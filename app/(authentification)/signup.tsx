@@ -4,8 +4,6 @@ import {
   StyleSheet,
   Image,
   SafeAreaView,
-  Modal,
-  Pressable,
 } from "react-native";
 import { GloblalStyles, TextColor } from "@/constants/GlobalStyles";
 import { useState } from "react";
@@ -14,6 +12,7 @@ import AuthentificationEmailInput from "@/components/authentification/authentifi
 import AuthentificationPasswordInput from "@/components/authentification/authentificationPasswordInput";
 import { saveUser } from "@/constants/Controller";
 import ErrorMessageModal from "@/components/message/errorMessageModal";
+import { useRouter } from "expo-router";
 
 export default function Singup() {
   let [email, setEmail] = useState<string>("");
@@ -23,6 +22,8 @@ export default function Singup() {
   let [errorMessage, setErrorMessage] = useState<Array<string>>([]);
 
   let [modalShown, setModalShown] = useState<boolean>(false);
+
+  const router = useRouter();
 
   return (
     <View style={styles.container}>
@@ -61,6 +62,7 @@ export default function Singup() {
               confirmationPassword,
               setErrorMessage,
               setModalShown,
+              router
             });
           }}
         ></AuthentificationButton>

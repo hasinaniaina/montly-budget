@@ -1,11 +1,16 @@
 
 
 import { StyleSheet} from "react-native";
+import { TitleColor } from "./Colors";
 
-export const TitleColor = "#717171";
-export const TextColor = "#C8C8C8";
+
 
 export const  GloblalStyles =  StyleSheet.create({
+    container: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+    },
     authentificationIcon: {
         width: 100,
         height: 100,

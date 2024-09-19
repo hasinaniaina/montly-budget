@@ -1,22 +1,27 @@
-import { Link } from "expo-router";
+import { Link, useRouter } from "expo-router";
 import {
   View,
   Text,
   StyleSheet,
   Image,
   SafeAreaView,
-  TextInput,
-  TouchableOpacity,
 } from "react-native";
 import { GloblalStyles, TextColor } from "@/constants/GlobalStyles";
-import {  useState } from "react";
+import {   useState } from "react";
 import AuthentificationButton from "@/components/authentification/authentificationButton";
 import AuthentificationEmailInput from "@/components/authentification/authentificationEmailInput";
+import { sendEMail } from "@/constants/Controller";
+import RetrievedPasswordMessageModal from "@/components/message/retrievedPasswordMessageModal";
+import ErrorMessageModal from "@/components/message/errorMessageModal";
 
 export default function ForgotPassword() {
+  let [email, setEmail] = useState<string>("");
+  let [message, setMessage] = useState<string>("");
+  let [errorMessage, setErrorMessage] = useState<Array<string>>([]);
+  let [modalShown, setModalShown] = useState<Array<boolean>>([false, false]);
 
-  let [passwordShowing, setPasswordShowing] = useState<boolean>(false);
 
+  const router = useRouter();
 
   return (
     <View style={styles.container}>
@@ -31,10 +36,28 @@ export default function ForgotPassword() {
       </View>
       <SafeAreaView>
         <View style={GloblalStyles.iconLeftTextInputContainer}>
-          <AuthentificationEmailInput />
+          <AuthentificationEmailInput handleChange={setEmail} />
         </View>
-        <AuthentificationButton title="Retrieve"></AuthentificationButton>
+        <AuthentificationButton title="Retrieve" retrieve={() => sendEMail({
+          email,
+          setErrorMessage,
+          setMessage,
+          setModalShown,
+          router 
+        })}></AuthentificationButton>
       </SafeAreaView>
+      <ErrorMessageModal
+        modalShown={modalShown[0]}
+        errorMessage={errorMessage}
+        setErrorMessage={setErrorMessage}
+        setModalShown={setModalShown}
+      />
+      <RetrievedPasswordMessageModal
+        modalShown={modalShown[1]}
+        message={message}
+        setMessage={setMessage}
+        setModalShown={setModalShown}
+      />
     </View>
   );
 }

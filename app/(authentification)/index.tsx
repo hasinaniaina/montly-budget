@@ -1,26 +1,32 @@
-import { Link } from "expo-router";
+import { Link, useRouter } from "expo-router";
 import {
   View,
   Text,
   StyleSheet,
   Image,
   SafeAreaView,
-  TextInput,
-  TouchableOpacity,
 } from "react-native";
-import { GloblalStyles, TextColor } from "@/constants/GlobalStyles";
+import { GloblalStyles } from "@/constants/GlobalStyles";
 import {  useState } from "react";
 import AuthentificationButton from "@/components/authentification/authentificationButton";
 import AuthentificationEmailInput from "@/components/authentification/authentificationEmailInput";
 import AuthentificationPasswordInput from "@/components/authentification/authentificationPasswordInput";
+import { login } from "@/constants/Controller";
+import ErrorMessageModal from "@/components/message/errorMessageModal";
+import { TextColor } from "@/constants/Colors";
 
 export default function Login() {
+  let [email, setEmail] = useState<string>("");
+  let [password, setPassword] = useState<string>("");
 
-  let [passwordShowing, setPasswordShowing] = useState<boolean>(false);
+  let [errorMessage, setErrorMessage] = useState<Array<string>>([]);
 
+  let [modalShown, setModalShown] = useState<Array<boolean>>([false, false]);
+
+  const router = useRouter();
 
   return (
-    <View style={styles.container}>
+    <View style={GloblalStyles.container}>
       <View>
         <Image
           style={GloblalStyles.authentificationIcon}
@@ -32,12 +38,22 @@ export default function Login() {
       </View>
       <SafeAreaView>
         <View style={GloblalStyles.iconLeftTextInputContainer}>
-          <AuthentificationEmailInput />
+          <AuthentificationEmailInput handleChange={setEmail} />
         </View>
         <View style={GloblalStyles.iconLeftTextInputContainer}>
-          <AuthentificationPasswordInput title="Password" />
+          <AuthentificationPasswordInput 
+            title="Password"
+            handleChange={setPassword} />
         </View>
-        <AuthentificationButton title="Login"></AuthentificationButton>
+        <AuthentificationButton title="Login" retrieve={() => {
+          login({
+            email,
+            password,
+            setErrorMessage,
+            setModalShown,
+            router            
+          });
+        }} ></AuthentificationButton>
       </SafeAreaView>
       <View>
         <Text style={styles.text}>
@@ -48,6 +64,13 @@ export default function Login() {
           <Link href={"/forgotPassword"}>Did you forget your password?</Link>
         </Text>
       </View>
+
+      <ErrorMessageModal
+        modalShown={modalShown[0]}
+        errorMessage={errorMessage}
+        setErrorMessage={setErrorMessage}
+        setModalShown={setModalShown}
+      />
     </View>
   );
 }

@@ -6,13 +6,14 @@ import {
   StyleSheet,
   Modal,
   Pressable,
+  TouchableOpacity,
 } from "react-native";
 
 function ErrorMessageModal({modalShown, errorMessage, setErrorMessage, setModalShown}: {
   modalShown: boolean,
-  errorMessage: Array<string>,
-  setErrorMessage: (val: Array<string>) => void,
-  setModalShown: (val: boolean) => void
+  errorMessage: string[],
+  setErrorMessage: (val: string[]) => void,
+  setModalShown: (val: boolean[]) => void
 }) {
   return (
 
@@ -28,13 +29,13 @@ function ErrorMessageModal({modalShown, errorMessage, setErrorMessage, setModalS
         </View>
         <View style={styles.errorMessageContent}>
           {errorMessage.map((message, index) => {
-              return <Text key={index}>- {message}</Text>;
+              return <Text key={index}>- {message}</Text>
           })}
-          <Pressable
+          <TouchableOpacity
             style={styles.ModalButton}
             onPress={() => {
               setErrorMessage([]);
-              setModalShown(false);
+              setModalShown([false, false]);
             }}
           >
             <Text
@@ -44,7 +45,7 @@ function ErrorMessageModal({modalShown, errorMessage, setErrorMessage, setModalS
             >
               Cancel
             </Text>
-          </Pressable>
+          </TouchableOpacity>
         </View>
       </View>
     </View>
@@ -65,9 +66,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     padding: 20,
+    width: 250
   },
   errorMessageContent: {
     padding: 20,
+    width: 250,
   },
   ModalButton: {
     alignItems: "center",
