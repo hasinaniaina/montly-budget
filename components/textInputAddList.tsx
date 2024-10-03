@@ -3,8 +3,6 @@ import ColorPickerView from "@/components/colorPicker";
 import { useEffect, useState } from "react";
 import {
   Dimensions,
-  Image,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,

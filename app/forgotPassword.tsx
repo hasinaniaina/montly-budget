@@ -6,7 +6,8 @@ import {
   Image,
   SafeAreaView,
 } from "react-native";
-import { GloblalStyles, TextColor } from "@/constants/GlobalStyles";
+import { TextColor } from "@/constants/Colors";
+import { GloblalStyles } from "@/constants/GlobalStyles";
 import {   useState } from "react";
 import AuthentificationButton from "@/components/authentification/authentificationButton";
 import AuthentificationEmailInput from "@/components/authentification/authentificationEmailInput";

@@ -10,8 +10,7 @@ import {
 import { TextColor, green, red } from "@/constants/Colors";
 import { Styles } from "react-native-svg";
 import { Product } from "@/constants/interface";
-import { useState } from "react";
-import { editProduct, removeProduct } from "@/constants/Controller";
+import {  removeProduct } from "@/constants/Controller";
 
 export default function ListProduct({
   showActionButton,

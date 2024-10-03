@@ -1,14 +1,21 @@
-import { Router } from "expo-router";
+import { ExpoRouter, Router } from "expo-router";
 import {
   createProduct,
   createUser,
   deleteProduct,
+  getCategory,
   getProducts,
   getUserByEmail,
+  insertCategory,
   updateProductById,
+  deleteCategory,
+  getCategoryById,
+  updateCategory,
+  getProductsNew,
+  getCategoryFilter
 } from "./db";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Product } from "./interface";
+import { Category, Product } from "./interface";
 
 export const saveUser = async ({
   email,
@@ -22,7 +29,7 @@ export const saveUser = async ({
   password: string;
   confirmationPassword: string;
   setErrorMessage: (val: string[]) => void;
-  setModalShown: (val: boolean) => void;
+  setModalShown: (val: boolean[]) => void;
   router: Router;
 }) => {
   let emailRegExp = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w\w+)+$/;
@@ -50,20 +57,21 @@ export const saveUser = async ({
 
   if (errorMessageTmp.length > 0) {
     setErrorMessage(errorMessageTmp);
-    setModalShown(true);
+    setModalShown([true]);
   } else {
     const data = {
       email,
       password,
     };
 
-    const result = await createUser(data);
+    const user = await createUser(data);
 
-    if (!result) {
+    if (!user) {
       setErrorMessage(["Email already use!"]);
-      setModalShown(true);
+      setModalShown([true]);
     } else {
-      router.navigate("/(dashboard)");
+      await AsyncStorage.setItem("userCredentials", JSON.stringify(user));
+      router.navigate("/dashboard/home");
     }
   }
 };
@@ -82,15 +90,21 @@ export const login = async ({
   router: Router;
 }) => {
   const user = await getUserByEmail(email);
+
   if (user && password == user.password) {
     await AsyncStorage.setItem("userCredentials", JSON.stringify(user));
 
-    router.navigate("/(dashboard)");
+    router.navigate("/dashboard/home");
   } else {
     setErrorMessage(["Authentification failed!"]);
     setModalShown([true, false]);
   }
 };
+
+export const logout = async (router: Router) => {
+  await AsyncStorage.removeItem("userCredentials");
+  router.replace("../");
+}
 
 export const sendEMail = async ({
   email,
@@ -135,6 +149,7 @@ export const saveProduct = async (
   }
 
   const user: any = await AsyncStorage.getItem("userCredentials");
+
   if (user) {
     const data = {
       color: color,
@@ -165,9 +180,20 @@ export const editProduct = async (
     return false;
   }
 
-  const result = await updateProductById(color, name, amount, index, productData);
+  const result = await updateProductById(
+    color,
+    name,
+    amount,
+    index,
+    productData
+  );
   return result;
 };
+
+export const retrieveProductNew = async () => {
+  const products = await getProductsNew();
+  return products as Product[];
+}
 
 export const retrieveProduct = async (
   idUser: string,
@@ -182,3 +208,103 @@ export const removeProduct = async (id: number, productData: Product[]) => {
   const result = await deleteProduct(id, productData);
   return true;
 };
+
+export const createCategory = async ({
+  datas,
+  setErrorMessage,
+  setModalShown,
+}: {
+  datas?: Category;
+  setErrorMessage: (val: string[]) => void;
+  setModalShown: (val: boolean[]) => void;
+}) => {
+  let error = false;
+  const user: any = await AsyncStorage.getItem("userCredentials");
+
+  if (datas?.label == "") {
+    error = true;
+  }
+
+  if (datas?.color == "") {
+    error = true;
+  }
+
+  if (datas?.income == "") {
+    error = true;
+  }
+
+  if (error) {
+    setErrorMessage(["All Fields should not be empty!"]);
+    setModalShown([true]);
+  } else {
+    const CategoryCreated = await insertCategory(datas!, JSON.parse(user));
+    if (CategoryCreated) {
+      return true;
+    }
+  }
+};
+
+export const retrieveCategory = async (categoryDateFilter: Date[]) => {
+  const user: any = await AsyncStorage.getItem("userCredentials");
+  return await getCategory(JSON.parse(user), categoryDateFilter);
+}
+
+export const removeCategory = async (id: number) => {
+  const result =  await deleteCategory(id);
+  
+  if (result.changes) {
+    return true;
+  } 
+  return false;
+}
+
+export const retrieveCategoryById = async (id: number) => {
+  const category = await getCategoryById(id);
+  return category;
+}
+
+export const upgradeCategory = async({
+  datas,
+  setErrorMessage,
+  setModalShown,
+}: {
+  datas?: Category;
+  setErrorMessage: (val: string[]) => void;
+  setModalShown: (val: boolean[]) => void;
+}) => {
+  let error = false;
+
+  if (datas?.label == "") {
+    error = true;
+  }
+
+  if (datas?.color == "") {
+    error = true;
+  }
+
+  if (datas?.income == "") {
+    error = true;
+  }
+
+  
+
+  if (error) {
+    setErrorMessage(["All Fields should not be empty!"]);
+    setModalShown([true]);
+  } else {
+    const updated = await updateCategory(datas!);
+    
+    if (updated) {
+      return true;
+    }
+  }
+}
+
+export const filterCategory = async (datas: Category[], date: Date[]) => {
+  return await getCategoryFilter(datas, date);
+}
+
+export const getUserEmail = async () => {
+  return  await AsyncStorage.getItem("userCredentials");
+}
+

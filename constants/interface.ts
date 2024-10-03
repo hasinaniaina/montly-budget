@@ -12,5 +12,13 @@ export type Product = {
     idUser: number,
     idMonth: number,
     yearNumber: number,
+    idCategory: number,
     percentage: number
+}
+
+export type Category = {
+    id?: number,
+    label?: string,
+    income?: string,
+    color?: string
 }

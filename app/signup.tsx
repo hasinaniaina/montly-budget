@@ -5,7 +5,8 @@ import {
   Image,
   SafeAreaView,
 } from "react-native";
-import { GloblalStyles, TextColor } from "@/constants/GlobalStyles";
+import { TextColor } from "@/constants/Colors";
+import { GloblalStyles } from "@/constants/GlobalStyles";
 import { useState } from "react";
 import AuthentificationButton from "@/components/authentification/authentificationButton";
 import AuthentificationEmailInput from "@/components/authentification/authentificationEmailInput";
@@ -21,7 +22,7 @@ export default function Singup() {
 
   let [errorMessage, setErrorMessage] = useState<Array<string>>([]);
 
-  let [modalShown, setModalShown] = useState<boolean>(false);
+  let [modalShown, setModalShown] = useState<Array<boolean>>([false]);
 
   const router = useRouter();
 
@@ -68,7 +69,7 @@ export default function Singup() {
         ></AuthentificationButton>
       </SafeAreaView>
       <ErrorMessageModal
-        modalShown={modalShown}
+        modalShown={modalShown[0]}
         errorMessage={errorMessage}
         setErrorMessage={setErrorMessage}
         setModalShown={setModalShown}
