@@ -1,18 +1,18 @@
 import { ExpoRouter, Router } from "expo-router";
 import {
-  createProduct,
   createUser,
   deleteProduct,
   getCategory,
   getProducts,
   getUserByEmail,
   insertCategory,
-  updateProductById,
   deleteCategory,
   getCategoryById,
   updateCategory,
   getProductsNew,
-  getCategoryFilter
+  getCategoryFilter,
+  insertProduct,
+  updateProduct,
 } from "./db";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Category, Product } from "./interface";
@@ -104,7 +104,7 @@ export const login = async ({
 export const logout = async (router: Router) => {
   await AsyncStorage.removeItem("userCredentials");
   router.replace("../");
-}
+};
 
 export const sendEMail = async ({
   email,
@@ -134,78 +134,48 @@ export const sendEMail = async ({
 };
 
 export const saveProduct = async (
-  color: string,
-  name: string,
-  amount: string,
-  month: string,
-  year: string,
+  datas: Product,
   setErrorMessage: (val: string[]) => void,
   setModalShown: (val: boolean[]) => void
 ) => {
-  if (color == "" || name == "" || amount == "") {
+
+  if (datas.color == "" || datas.designation == "" || datas.amount == 0) {
     setErrorMessage(["All Fields should not be empty!"]);
     setModalShown([true]);
     return false;
   }
 
-  const user: any = await AsyncStorage.getItem("userCredentials");
+  const save = await insertProduct(datas);
 
-  if (user) {
-    const data = {
-      color: color,
-      name: name,
-      amount: amount,
-      idUser: JSON.parse(user).id,
-      idMonth: month,
-      yearNumber: year,
-    };
-
-    const product = await createProduct(data);
-    return product;
-  }
+  return save;
 };
 
-export const editProduct = async (
-  color: string,
-  name: string,
-  amount: string,
-  index: number,
-  productData: Product[],
-  setErrorMessage: (val: string[]) => void,
+export const editProduct = async (datas: Product,
+   setErrorMessage: (val: string[]) => void,
   setModalShown: (val: boolean[]) => void
 ) => {
-  if (color == "" || name == "" || amount == "") {
+  if (datas.color == "" || datas.designation == "") {
     setErrorMessage(["All Fields should not be empty!"]);
     setModalShown([true]);
     return false;
   }
 
-  const result = await updateProductById(
-    color,
-    name,
-    amount,
-    index,
-    productData
-  );
-  return result;
+  const edit = await updateProduct(datas);
+  return edit;
 };
 
-export const retrieveProductNew = async () => {
+export const retrieveProductByCategory = async () => {
   const products = await getProductsNew();
   return products as Product[];
-}
-
-export const retrieveProduct = async (
-  idUser: string,
-  idMonth: string,
-  yearNumber: string
-) => {
-  const products = await getProducts(idUser, idMonth, yearNumber);
-  return products as Product[];
 };
 
-export const removeProduct = async (id: number, productData: Product[]) => {
-  const result = await deleteProduct(id, productData);
+export const retrieveProduct = async (category: Category) => {
+  const products = await getProducts(category);
+  return products as [Product];
+};
+
+export const removeProduct = async (id: number) => {
+  const result = await deleteProduct(id);
   return true;
 };
 
@@ -247,23 +217,23 @@ export const createCategory = async ({
 export const retrieveCategory = async (categoryDateFilter: Date[]) => {
   const user: any = await AsyncStorage.getItem("userCredentials");
   return await getCategory(JSON.parse(user), categoryDateFilter);
-}
+};
 
 export const removeCategory = async (id: number) => {
-  const result =  await deleteCategory(id);
-  
+  const result = await deleteCategory(id);
+
   if (result.changes) {
     return true;
-  } 
+  }
   return false;
-}
+};
 
 export const retrieveCategoryById = async (id: number) => {
   const category = await getCategoryById(id);
   return category;
-}
+};
 
-export const upgradeCategory = async({
+export const upgradeCategory = async ({
   datas,
   setErrorMessage,
   setModalShown,
@@ -286,25 +256,22 @@ export const upgradeCategory = async({
     error = true;
   }
 
-  
-
   if (error) {
     setErrorMessage(["All Fields should not be empty!"]);
     setModalShown([true]);
   } else {
     const updated = await updateCategory(datas!);
-    
+
     if (updated) {
       return true;
     }
   }
-}
+};
 
 export const filterCategory = async (datas: Category[], date: Date[]) => {
   return await getCategoryFilter(datas, date);
-}
+};
 
 export const getUserEmail = async () => {
-  return  await AsyncStorage.getItem("userCredentials");
-}
-
+  return await AsyncStorage.getItem("userCredentials");
+};

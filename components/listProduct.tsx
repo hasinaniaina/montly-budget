@@ -6,31 +6,44 @@ import {
   TouchableOpacity,
   View,
   FlatList,
+  ViewStyle,
 } from "react-native";
 import { TextColor, green, red } from "@/constants/Colors";
 import { Styles } from "react-native-svg";
 import { Product } from "@/constants/interface";
-import {  removeProduct } from "@/constants/Controller";
+import {
+  removeProduct,
+  retrieveProduct,
+  retrieveProductByCategory,
+} from "@/constants/Controller";
+import { useEffect, useState } from "react";
 
 export default function ListProduct({
   showActionButton,
   setShowActionButton,
   indexOfActionButtonShowed,
   setIndexOfActionButtonShowed,
-  setRefresh,
-  selectProductForEdit,
+  setChange,
+  setShowAddListField,
   setSelectProductForEdit,
   productData,
 }: {
-  showActionButton: Styles[];
-  setShowActionButton: (val: Styles[]) => void;
+  showActionButton: ViewStyle[];
+  setShowActionButton: (val: ViewStyle[]) => void;
   indexOfActionButtonShowed: number;
   setIndexOfActionButtonShowed: (val: number) => void;
-  setRefresh: (val: boolean) => void;
-  selectProductForEdit: number;
-  setSelectProductForEdit: (val: number) => void;
+  setChange: (val: boolean) => void;
+  setShowAddListField: (val: ViewStyle) => void;
+  setSelectProductForEdit: (val: Product) => void;
   productData: Product[];
 }) {
+
+  let totalAmountTmp = 0;
+
+  productData.forEach((data) => {
+    totalAmountTmp += data.amount;
+  });
+
   return (
     <FlatList
       data={productData}
@@ -54,7 +67,7 @@ export default function ListProduct({
           <View
             style={[
               styles.itemsContainer,
-              (indexOfActionButtonShowed == index && selectProductForEdit == -1) && {
+              indexOfActionButtonShowed == index && {
                 backgroundColor: "#fff",
                 borderRadius: 5,
               },
@@ -67,7 +80,7 @@ export default function ListProduct({
               <Text
                 style={[
                   styles.productName,
-                  (indexOfActionButtonShowed == index && selectProductForEdit == -1)  && {
+                  indexOfActionButtonShowed == index && {
                     fontFamily: "k2d-bold",
                     color: "#000",
                   },
@@ -79,25 +92,31 @@ export default function ListProduct({
             <View
               style={[
                 styles.itemRightContent,
-                (indexOfActionButtonShowed == index && selectProductForEdit == -1)  && {
+                indexOfActionButtonShowed == index && {
                   display: "none",
                 },
               ]}
             >
-              <Text style={styles.price}>{item.amount} Ariary - </Text>
+              <Text style={styles.price}>
+                {item.amount} Ariary -{" "}
+              </Text>
               <Text style={styles.percentage}>
-                {Number(item.percentage * 100).toFixed(2)}%
+                {Number(
+                  (item.coefficient * item.amount * 100) / totalAmountTmp
+                ).toFixed(2)}
+                %
               </Text>
             </View>
 
             <View style={[styles.buttonsAction, showActionButton[index]]}>
-              <TouchableOpacity style={styles.editIconContainer} 
-              onPress={() => {
-                setSelectProductForEdit(index);
-                setIndexOfActionButtonShowed(-1);
-                setRefresh(true);
-
-              }}>
+              <TouchableOpacity
+                style={styles.editIconContainer}
+                onPress={() => {
+                  setSelectProductForEdit(item);
+                  setIndexOfActionButtonShowed(-1);
+                  setShowAddListField({display: "flex"});
+                }}
+              >
                 <Image
                   style={styles.editIcon}
                   source={require("@/assets/images/pencil.png")}
@@ -106,10 +125,10 @@ export default function ListProduct({
               <TouchableOpacity
                 style={styles.deleteIconContainer}
                 onPress={async () => {
-                  const deleted = await removeProduct(item.id, productData);
+                  const deleted = await removeProduct(item.id);
                   if (deleted) {
                     setIndexOfActionButtonShowed(-1);
-                    setRefresh(true);
+                    setChange(true);
                   }
                 }}
               >

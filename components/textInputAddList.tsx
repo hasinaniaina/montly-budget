@@ -13,26 +13,30 @@ import { Styles } from "react-native-svg";
 import { green, red } from "@/constants/Colors";
 import ErrorMessageModal from "./message/errorMessageModal";
 import { Product } from "@/constants/interface";
+import ColorPickerViewNew from "./colorPickerNew";
 
 export default function TextInputAddList({
-  showAddList,
-  month,
-  year,
   setShowAddListField,
   selectProductForEdit,
   setSelectProductForEdit,
   productData,
   setRefresh,
 }: {
-  showAddList: Styles;
-  month: string;
-  year: string;
   setShowAddListField: (val: Styles) => void;
-  selectProductForEdit: number;
-  setSelectProductForEdit: (val: number) => void;
+  selectProductForEdit: Product;
+  setSelectProductForEdit: (val: Product) => void;
   productData: Product[];
   setRefresh: (val: boolean) => void;
 }) {
+  const productDataInit = {
+    id: -1,
+    designation: "string",
+    amount: 0,
+    color: "string",
+    idCategory: -1,
+    percentage: 0
+  };
+
   const [productColor, setProductColor] = useState<string>("#000");
   const [productName, setProductName] = useState<string>("");
   const [productAmount, setProductAmount] = useState<string>("");
@@ -44,11 +48,10 @@ export default function TextInputAddList({
   let [modalShown, setModalShown] = useState<boolean[]>([false]);
 
   useEffect(() => {
-    const editProductNameTmp = productData[selectProductForEdit]
-      ? productData[selectProductForEdit].designation
+    const editProductNameTmp = selectProductForEdit ? selectProductForEdit.designation
       : "";
-    const editProductAmountTmp = productData[selectProductForEdit]
-      ? productData[selectProductForEdit].amount
+    const editProductAmountTmp = selectProductForEdit
+      ? selectProductForEdit.amount
       : 0;
 
     setEditProductName(editProductNameTmp);
@@ -56,20 +59,19 @@ export default function TextInputAddList({
   }, [selectProductForEdit]);
   
   return (
-    <View style={[styles.textInputAddListContainer, showAddList]}>
-      <ColorPickerView
-        setColor={setProductColor}
-        selectProductForEdit={selectProductForEdit}
-        productData={productData}
+    <View style={[styles.textInputAddListContainer]}>
+      <ColorPickerViewNew
+        data={selectProductForEdit}
+        setData={setSelectProductForEdit}
       />
 
       <View style={styles.textInputContainer}>
         <TextInput
           placeholder="Product"
-          value={selectProductForEdit > -1 ? editProductName : productName}
+          value={selectProductForEdit ? editProductName : productName}
           style={styles.textInput}
           onChangeText={(val) => {
-            selectProductForEdit > -1
+            selectProductForEdit 
               ? setEditProductName(val)
               : setProductName(val);
           }}
@@ -81,13 +83,13 @@ export default function TextInputAddList({
           placeholder="Amount"
           keyboardType="numeric"
           value={
-            selectProductForEdit > -1
+            selectProductForEdit
               ? editProductAmount.toString()
               : productAmount
           }
           style={styles.textInput}
           onChangeText={(val) => {
-            selectProductForEdit > -1
+            selectProductForEdit
               ? setEditProductAmount(val)
               : setProductAmount(val);
           }}
@@ -103,16 +105,14 @@ export default function TextInputAddList({
 
             let result: any = false;
 
-            if (selectProductForEdit == -1) {
-              result = await saveProduct(
-                productColor,
-                productName,
-                productAmount,
-                month,
-                year,
-                setErrorMessage,
-                setModalShown
-              );
+            if (selectProductForEdit ) {
+              // result = await saveProduct(
+              //   productColor,
+              //   productName,
+              //   productAmount,
+              //   setErrorMessage,
+              //   setModalShown
+              // );
             
             } else {
               result = await editProduct(
@@ -132,7 +132,7 @@ export default function TextInputAddList({
 
             if (result) {
               setRefresh(true);
-              setSelectProductForEdit(-1);
+              setSelectProductForEdit(productDataInit);
             }
           }}
         >
@@ -144,7 +144,7 @@ export default function TextInputAddList({
           onPress={() => {
             setShowAddListField({ display: "none" });
             setRefresh(true);
-            setSelectProductForEdit(-1);
+            setSelectProductForEdit(productDataInit);
           }}
         >
           <Text style={styles.textSave}>Close</Text>

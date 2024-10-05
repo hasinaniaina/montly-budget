@@ -27,7 +27,7 @@ export const createTable = async () => {
           id INTEGER PRIMARY KEY  AUTOINCREMENT, 
           designation TEXT NOT NULL, 
           amount REAL,
-          percentage REAL,
+          coefficient INTEGER,
           idCategory INTEGER,
           color TEXT,
           createdDate  DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -115,73 +115,6 @@ export const getUserByEmail = async (email: string): Promise<User> => {
   }
 };
 
-// export const setYear = async () => {
-//   const currentYear = new Date().getFullYear();
-//   const years = await getYear();
-//   let isYearExist = false;
-
-//   if (years) {
-//     for (let year of years) {
-//       if (year.number == currentYear) {
-//         isYearExist = true;
-//         break;
-//       }
-//     }
-//   }
-
-//   if (!isYearExist) {
-//     try {
-//       let query = await (
-//         await db
-//       ).runAsync("INSERT INTO Year (number) VALUES (?)", currentYear);
-
-//       console.log(query);
-//     } catch (error) {
-//       console.log("Year insertion error => ", error);
-//     }
-//   }
-// };
-
-// export const getYear = async () => {
-//   try {
-//     const year: any = await (await db).getAllAsync("SELECT number FROM Year");
-//     return year;
-//   } catch (error) {
-//     console.log("Retrieve year error => ", error);
-//   }
-// };
-
-// export const setMonths = async () => {
-//   const monthInserted = await getMonth();
-//   const monthNames = [
-//     "January",
-//     "February",
-//     "March",
-//     "April",
-//     "May",
-//     "June",
-//     "July",
-//     "August",
-//     "September",
-//     "October",
-//     "November",
-//     "December",
-//   ];
-
-//   if (monthInserted.length == 0) {
-//     try {
-//       monthNames.map(async (monthName) => {
-//         let query = await (
-//           await db
-//         ).runAsync("INSERT INTO Month (name) VALUES (?)", monthName);
-//         console.log(query);
-//       });
-//     } catch (error) {
-//       console.log("Year insertion error => ", error);
-//     }
-//   }
-// };
-
 export const getMonth = async () => {
   try {
     const months: any = await (await db).getAllAsync("SELECT * FROM Month");
@@ -212,63 +145,11 @@ export const deleteMonth = async () => {
   }
 };
 
-export const createProduct = async (data: {
-  color: string;
-  name: string;
-  amount: string;
-  idUser: string;
-  idMonth: string;
-  yearNumber: string;
-}) => {
-  let sumAmount = 0;
-
-  let percentage = 1;
-
-  const products = await getProducts(
-    data.idUser,
-    data.idMonth,
-    data.yearNumber
-  );
-
-  if (products) {
-    if (products.length == 0) {
-      return await insertProduct(data, percentage);
-    } else {
-      products.forEach((product: Product) => {
-        sumAmount += product.amount;
-      });
-
-      percentage = parseInt(data.amount) / (sumAmount + parseInt(data.amount));
-
-      await insertProduct(data, percentage);
-
-      products.forEach(async (product: Product) => {
-        percentage = product.amount / (sumAmount + parseInt(data.amount));
-        await updateProduct(product.id, percentage);
-      });
-
-      return true;
-    }
-  }
-};
-
-export const getProducts = async (
-  idUser: string,
-  idMonth: string,
-  yearNumber: string
-) => {
+export const getProducts = async (category: Category) => {
   try {
     const product: any = await (
       await db
-    ).getAllAsync(
-      "SELECT * FROM Product WHERE idUser=" +
-        idUser +
-        " AND idMonth=" +
-        idMonth +
-        " AND yearNumber=" +
-        yearNumber +
-        " ORDER BY id DESC "
-    );
+    ).getAllAsync("SELECT * FROM Product WHERE idCategory=" + category.id);
     return product ? product : ([] as Product[]);
   } catch (error) {
     console.log("Retrieve year error => ", error);
@@ -284,128 +165,58 @@ export const getProductsNew = async () => {
   }
 };
 
-export const updateProduct = async (id: number, percentage: number) => {
+export const updateProduct = async (datas: Product) => {
   try {
-    let query = await (
+    let update = await (
       await db
     ).runAsync(
-      `UPDATE Product SET percentage = ? WHERE id = ?`,
-      percentage,
-      id
+      `UPDATE Product SET designation = ?, amount = ?, coefficient = ?, color = ? WHERE id = ?`,
+      datas.designation,
+      datas.amount,
+      datas.coefficient,
+      datas.color,
+      datas.id
     );
 
-    return query;
+    return update.changes;
+
   } catch (error) {
     console.log("Year insertion error => ", error);
   }
 };
 
-export const insertProduct = async (
-  data: {
-    color: string;
-    name: string;
-    amount: string;
-    idUser: string;
-    idMonth: string;
-    yearNumber: string;
-  },
-  percentage: number
-) => {
+export const insertProduct = async (datas: Product):Promise<number | undefined> => {
   try {
-    let query = await (
+    let insert = await (
       await db
     ).runAsync(
       `INSERT INTO Product 
-    (designation, amount, percentage, idUser, idMonth, yearNumber, color) 
-    VALUES (?, ? , ?, ?, ?, ?, ?)`,
-      data.name,
-      parseInt(data.amount),
-      percentage,
-      parseInt(data.idUser),
-      parseInt(data.idMonth),
-      parseInt(data.yearNumber),
-      data.color
+    (designation, amount, idCategory, coefficient, color) 
+    VALUES (?, ? , ?, ?, ?)`,
+      datas.designation,
+      datas.amount,
+      datas.idCategory,
+      datas.coefficient,
+      datas.color
     );
 
-    return query;
+    return insert.changes;
+
   } catch (error) {
     console.log("Year insertion error => ", error);
   }
 };
 
-export const deleteProduct = async (id: number, productData: Product[]) => {
-  try {
-    let query = await (await db).runAsync("DELETE FROM Product WHERE id=" + id);
+export const deleteProduct = async (id: number) => {
+    try {
+      let deleted = await (await db).runAsync("DELETE FROM Product WHERE id=" + id);
+      return deleted.changes;
 
-    if (query) {
-      const idUser = productData[0].idUser.toString();
-      const idMonth = productData[0].idMonth.toString();
-      const yearNumber = productData[0].yearNumber.toString();
-
-      const products = await getProducts(idUser, idMonth, yearNumber);
-      let percentage = 0;
-      let sumAmount = 0;
-
-      products.forEach((product: Product) => {
-        sumAmount += product.amount;
-      });
-
-      let update: any = "";
-      products.forEach(async (product: Product) => {
-        percentage = product.amount / sumAmount;
-        update = await updateProduct(product.id, percentage);
-      });
-
-      return update;
+    } catch (error) {
+      console.log("Delete month record error => ", error);
     }
-  } catch (error) {
-    console.log("Delete month record error => ", error);
-  }
 };
 
-export const updateProductById = async (
-  newColor: string,
-  newName: string,
-  newAmount: string,
-  index: number,
-  productData: Product[]
-) => {
-  const idUser = productData[index].idUser.toString();
-  const idMonth = productData[index].idMonth.toString();
-  const yearNumber = productData[index].yearNumber.toString();
-  const idProduct = productData[index].id;
-
-  const products = await getProducts(idUser, idMonth, yearNumber);
-
-  let sumAmount = 0;
-  let newSumAmount = 0;
-  let newPercentage = 0;
-  let oldAmout = productData[index].amount;
-
-  products.forEach((product: Product) => {
-    sumAmount += product.amount;
-  });
-
-  newSumAmount = sumAmount - oldAmout + parseFloat(newAmount);
-  newPercentage = parseFloat(newAmount) / newSumAmount;
-
-  try {
-    let query = await (
-      await db
-    ).runAsync(
-      `UPDATE Product SET color = ?, designation = ?, amount = ?, percentage = ? WHERE id = ?`,
-      newColor,
-      newName,
-      newAmount,
-      newPercentage,
-      idProduct
-    );
-
-    return query;
-  } catch (error) {
-    console.log("Year insertion error => ", error);
-  }
-};
 
 export const insertCategory = async (datas: Category, user: User) => {
   try {

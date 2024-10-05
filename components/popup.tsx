@@ -13,9 +13,15 @@ import {
   ViewStyle,
 } from "react-native";
 import ColorPickerViewNew from "./colorPickerNew";
-import { createCategory, filterCategory, upgradeCategory } from "@/constants/Controller";
+import {
+  createCategory,
+  editProduct,
+  filterCategory,
+  saveProduct,
+  upgradeCategory,
+} from "@/constants/Controller";
 import ErrorMessageModal from "./message/errorMessageModal";
-import { Category } from "@/constants/interface";
+import { Category, Product } from "@/constants/interface";
 
 export default function Popup({
   title,
@@ -35,8 +41,8 @@ export default function Popup({
   visible: ViewStyle;
   setVisible: (val: ViewStyle) => void;
   viewType: string;
-  datas?: Category;
-  setData: (val: Category) => void;
+  datas?: any;
+  setData: (val: any) => void;
   setChange: (val: boolean) => void;
   setIsCategoryFilterSelected: (val: boolean) => void;
   categoryDateFilter?: Date[];
@@ -49,11 +55,21 @@ export default function Popup({
     label: "",
   };
 
+  // Get product for edit
+  const productDataInit: Product = {
+    id: -1,
+    designation: "",
+    amount: 0,
+    color: "#FFF",
+    idCategory: datas.id!,
+    coefficient: 1,
+  };
+
   const [color, setColor] = useState<String>("#FFF");
 
   let [errorMessage, setErrorMessage] = useState<string[]>([]);
   let [modalShown, setModalShown] = useState<boolean[]>([false]);
-  
+
   return (
     <View style={[styles.popupContainer, visible]}>
       {/* popup top */}
@@ -81,9 +97,10 @@ export default function Popup({
         <ScrollView>
           <View style={{ alignItems: "center" }}>
             {/* popup colorPicker */}
-            {viewType == "category" && (
-              <ColorPickerViewNew data={datas} setData={setData} />
-            )}
+            {viewType == "category" ||
+              (viewType == "expenses" && (
+                <ColorPickerViewNew data={datas} setData={setData} />
+              ))}
 
             {/* popup content */}
             <View style={styles.popupContent}>{children}</View>
@@ -117,20 +134,51 @@ export default function Popup({
                     break;
                   case "filterByCategory":
                     if (datas) {
-                      const datasAfterFilter = await filterCategory([datas!], categoryDateFilter!);
+                      const datasAfterFilter = await filterCategory(
+                        [datas!],
+                        categoryDateFilter!
+                      );
                       setData(datasAfterFilter);
                       setVisible({ display: "none" });
                       setIsCategoryFilterSelected(true);
                     }
                     break;
-                  case "filterByDate":                  
-                    const datasAfterFilter = await filterCategory(datas! as Category[], categoryDateFilter!);
+                  case "filterByDate":
+                    const datasAfterFilter = await filterCategory(
+                      datas! as Category[],
+                      categoryDateFilter!
+                    );
                     setData(datasAfterFilter);
                     setVisible({ display: "none" });
                     setIsCategoryFilterSelected(true);
                     break;
-                }
+                  case "expenses":
+                    if (datas.id == -1) {
+                      const insertProduct = await saveProduct(
+                        datas,
+                        setErrorMessage,
+                        setModalShown
+                      );
 
+                      if (insertProduct) {
+                        setData(productDataInit);
+                        setChange(true);
+                      }
+                    } else {
+                      const updateProduct = await editProduct(
+                        datas,
+                        setErrorMessage,
+                        setModalShown
+                      );
+
+                      if (updateProduct) {
+                        setData(productDataInit);
+                        setChange(true);
+                        setVisible({ display: "none" });
+                      }
+                    }
+                    break;
+                }
 
                 setChange(true);
               }}

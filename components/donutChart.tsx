@@ -3,7 +3,9 @@ import { Product } from "@/constants/interface";
 import { useEffect, useState } from "react";
 import { StyleSheet, Text } from "react-native";
 import Svg, { Circle, G, Text as TextSvg } from "react-native-svg";
-export default function DonutChart({productData}: {
+export default function DonutChart({
+  productData,
+}: {
   productData: Product[];
 }) {
   const center = 250 / 2;
@@ -11,26 +13,32 @@ export default function DonutChart({productData}: {
   const circonference = 2 * Math.PI * radius;
   const productChartData = [];
 
-  productData.map((data) => {
-    productChartData.push({
-      percentage: data.percentage, 
-      color: data.color
-    });
-  });
-
-
   const [startAngle, setStartAngle] = useState<number[]>([]);
   const [expensesCount, setExpensesCount] = useState<number>(0);
 
+  let totalAmount = 0;
+  productData.forEach((data) => {
+    totalAmount += data.amount;
+  });
+
 
   const refresh = () => {
+
+    productData.map((data) => {
+      productChartData.push({
+        percentage: (data.coefficient * data.amount) / totalAmount,
+        color: data.color,
+      });
+    });
+
     let angle = 0;
     const angles: number[] = [];
 
-    productData.forEach((item) => {
+    productData.forEach((data) => {
       angles.push(angle);
-      angle += item.percentage * 360;
+      angle += ((data.coefficient * data.amount) / totalAmount) * 360;
     });
+
     setExpensesCount(productChartData.length);
     setStartAngle(angles);
   };
@@ -53,14 +61,12 @@ export default function DonutChart({productData}: {
                 strokeWidth="70"
                 fill="transparent"
                 strokeDasharray={circonference}
-                strokeDashoffset={circonference * (1 - value.percentage)}
+                strokeDashoffset={circonference * (1 - ((value.coefficient * value.amount) / totalAmount))}
                 originX={center}
                 originY={center}
                 rotation={startAngle[index]}
               />
-              <TextSvg fill="black">
-                {value.percentage}
-              </TextSvg>
+              <TextSvg fill="black">{(value.coefficient * value.amount) / totalAmount}</TextSvg>
             </G>
           );
         })}

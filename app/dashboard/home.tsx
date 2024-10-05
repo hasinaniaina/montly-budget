@@ -24,11 +24,12 @@ import {
   removeCategory,
   retrieveCategory,
   retrieveCategoryById,
-  retrieveProductNew,
+  retrieveProductByCategory,
 } from "@/constants/Controller";
-import { useRouter } from "expo-router";
+import { router } from "expo-router";
 
 export default function Home() {
+
   const categoryDataInit = {
     id: -1,
     color: "#000",
@@ -42,7 +43,6 @@ export default function Home() {
     day: "numeric",
   };
 
-  const router = useRouter();
 
   const [userEmail, setUserEmail] = useState<string>("");
 
@@ -126,7 +126,7 @@ export default function Home() {
     };
 
     const getProduct = async () => {
-      let product = await retrieveProductNew();
+      let product = await retrieveProductByCategory();
       return product;
     };
 
@@ -380,6 +380,10 @@ export default function Home() {
                         onPressIn={() => {
                           setShowActionButton(showActionButtonInit);
                           setIndexOfActionButtonShowed(-1);
+                          router.push({
+                            pathname: "/dashboard/[categoryId]",
+                            params: {categoryId: JSON.stringify(category) }
+                          })
                         }}
                       >
                         <View style={styles.colorNamecontainer}>

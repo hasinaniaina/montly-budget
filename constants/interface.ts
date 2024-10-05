@@ -9,16 +9,14 @@ export type Product = {
     designation: string,
     amount: number,
     color: string,
-    idUser: number,
-    idMonth: number,
-    yearNumber: number,
     idCategory: number,
-    percentage: number
+    coefficient: number
 }
 
 export type Category = {
     id?: number,
     label?: string,
     income?: string,
-    color?: string
+    color?: string,
+    createdDate?: string
 }

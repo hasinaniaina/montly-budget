@@ -5,11 +5,11 @@ import ColorPicker, {
 } from "reanimated-color-picker";
 
 export default function ColorPickerViewNew({data, setData}: {
-    data?: Category;
-    setData: (val: Category) => void;
+    data?: any;
+    setData: (val: any) => void;
 }) {
   const onSelectColor = ({ hex }: {hex: string}) => {
-    let dataTmp = {...data};
+    let dataTmp = {...data!};
     dataTmp.color = hex;
     setData(dataTmp);
   };
