@@ -13,6 +13,7 @@ import {
   getCategoryFilter,
   insertProduct,
   updateProduct,
+  getProductFilter,
 } from "./db";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Category, Product } from "./interface";
@@ -71,7 +72,7 @@ export const saveUser = async ({
       setModalShown([true]);
     } else {
       await AsyncStorage.setItem("userCredentials", JSON.stringify(user));
-      router.navigate("/dashboard/home");
+      router.push("/dashboard/home");
     }
   }
 };
@@ -94,7 +95,7 @@ export const login = async ({
   if (user && password == user.password) {
     await AsyncStorage.setItem("userCredentials", JSON.stringify(user));
 
-    router.navigate("/dashboard/home");
+    router.push("/dashboard/home");
   } else {
     setErrorMessage(["Authentification failed!"]);
     setModalShown([true, false]);
@@ -103,7 +104,7 @@ export const login = async ({
 
 export const logout = async (router: Router) => {
   await AsyncStorage.removeItem("userCredentials");
-  router.replace("../");
+  router.push("/");
 };
 
 export const sendEMail = async ({
@@ -269,9 +270,22 @@ export const upgradeCategory = async ({
 };
 
 export const filterCategory = async (datas: Category[], date: Date[]) => {
+  const user: any = await AsyncStorage.getItem("userCredentials");
+
+  datas.forEach((data, index) => { 
+    datas[index].idUser = JSON.parse(user).id;
+  });
+
   return await getCategoryFilter(datas, date);
 };
 
-export const getUserEmail = async () => {
-  return await AsyncStorage.getItem("userCredentials");
+export const filterProduct = async (datas: Product[]): Promise<Product[]> => {
+  console.log("datas =>" + datas);
+
+  return await getProductFilter(datas);
+};
+
+export const getUserEmail = async (): Promise<String> => {
+  const user = await AsyncStorage.getItem("userCredentials");
+  return user!;
 };

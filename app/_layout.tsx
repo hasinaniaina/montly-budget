@@ -1,10 +1,12 @@
-import { Stack } from "expo-router";
+import { Redirect, Stack } from "expo-router";
 import { useFonts } from "expo-font";
 import * as SplashScreen from "expo-splash-screen";
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { SQLiteProvider } from "expo-sqlite";
 import { init } from "@/constants/db";
 import FallBack from "@/components/fallBack";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { NavigationContainer } from "@react-navigation/native";
 
 const color = "#717171";
 
@@ -24,7 +26,6 @@ export default function RootLayout() {
   if (!loaded && !error) {
     return null;
   }
-
   return (
     <Suspense fallback={<FallBack />}>
       <SQLiteProvider databaseName="monthlyBudget" onInit={init} useSuspense>
@@ -36,7 +37,6 @@ export default function RootLayout() {
           <Stack.Screen name="index" />
           <Stack.Screen name="signup" />
           <Stack.Screen name="forgotPassword" />
-          {/* <Stack.Screen name="/dashboard" /> */}
         </Stack>
       </SQLiteProvider>
     </Suspense>

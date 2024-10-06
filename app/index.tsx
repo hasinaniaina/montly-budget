@@ -1,19 +1,15 @@
-import { Link, useRouter } from "expo-router";
-import {
-  View,
-  Text,
-  StyleSheet,
-  Image,
-  SafeAreaView,
-} from "react-native";
+import { Link, Redirect, useRouter } from "expo-router";
+import { View, Text, StyleSheet, Image, SafeAreaView, ViewStyle } from "react-native";
 import { GloblalStyles } from "@/constants/GlobalStyles";
-import {  useState } from "react";
+import { useEffect, useState } from "react";
 import AuthentificationButton from "@/components/authentification/authentificationButton";
 import AuthentificationEmailInput from "@/components/authentification/authentificationEmailInput";
 import AuthentificationPasswordInput from "@/components/authentification/authentificationPasswordInput";
 import { login } from "@/constants/Controller";
 import ErrorMessageModal from "@/components/message/errorMessageModal";
 import { TextColor } from "@/constants/Colors";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import Loading from "@/components/loading";
 
 export default function Login() {
   let [email, setEmail] = useState<string>("");
@@ -23,7 +19,29 @@ export default function Login() {
 
   let [modalShown, setModalShown] = useState<Array<boolean>>([false, false]);
 
+  const [isUserLogged, setIsUSerLogged] = useState<boolean>(false);
+
+  // Show loading when add category or product
+  const [showLoading, setShowLoading] = useState<ViewStyle>({
+    display: "none",
+  });
+
   const router = useRouter();
+
+  useEffect(() => {
+    const checkUserSigned = async () => {
+      let user: any = await AsyncStorage.getItem("userCredentials");
+      console.log(user);
+      let userLogged = user ? true : false;
+      setIsUSerLogged(userLogged);
+    };
+
+    checkUserSigned();
+  }, []);
+
+  if (isUserLogged) {
+    return <Redirect href={"/dashboard/home"} />;
+  }
 
   return (
     <View style={GloblalStyles.container}>
@@ -41,19 +59,23 @@ export default function Login() {
           <AuthentificationEmailInput handleChange={setEmail} />
         </View>
         <View style={GloblalStyles.iconLeftTextInputContainer}>
-          <AuthentificationPasswordInput 
+          <AuthentificationPasswordInput
             title="Password"
-            handleChange={setPassword} />
+            handleChange={setPassword}
+          />
         </View>
-        <AuthentificationButton title="Login" retrieve={() => {
-          login({
-            email,
-            password,
-            setErrorMessage,
-            setModalShown,
-            router            
-          });
-        }} ></AuthentificationButton>
+        <AuthentificationButton
+          title="Login"
+          retrieve={() => {
+            login({
+              email,
+              password,
+              setErrorMessage,
+              setModalShown,
+              router,
+            });
+          }}
+        ></AuthentificationButton>
       </SafeAreaView>
       <View>
         <Text style={styles.text}>
@@ -70,7 +92,10 @@ export default function Login() {
         errorMessage={errorMessage}
         setErrorMessage={setErrorMessage}
         setModalShown={setModalShown}
+        setShowLoading={setShowLoading}
       />
+
+      <Loading showLoading={showLoading} />
     </View>
   );
 }

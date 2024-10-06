@@ -27,6 +27,7 @@ export default function ListProduct({
   setShowAddListField,
   setSelectProductForEdit,
   productData,
+  setShowLoading,
 }: {
   showActionButton: ViewStyle[];
   setShowActionButton: (val: ViewStyle[]) => void;
@@ -36,12 +37,20 @@ export default function ListProduct({
   setShowAddListField: (val: ViewStyle) => void;
   setSelectProductForEdit: (val: Product) => void;
   productData: Product[];
+  setShowLoading?: (val: ViewStyle) => void;
 }) {
+  let options: Intl.DateTimeFormatOptions = {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "numeric",
+  };
 
   let totalAmountTmp = 0;
 
-  productData.forEach((data) => {
-    totalAmountTmp += data.amount;
+  productData?.forEach((data) => {
+    totalAmountTmp += (data.amount * data.coefficient);
   });
 
   return (
@@ -77,17 +86,25 @@ export default function ListProduct({
               <View
                 style={[styles.itemColor, { backgroundColor: item.color }]}
               ></View>
-              <Text
-                style={[
-                  styles.productName,
-                  indexOfActionButtonShowed == index && {
-                    fontFamily: "k2d-bold",
-                    color: "#000",
-                  },
-                ]}
-              >
-                {item.designation}
-              </Text>
+              <View>
+                <Text
+                  style={[
+                    styles.productName,
+                    indexOfActionButtonShowed == index && {
+                      fontFamily: "k2d-bold",
+                      color: "#000",
+                    },
+                  ]}
+                >
+                  {item.designation}
+                </Text>
+                <Text style={styles.productCreatedDate}>
+                  {new Date(item.createdDate!).toLocaleDateString(
+                    "en-US",
+                    options
+                  )}
+                </Text>
+              </View>
             </View>
             <View
               style={[
@@ -97,12 +114,10 @@ export default function ListProduct({
                 },
               ]}
             >
-              <Text style={styles.price}>
-                {item.amount} Ariary -{" "}
-              </Text>
+              <Text style={styles.price}>{item.amount * item.coefficient} Ariary - </Text>
               <Text style={styles.percentage}>
                 {Number(
-                  (item.coefficient * item.amount * 100) / totalAmountTmp
+                  ((item.coefficient * item.amount) * 100) / totalAmountTmp
                 ).toFixed(2)}
                 %
               </Text>
@@ -114,7 +129,7 @@ export default function ListProduct({
                 onPress={() => {
                   setSelectProductForEdit(item);
                   setIndexOfActionButtonShowed(-1);
-                  setShowAddListField({display: "flex"});
+                  setShowAddListField({ display: "flex" });
                 }}
               >
                 <Image
@@ -125,10 +140,15 @@ export default function ListProduct({
               <TouchableOpacity
                 style={styles.deleteIconContainer}
                 onPress={async () => {
+                  setShowLoading!({ display: "flex" });
                   const deleted = await removeProduct(item.id);
                   if (deleted) {
                     setIndexOfActionButtonShowed(-1);
                     setChange(true);
+
+                    setTimeout(() => {
+                      setShowLoading!({ display: "none" });
+                    }, 2000);
                   }
                 }}
               >
@@ -168,8 +188,13 @@ const styles = StyleSheet.create({
     marginRight: 5,
   },
   productName: {
+    fontFamily: "k2d-bold",
+    color: TextColor,
+  },
+  productCreatedDate: {
     fontFamily: "k2d-regular",
     color: TextColor,
+    fontSize: 8
   },
   itemRightContent: {
     flexDirection: "row",

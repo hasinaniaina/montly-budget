@@ -6,95 +6,15 @@ import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   Dimensions,
-  Image,
-  ScrollView,
   StyleSheet,
-  Text,
-  View,
 } from "react-native";
 import { TouchableOpacity } from "react-native";
 
 function Home() {
-  const [currentMonth, setCurrentMonth] = useState<number>(new Date().getMonth());
-  const [modalShow, setModalShow] = useState<boolean>(false);
-  const [currentYear, setCurrentYear] = useState<number>(
-    new Date().getFullYear()
-  );
-  const [months, setMonths] = useState<Array<{ id: number, name: string, index: number }>>([]);
-
   useEffect(() => {
-    const getMonths = async () => {
-      const months = await getMonth();
-      setMonths(months);
-    };
-
-    getMonths();
   }, []);
   return (
-    <View style={GloblalStyles.container}>
-      <View style={styles.header}>
-        <Image
-          style={styles.icon}
-          source={require("@/assets/images/budget.png")}
-        />
-        <Text style={styles.title}>Monthly Budget</Text>
-      </View>
-      <View style={styles.monthContainer}>
-        <View style={styles.monthHeader}>
-          <View style={styles.left}>
-            <Image
-              style={styles.scheduleIcon}
-              source={require("@/assets/images/schedule.png")}
-            />
-            <Text style={styles.calendarText}>Calendar</Text>
-          </View>
-          <TouchableOpacity
-            style={styles.right}
-            onPress={() => {
-              setModalShow(true);
-            }}
-          >
-            <Text style={styles.yearText}>{currentYear}</Text>
-            <Image
-              style={styles.arrowDownIcon}
-              source={require("@/assets/images/arrow-down.png")}
-            />
-          </TouchableOpacity>
-        </View>
-        <ScrollView>
-          <View style={styles.monthContent}>
-            {months.map((month, index) => {
-              return (
-                <TouchableOpacity onPress={() => {
-                  router.push({
-                    pathname: "/(dashboard)/[monthId]",
-                    params: {monthId: month.id, year: currentYear}
-                  })
-                }}
-                  style={[
-                    currentMonth == index &&  styles.monthTextContainerRed,
-                    currentMonth < index && styles.monthTextContainerPurple,
-                    currentMonth > index && styles.monthTextContainer
-                  ]}
-                  key={month.id}
-                >
-                    <Text style={[
-                      currentMonth == index &&  styles.monthTextRed,
-                      currentMonth < index && styles.monthTextPurple,
-                      currentMonth > index && styles.monthText
-                    ]}>{month.name}...</Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        </ScrollView>
-      </View>
-      <YearListModal
-        modalShow={modalShow}
-        setModalShow={setModalShow}
-        selectedYear={setCurrentYear}
-      />
-    </View>
+    <></>
   );
 }
 

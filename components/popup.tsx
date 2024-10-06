@@ -17,6 +17,7 @@ import {
   createCategory,
   editProduct,
   filterCategory,
+  filterProduct,
   saveProduct,
   upgradeCategory,
 } from "@/constants/Controller";
@@ -32,8 +33,9 @@ export default function Popup({
   datas,
   setData,
   setChange,
-  setIsCategoryFilterSelected,
+  setIsFilterSelected,
   categoryDateFilter,
+  setshowLoading,
   children,
 }: {
   title: string;
@@ -44,8 +46,9 @@ export default function Popup({
   datas?: any;
   setData: (val: any) => void;
   setChange: (val: boolean) => void;
-  setIsCategoryFilterSelected: (val: boolean) => void;
+  setIsFilterSelected?: (val: boolean | any) => void;
   categoryDateFilter?: Date[];
+  setshowLoading: (val: ViewStyle) => void;
   children: ReactNode;
 }) {
   const categoryDataInit = {
@@ -53,6 +56,7 @@ export default function Popup({
     color: "#000",
     income: "",
     label: "",
+    idUser: 1,
   };
 
   // Get product for edit
@@ -60,8 +64,8 @@ export default function Popup({
     id: -1,
     designation: "",
     amount: 0,
-    color: "#FFF",
-    idCategory: datas.id!,
+    color: "#000",
+    idCategory: datas?.idCategory!,
     coefficient: 1,
   };
 
@@ -97,16 +101,16 @@ export default function Popup({
         <ScrollView>
           <View style={{ alignItems: "center" }}>
             {/* popup colorPicker */}
-            {viewType == "category" ||
-              (viewType == "expenses" && (
-                <ColorPickerViewNew data={datas} setData={setData} />
-              ))}
+            {(viewType == "category" || viewType == "expenses") && (
+              <ColorPickerViewNew data={datas} setData={setData} />
+            )}
 
             {/* popup content */}
             <View style={styles.popupContent}>{children}</View>
             <TouchableOpacity
               style={styles.popupButton}
               onPress={async () => {
+                setshowLoading({ display: "flex" });
                 switch (viewType) {
                   case "category":
                     if (datas?.id! > 0) {
@@ -119,6 +123,7 @@ export default function Popup({
                       if (await result) {
                         setData(categoryDataInit);
                         setVisible({ display: "none" });
+                        setshowLoading({ display: "none" });
                       }
                     } else {
                       const result = createCategory({
@@ -129,28 +134,44 @@ export default function Popup({
 
                       if (await result) {
                         setData(categoryDataInit);
+                        setshowLoading({ display: "none" });
                       }
                     }
+
+                    setChange(true);
                     break;
                   case "filterByCategory":
                     if (datas) {
+                      let datasTmp = Array.isArray(datas) ? datas : [datas];
+                      
                       const datasAfterFilter = await filterCategory(
-                        [datas!],
+                        datasTmp,
                         categoryDateFilter!
                       );
+
                       setData(datasAfterFilter);
                       setVisible({ display: "none" });
-                      setIsCategoryFilterSelected(true);
+                      setIsFilterSelected!(true);
+                      setChange(true);
+                      setshowLoading({ display: "none" });
                     }
                     break;
                   case "filterByDate":
+                    let datasTmp = Array.isArray(datas) ? datas : [datas];
+                    datasTmp =
+                      datasTmp.length == 0 || !datas[0]
+                        ? [categoryDataInit]
+                        : datasTmp;
+
                     const datasAfterFilter = await filterCategory(
-                      datas! as Category[],
+                      datasTmp as Category[],
                       categoryDateFilter!
                     );
                     setData(datasAfterFilter);
                     setVisible({ display: "none" });
-                    setIsCategoryFilterSelected(true);
+                    setIsFilterSelected!(true);
+                    setChange(true);
+                    setshowLoading({ display: "none" });
                     break;
                   case "expenses":
                     if (datas.id == -1) {
@@ -163,6 +184,10 @@ export default function Popup({
                       if (insertProduct) {
                         setData(productDataInit);
                         setChange(true);
+
+                        setTimeout(() => {
+                          setshowLoading({ display: "none" });
+                        }, 2000);
                       }
                     } else {
                       const updateProduct = await editProduct(
@@ -175,12 +200,27 @@ export default function Popup({
                         setData(productDataInit);
                         setChange(true);
                         setVisible({ display: "none" });
+
+                        setTimeout(() => {
+                          setshowLoading({ display: "none" });
+                        }, 2000);
                       }
                     }
                     break;
-                }
+                  case "filterProduct":
+                    const productsFiltered =  filterProduct(datas);
 
-                setChange(true);
+                    productsFiltered.then((datasFiltered) => {
+                      setData(datasFiltered);
+                      setIsFilterSelected!(true);
+                      setVisible({ display: "none" });
+  
+                      setTimeout(() => {
+                        setshowLoading({ display: "none" });
+                      }, 2000);
+                    });
+                    break;
+                }
               }}
             >
               <Text style={styles.popupButtonTitle}>{buttonTitle}</Text>
@@ -193,6 +233,7 @@ export default function Popup({
         errorMessage={errorMessage}
         setErrorMessage={setErrorMessage}
         setModalShown={setModalShown}
+        setShowLoading={setshowLoading}
       />
     </View>
   );

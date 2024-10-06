@@ -1,5 +1,3 @@
-
-
 import {
   View,
   Text,
@@ -7,50 +5,54 @@ import {
   Modal,
   Pressable,
   TouchableOpacity,
+  ViewStyle,
 } from "react-native";
 
-function ErrorMessageModal({modalShown, errorMessage, setErrorMessage, setModalShown}: {
-  modalShown: boolean,
-  errorMessage: string[],
-  setErrorMessage: (val: string[]) => void,
-  setModalShown: (val: boolean[]) => void
+function ErrorMessageModal({
+  modalShown,
+  errorMessage,
+  setErrorMessage,
+  setModalShown,
+  setShowLoading,
+}: {
+  modalShown: boolean;
+  errorMessage: string[];
+  setErrorMessage: (val: string[]) => void;
+  setModalShown: (val: boolean[]) => void;
+  setShowLoading?: (val: ViewStyle) => void;
 }) {
   return (
-
-    <Modal
-    animationType="fade"
-    transparent={true}
-    visible={modalShown}
-  >
-    <View style={styles.errorMessageContainer}>
-      <View style={{ backgroundColor: "#FFF" }}>
-        <View style={styles.errorMessageHeader}>
-          <Text style={{ color: "#FFF" }}>Oopss!</Text>
-        </View>
-        <View style={styles.errorMessageContent}>
-          {errorMessage.map((message, index) => {
-              return <Text key={index}>- {message}</Text>
-          })}
-          <TouchableOpacity
-            style={styles.ModalButton}
-            onPress={() => {
-              setErrorMessage([]);
-              setModalShown([false, false]);
-            }}
-          >
-            <Text
-              style={{
-                color: "#fff",
+    <Modal animationType="fade" transparent={true} visible={modalShown}>
+      <View style={styles.errorMessageContainer}>
+        <View style={{ backgroundColor: "#FFF" }}>
+          <View style={styles.errorMessageHeader}>
+            <Text style={{ color: "#FFF" }}>Oopss!</Text>
+          </View>
+          <View style={styles.errorMessageContent}>
+            {errorMessage.map((message, index) => {
+              return <Text key={index}>- {message}</Text>;
+            })}
+            <TouchableOpacity
+              style={styles.ModalButton}
+              onPress={() => {
+                setErrorMessage([]);
+                setModalShown([false, false]);
+                setShowLoading!({ display: "none" });
               }}
             >
-              Cancel
-            </Text>
-          </TouchableOpacity>
+              <Text
+                style={{
+                  color: "#fff",
+                }}
+              >
+                Cancel
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
-    </View>
-  </Modal>
-  )
+    </Modal>
+  );
 }
 
 export default ErrorMessageModal;
@@ -66,7 +68,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     padding: 20,
-    width: 250
+    width: 250,
   },
   errorMessageContent: {
     padding: 20,

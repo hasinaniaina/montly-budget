@@ -8,8 +8,8 @@ export default function DonutChart({
 }: {
   productData: Product[];
 }) {
-  const center = 250 / 2;
-  const radius = (250 - 70) / 2;
+  const center = 200 / 2;
+  const radius = (200 - 70) / 2;
   const circonference = 2 * Math.PI * radius;
   const productChartData = [];
 
@@ -17,14 +17,14 @@ export default function DonutChart({
   const [expensesCount, setExpensesCount] = useState<number>(0);
 
   let totalAmount = 0;
-  productData.forEach((data) => {
-    totalAmount += data.amount;
+  productData?.forEach((data) => {
+    totalAmount += (data.amount * data.coefficient);
   });
 
 
   const refresh = () => {
 
-    productData.map((data) => {
+    productData?.map((data) => {
       productChartData.push({
         percentage: (data.coefficient * data.amount) / totalAmount,
         color: data.color,
@@ -34,7 +34,7 @@ export default function DonutChart({
     let angle = 0;
     const angles: number[] = [];
 
-    productData.forEach((data) => {
+    productData?.forEach((data) => {
       angles.push(angle);
       angle += ((data.coefficient * data.amount) / totalAmount) * 360;
     });
@@ -49,8 +49,8 @@ export default function DonutChart({
 
   return (
     <>
-      <Svg height="250" width="250">
-        {productData.map((value, index) => {
+      <Svg height="200" width="200">
+        {productData?.map((value, index) => {
           return (
             <G key={index}>
               <Circle
@@ -58,7 +58,7 @@ export default function DonutChart({
                 cy={center}
                 r={radius}
                 stroke={value.color}
-                strokeWidth="70"
+                strokeWidth="30"
                 fill="transparent"
                 strokeDasharray={circonference}
                 strokeDashoffset={circonference * (1 - ((value.coefficient * value.amount) / totalAmount))}

@@ -115,36 +115,6 @@ export const getUserByEmail = async (email: string): Promise<User> => {
   }
 };
 
-export const getMonth = async () => {
-  try {
-    const months: any = await (await db).getAllAsync("SELECT * FROM Month");
-    return months;
-  } catch (error) {
-    console.log("Retrieve year error => ", error);
-  }
-};
-
-export const getMonthById = async (id: string) => {
-  try {
-    const months: any = await (
-      await db
-    ).getAllAsync("SELECT name FROM Month WHERE id=" + id);
-    return months;
-  } catch (error) {
-    console.log("Retrieve year error => ", error);
-  }
-};
-
-export const deleteMonth = async () => {
-  try {
-    let query = await (await db).runAsync("DELETE FROM Month");
-
-    console.log(query);
-  } catch (error) {
-    console.log("Delete month record error => ", error);
-  }
-};
-
 export const getProducts = async (category: Category) => {
   try {
     const product: any = await (
@@ -179,13 +149,14 @@ export const updateProduct = async (datas: Product) => {
     );
 
     return update.changes;
-
   } catch (error) {
     console.log("Year insertion error => ", error);
   }
 };
 
-export const insertProduct = async (datas: Product):Promise<number | undefined> => {
+export const insertProduct = async (
+  datas: Product
+): Promise<number | undefined> => {
   try {
     let insert = await (
       await db
@@ -201,22 +172,42 @@ export const insertProduct = async (datas: Product):Promise<number | undefined> 
     );
 
     return insert.changes;
-
   } catch (error) {
     console.log("Year insertion error => ", error);
   }
 };
 
-export const deleteProduct = async (id: number) => {
-    try {
-      let deleted = await (await db).runAsync("DELETE FROM Product WHERE id=" + id);
-      return deleted.changes;
+export const getProductFilter = async (datas: Product[]) => {
+  try {
+    let product: any = "";
 
-    } catch (error) {
-      console.log("Delete month record error => ", error);
-    }
+    let query = "SELECT * FROM Product WHERE designation LIKE ";
+
+    datas.forEach((data, index) => {
+      query += " '%" + data.designation + "%' ";
+    });
+
+    query += " AND idCategory= " + datas[0].idCategory;
+
+    product = await (await db).getAllAsync(query);
+
+    return product;
+  } catch (error) {
+    console.log("fitler by product and date error =>", error);
+    return false;
+  }
 };
 
+export const deleteProduct = async (id: number) => {
+  try {
+    let deleted = await (
+      await db
+    ).runAsync("DELETE FROM Product WHERE id=" + id);
+    return deleted.changes;
+  } catch (error) {
+    console.log("Delete month record error => ", error);
+  }
+};
 
 export const insertCategory = async (datas: Category, user: User) => {
   try {
@@ -311,27 +302,39 @@ export const updateCategory = async (datas: Category) => {
 export const getCategoryFilter = async (datas: Category[], date: Date[]) => {
   try {
     let category: any = "";
-    if (datas[0].id) {
-      category = await (
-        await db
-      ).getAllAsync(
-        "SELECT * FROM Category WHERE label LIKE '%" +
-          datas[0].label +
-          "%' AND createdDate BETWEEN " +
-          JSON.stringify(date[0]) +
-          " AND " +
-          JSON.stringify(date[1])
-      );
+
+    if (datas[0].id != -1) {
+      let query = "SELECT * FROM Category WHERE label LIKE ";
+
+      datas.forEach((data, index) => {
+        query += " '%" + data.label + "%' ";
+        if (index < datas.length - 1) {
+          query += " OR label LIKE ";
+        }
+      });
+
+      query +=
+        " AND createdDate BETWEEN '" +
+        date[0].toISOString().split("T")[0] +
+        "' AND '" +
+        date[1].toISOString().split("T")[0] +
+        "' AND idUser = " +
+        datas[0].idUser;
+
+      category = await (await db).getAllAsync(query);
     } else {
       category = await (
         await db
       ).getAllAsync(
-        "SELECT * FROM Category WHERE createdDate BETWEEN " +
-          JSON.stringify(date[0]) +
-          " AND " +
-          JSON.stringify(date[1])
+        "SELECT * FROM Category WHERE createdDate BETWEEN '" +
+          date[0].toISOString().split("T")[0] +
+          "' AND '" +
+          date[1].toISOString().split("T")[0] +
+          "' AND idUser = " +
+          datas[0].idUser
       );
     }
+
     return category;
   } catch (error) {
     console.log("fitler by category and date error =>", error);

@@ -5,6 +5,7 @@ import {
   StyleSheet,
   Image,
   SafeAreaView,
+  ViewStyle,
 } from "react-native";
 import { TextColor } from "@/constants/Colors";
 import { GloblalStyles } from "@/constants/GlobalStyles";
@@ -14,6 +15,7 @@ import AuthentificationEmailInput from "@/components/authentification/authentifi
 import { sendEMail } from "@/constants/Controller";
 import RetrievedPasswordMessageModal from "@/components/message/retrievedPasswordMessageModal";
 import ErrorMessageModal from "@/components/message/errorMessageModal";
+import Loading from "@/components/loading";
 
 export default function ForgotPassword() {
   let [email, setEmail] = useState<string>("");
@@ -21,6 +23,10 @@ export default function ForgotPassword() {
   let [errorMessage, setErrorMessage] = useState<Array<string>>([]);
   let [modalShown, setModalShown] = useState<Array<boolean>>([false, false]);
 
+  // Show loading when add category or product
+  const [showLoading, setShowLoading] = useState<ViewStyle>({
+    display: "none",
+  });
 
   const router = useRouter();
 
@@ -52,6 +58,7 @@ export default function ForgotPassword() {
         errorMessage={errorMessage}
         setErrorMessage={setErrorMessage}
         setModalShown={setModalShown}
+        setShowLoading={setShowLoading}
       />
       <RetrievedPasswordMessageModal
         modalShown={modalShown[1]}
@@ -59,6 +66,7 @@ export default function ForgotPassword() {
         setMessage={setMessage}
         setModalShown={setModalShown}
       />
+      <Loading showLoading={showLoading} />
     </View>
   );
 }

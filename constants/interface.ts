@@ -10,7 +10,8 @@ export type Product = {
     amount: number,
     color: string,
     idCategory: number,
-    coefficient: number
+    coefficient: number,
+    createdDate?: Date
 }
 
 export type Category = {
@@ -18,5 +19,6 @@ export type Category = {
     label?: string,
     income?: string,
     color?: string,
-    createdDate?: string
+    createdDate?: Date,
+    idUser?: number
 }

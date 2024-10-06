@@ -16,6 +16,7 @@ import {
   ViewStyle,
   ScrollView,
   Pressable,
+  BackHandler,
 } from "react-native";
 import { Category, Product } from "@/constants/interface";
 import {
@@ -27,22 +28,14 @@ import {
   retrieveProductByCategory,
 } from "@/constants/Controller";
 import { router } from "expo-router";
+import Loading from "@/components/loading";
 
 export default function Home() {
-
-  const categoryDataInit = {
-    id: -1,
-    color: "#000",
-    income: "",
-    label: "",
-  };
-
   let options: Intl.DateTimeFormatOptions = {
     year: "numeric",
     month: "short",
     day: "numeric",
   };
-
 
   const [userEmail, setUserEmail] = useState<string>("");
 
@@ -72,6 +65,13 @@ export default function Home() {
   const [change, setChange] = useState<boolean>(false);
 
   // Retrieve Category Selected
+  const categoryDataInit = {
+    id: -1,
+    color: "#000",
+    income: "",
+    label: "",
+    idUser: 1,
+  };
   const [categoryData, setCategoryData] = useState<Category>(categoryDataInit);
 
   // Triggered when category filter is selected
@@ -81,6 +81,10 @@ export default function Home() {
   // Retrieve Categories
   const [categories, setCategories] = useState<Category[]>([]);
 
+  //  Retrieve transactions for each categorie
+  const [categoriesTransactionNumber, setCategoriesTransactionNumber] =
+    useState<number[]>([]);
+
   // Retrieve Categories for filter
   const [categoriesFitler, setCategoriesFilter] = useState<Item[]>();
 
@@ -89,7 +93,10 @@ export default function Home() {
   var firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
   var lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0);
 
-  const [categoryDateFilter, setCategoryDateFilter] = useState<Date[]>([firstDay, lastDay]);
+  const [categoryDateFilter, setCategoryDateFilter] = useState<Date[]>([
+    firstDay,
+    lastDay,
+  ]);
 
   // Display category action button
   let showActionButtonInit: ViewStyle[] = [];
@@ -113,16 +120,30 @@ export default function Home() {
     expense: 0,
   });
 
+  // Show loading when add category or product
+  const [showLoading, setShowLoading] = useState<ViewStyle>({
+    display: "none",
+  });
+
   useEffect(() => {
     const fetchUserEmail = async () => {
-      const user: any = await getUserEmail();
-      setUserEmail(JSON.parse(user).email);
+      const user: any = getUserEmail();
+      return user;
     };
 
-    const getCategory = async (categoryDateFilter: Date[]) => {
+    const getCategory = async (
+      categoryDateFilter: Date[]
+    ): Promise<Category[]> => {
       let category = await retrieveCategory(categoryDateFilter);
+      let categories: any = null;
 
-      return category;
+      if (!isCategoryFilterSelected) {
+        categories = category;
+      } else {
+        categories = categoryData;
+      }
+
+      return categories;
     };
 
     const getProduct = async () => {
@@ -175,16 +196,34 @@ export default function Home() {
       let categoryCount = 0;
       let productCount = 0;
       let sumExpensiveTmp = 0;
+      let transactionNumberCategoriesTmp = [];
 
       while (categoryCount < category.length) {
+        let transactionNumber = 0;
         while (productCount < product.length) {
           if (product[productCount].idCategory == category[categoryCount].id) {
-            sumExpensiveTmp += product[productCount].idCategory;
+            sumExpensiveTmp += product[productCount].amount;
+            transactionNumber += 1;
           }
           productCount++;
         }
+
+        transactionNumberCategoriesTmp.push(transactionNumber);
         categoryCount++;
       }
+
+      // Back button on click event
+      const backAction = () => {
+        router.push("/");
+        return true;
+      };
+
+      const backHandler = BackHandler.addEventListener(
+        "hardwareBackPress",
+        backAction
+      );
+
+      setCategoriesTransactionNumber(transactionNumberCategoriesTmp);
 
       return sumExpensiveTmp;
     };
@@ -200,24 +239,27 @@ export default function Home() {
     };
 
     const init = async () => {
-      fetchUserEmail();
-      let categories: any = null;
+      setShowLoading({ display: "flex" });
 
-      if (!isCategoryFilterSelected) {
-        categories = await getCategory(categoryDateFilter);
-      } else {
-        categories = categoryData;
-      }
+      fetchUserEmail().then((user) => {
+        setUserEmail(JSON.parse(user)?.email);
 
-      setCategories(categories);
+        getCategory(categoryDateFilter).then((categories) => {
+          setCategories(categories);
 
-      getCountOfCategory(categories);
+          getCountOfCategory(categories);
 
-      getCategoriesForFitler(categories);
+          getCategoriesForFitler(categories);
 
-      getSumIncome(categories).then((sumIncome) => {
-        getSumExpense(categories).then((sumExpense) => {
-          getSum(sumIncome, sumExpense);
+          getSumIncome(categories).then((sumIncome) => {
+            getSumExpense(categories).then((sumExpense) => {
+              getSum(sumIncome, sumExpense);
+
+              setTimeout(() => {
+                setShowLoading({display: "none"});
+              }, 2000);
+            });
+          });
         });
       });
 
@@ -293,15 +335,21 @@ export default function Home() {
           </View>
           <View style={styles.numberTitleContainer}>
             <View style={styles.incomeSavingExpenses}>
-              <Text style={styles.number}>{sum.income ? sum.income : 0 } Ar</Text>
+              <Text style={styles.number}>
+                {sum.income ? sum.income : 0} Ar
+              </Text>
               <Text style={styles.title}>Income</Text>
             </View>
             <View style={styles.incomeSavingExpenses}>
-              <Text style={styles.number}>{sum.expense ? sum.expense : 0 } Ar</Text>
+              <Text style={styles.number}>
+                {sum.expense ? sum.expense : 0} Ar
+              </Text>
               <Text style={styles.title}>Expenses</Text>
             </View>
             <View style={styles.incomeSavingExpenses}>
-              <Text style={styles.number}>{sum.saving ? sum.saving : 0 } Ar</Text>
+              <Text style={styles.number}>
+                {sum.saving ? sum.saving : 0} Ar
+              </Text>
               <Text style={styles.title}>Saving</Text>
             </View>
           </View>
@@ -349,8 +397,14 @@ export default function Home() {
                   style={styles.iconFilter}
                   onPress={() => {
                     setIsCategoryFilterSelected(false);
-                    setChange(true);
                     setCategoryData(categoryDataInit);
+                    setCategoryDateFilter([firstDay, lastDay]);
+                    setShowLoading({ display: "flex" });
+                    setChange(true);
+
+                    setTimeout(() => {
+                      setShowLoading({ display: "none" });
+                    }, 2000);
                   }}
                 >
                   <Image
@@ -377,13 +431,13 @@ export default function Home() {
                           setShowActionButton(showActionButtonTmp);
                           setIndexOfActionButtonShowed(category.id!);
                         }}
-                        onPressIn={() => {
+                        onPress={() => {
                           setShowActionButton(showActionButtonInit);
                           setIndexOfActionButtonShowed(-1);
                           router.push({
                             pathname: "/dashboard/[categoryId]",
-                            params: {categoryId: JSON.stringify(category) }
-                          })
+                            params: { categoryId: JSON.stringify(category) },
+                          });
                         }}
                       >
                         <View style={styles.colorNamecontainer}>
@@ -396,7 +450,8 @@ export default function Home() {
                           <View style={styles.categoryName}>
                             <Text style={styles.name}>{category?.label}</Text>
                             <Text style={styles.transaction}>
-                              0 transaction(s)
+                              {categoriesTransactionNumber[index]}{" "}
+                              transaction(s)
                             </Text>
                           </View>
                         </View>
@@ -432,12 +487,16 @@ export default function Home() {
                           <TouchableOpacity
                             style={GloblalStyles.deleteIconContainer}
                             onPress={async () => {
+                              setShowLoading({ display: "flex" });
                               const result = await removeCategory(
                                 indexOfActionButtonShowed
                               );
 
                               if (result) {
                                 setChange(true);
+                                setTimeout(() => {
+                                  setShowLoading({ display: "none" });
+                                }, 2000);
                               }
                             }}
                           >
@@ -470,8 +529,9 @@ export default function Home() {
         viewType="category"
         datas={categoryData}
         setData={setCategoryData}
-        setIsCategoryFilterSelected={setIsCategoryFilterSelected}
+        setIsFilterSelected={setIsCategoryFilterSelected}
         setChange={setChange}
+        setshowLoading={setShowLoading}
       >
         <View style={styles.popupLabelInput}>
           <Text style={GloblalStyles.appLabel}>Label</Text>
@@ -514,8 +574,9 @@ export default function Home() {
         datas={categoryData}
         setData={setCategoryData}
         setChange={setChange}
-        setIsCategoryFilterSelected={setIsCategoryFilterSelected}
+        setIsFilterSelected={setIsCategoryFilterSelected}
         categoryDateFilter={categoryDateFilter}
+        setshowLoading={setShowLoading}
       >
         <View style={styles.popupLabelInput}>
           <Text style={GloblalStyles.appLabel}>Categories</Text>
@@ -524,7 +585,7 @@ export default function Home() {
               onValueChange={(categorySelected) => {
                 if (categorySelected?.id) {
                   setCategoryData(categorySelected);
-                } 
+                }
               }}
               items={categoriesFitler ? categoriesFitler : []}
             ></RNPickerSelect>
@@ -542,8 +603,9 @@ export default function Home() {
         datas={categoryData}
         setData={setCategoryData}
         setChange={setChange}
-        setIsCategoryFilterSelected={setIsCategoryFilterSelected}
+        setIsFilterSelected={setIsCategoryFilterSelected}
         categoryDateFilter={categoryDateFilter}
+        setshowLoading={setShowLoading}
       >
         <View style={styles.popupDatecontainer}>
           {/* Date From */}
@@ -584,6 +646,7 @@ export default function Home() {
             mode="date"
             onConfirm={(date) => {
               const categoryDateFilterTmp: Date[] = [...categoryDateFilter];
+
               if (openDatePicker[0]) {
                 setDateFrom(date.toLocaleDateString("en-US", options));
                 categoryDateFilterTmp[0] = date;
@@ -602,13 +665,14 @@ export default function Home() {
           />
         </View>
       </Popup>
+      <Loading showLoading={showLoading} />
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   header: {
-    height: "30%",
+    height: "40%",
     padding: 20,
     width: Dimensions.get("window").width,
   },

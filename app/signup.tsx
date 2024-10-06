@@ -4,6 +4,7 @@ import {
   StyleSheet,
   Image,
   SafeAreaView,
+  ViewStyle,
 } from "react-native";
 import { TextColor } from "@/constants/Colors";
 import { GloblalStyles } from "@/constants/GlobalStyles";
@@ -14,6 +15,7 @@ import AuthentificationPasswordInput from "@/components/authentification/authent
 import { saveUser } from "@/constants/Controller";
 import ErrorMessageModal from "@/components/message/errorMessageModal";
 import { useRouter } from "expo-router";
+import Loading from "@/components/loading";
 
 export default function Singup() {
   let [email, setEmail] = useState<string>("");
@@ -23,6 +25,11 @@ export default function Singup() {
   let [errorMessage, setErrorMessage] = useState<Array<string>>([]);
 
   let [modalShown, setModalShown] = useState<Array<boolean>>([false]);
+
+  // Show loading when add category or product
+  const [showLoading, setShowLoading] = useState<ViewStyle>({
+    display: "none",
+  });
 
   const router = useRouter();
 
@@ -73,7 +80,9 @@ export default function Singup() {
         errorMessage={errorMessage}
         setErrorMessage={setErrorMessage}
         setModalShown={setModalShown}
+        setShowLoading={setShowLoading}
       />
+      <Loading showLoading={showLoading} />
     </View>
   );
 }

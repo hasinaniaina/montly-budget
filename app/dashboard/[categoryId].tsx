@@ -23,15 +23,23 @@ import {
 } from "react-native";
 import Popup from "@/components/popup";
 import ErrorMessageModal from "@/components/message/errorMessageModal";
+import Loading from "@/components/loading";
 
 export default function Products() {
   const { categoryId } = useLocalSearchParams();
-  const category = JSON.parse(categoryId as string) as Category;
+  const category: Category = JSON.parse(categoryId! as string);
 
+  // Show button edit, delete
   const [showActionButton, setShowActionButton] = useState<ViewStyle[]>([]);
 
+  // retrieve index of edit, delete action button
   const [indexOfActionButtonShowed, setIndexOfActionButtonShowed] =
     useState<number>(-1);
+
+  // Show loading when add category or product
+  const [showLoading, setShowLoading] = useState<ViewStyle>({
+    display: "none",
+  });
 
   // Show popup
   const [showAddListField, setShowAddListField] = useState<ViewStyle>({
@@ -39,23 +47,28 @@ export default function Products() {
   });
 
   const [productData, setProductData] = useState<Product[]>([]);
+
+  // Retrieve Categories for filter
+  const [productItemFitler, setProductItemFilter] = useState<Item[]>();
+
   // Get product for edit
   const productDataInit: Product = {
     id: -1,
     designation: "",
     amount: 0,
-    color: "#FFF",
+    color: "#000",
     idCategory: category.id!,
     coefficient: 1,
   };
   const [productDataTmp, setProductDataTmp] =
     useState<Product>(productDataInit);
 
-  // if new category
-  const [change, setChange] = useState<boolean>(false);
-
   // Triggered when category filter is selected
-  const [isCategoryFilterSelected, setIsCategoryFilterSelected] =
+  const [popupFilterByProductVisible, setPopupFilterByProductVisible] =
+    useState<ViewStyle>({ display: "none" });
+
+  // Triggered when Product filter is selected
+  const [isProductFilterSelected, setIsProductFilterSelected] =
     useState<boolean>(false);
 
   // Initiate list day number
@@ -67,29 +80,43 @@ export default function Products() {
     productDataTmp.coefficient
   );
 
+  // Product total amount
+  const [productTotalAmount, setProductTotalAmount] = useState<number>(0);
+
+  // if new category
+  const [change, setChange] = useState<boolean>(false);
+
   // Error handler
   let [errorMessage, setErrorMessage] = useState<Array<string>>([]);
 
   let [modalShown, setModalShown] = useState<Array<boolean>>([false]);
 
   useEffect(() => {
+    setShowLoading({display: "flex"});
+
     const getProduct = async () => {
       const products = await retrieveProduct(category);
+
+      setProductData(products);
+      getTotalAmountProduct(products);
+      getCategoriesForFitler(products);
+
+      // Initialize button action (edit, delete) of each product
       let productsCount = 0;
       let buttonActionDiplay: ViewStyle[] = [];
 
-      setProductData(products);
-
-      while (productsCount < products.length) {
+      while (productsCount < products?.length) {
         buttonActionDiplay.push({ display: "none" });
         productsCount += 1;
       }
+
       setShowActionButton(buttonActionDiplay);
     };
 
+    // Initialize number of day (1 to 31)
     const getListDayNumber = () => {
       let dayNumberTmp: Item[] = [];
-      
+
       for (let i = 1; i < 32; i++) {
         dayNumberTmp?.push({
           label: i.toString(),
@@ -100,9 +127,39 @@ export default function Products() {
       setDayNumber(dayNumberTmp);
     };
 
+    const getTotalAmountProduct = (products: [Product]) => {
+      let productAmountTmp = 0;
+
+      products?.forEach((product) => {
+        productAmountTmp += (product.amount * product.coefficient);
+      });
+
+      setProductTotalAmount(parseFloat(category.income!) - productAmountTmp);
+    };
+
+    const getCategoriesForFitler = (products: Product[]) => {
+      let productCount = 0;
+      let productTmp: Item[] = [];
+
+      while (productCount < products?.length) {
+        productTmp?.push({
+          label: products[productCount].designation!,
+          value: products[productCount]!,
+        });
+
+        productCount += 1;
+      }
+
+      setProductItemFilter(productTmp);
+    };
+
     getProduct();
     getListDayNumber();
     setChange(false);
+
+    setTimeout(() => {
+      setShowLoading({display: "none"});
+    }, 2000);
   }, [change]);
 
   return (
@@ -110,8 +167,13 @@ export default function Products() {
       <View style={styles.header}>
         <View style={styles.top}>
           <Text style={styles.categoryLabel}>{category.label}</Text>
-          <Text style={styles.amountRemain}>
-            Income remains: {category.income} Ar
+          <Text
+            style={[
+              styles.amountRemain,
+              productTotalAmount < 0 ? { color: red } : { color: TitleColor },
+            ]}
+          >
+            Income remains: {productTotalAmount} Ar
           </Text>
         </View>
       </View>
@@ -146,22 +208,49 @@ export default function Products() {
               <Text style={GloblalStyles.titleSection}>Expense Overview</Text>
             </View>
             <View style={GloblalStyles.titleFlexAlignement}>
-              <TouchableOpacity style={{ marginRight: 10 }}>
+              <TouchableOpacity
+                style={{ marginRight: 10 }}
+                onPress={() => {
+                  setPopupFilterByProductVisible({ display: "flex" });
+                }}
+              >
                 <Image
                   source={require("@/assets/images/filter.png")}
                   style={GloblalStyles.icon}
                 />
               </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => {
-                  setShowAddListField({ display: "flex" });
-                }}
-              >
-                <Image
-                  source={require("@/assets/images/plus.png")}
-                  style={GloblalStyles.icon}
-                />
-              </TouchableOpacity>
+              {!isProductFilterSelected && (
+                <TouchableOpacity
+                  onPress={() => {
+                    setShowAddListField({ display: "flex" });
+                    setProductDataTmp(productDataInit);
+                  }}
+                >
+                  <Image
+                    source={require("@/assets/images/plus.png")}
+                    style={GloblalStyles.icon}
+                  />
+                </TouchableOpacity>
+              )}
+
+              {isProductFilterSelected && (
+                <TouchableOpacity
+                  onPress={() => {
+                    setIsProductFilterSelected(false);
+                    setShowLoading({ display: "flex" });
+                    setChange(true);
+
+                    setTimeout(() => {
+                      setShowLoading({ display: "none" });
+                    }, 2000);
+                  }}
+                >
+                  <Image
+                    source={require("@/assets/images/refresh.png")}
+                    style={GloblalStyles.icon}
+                  />
+                </TouchableOpacity>
+              )}
             </View>
           </View>
 
@@ -175,6 +264,7 @@ export default function Products() {
               setShowAddListField={setShowAddListField}
               setSelectProductForEdit={setProductDataTmp}
               productData={productData}
+              setShowLoading={setShowLoading}
             />
           </View>
         </View>
@@ -190,7 +280,7 @@ export default function Products() {
         datas={productDataTmp}
         setData={setProductDataTmp}
         setChange={setChange}
-        setIsCategoryFilterSelected={setIsCategoryFilterSelected}
+        setshowLoading={setShowLoading}
       >
         <View style={styles.popupLabelInput}>
           <Text style={GloblalStyles.appLabel}>Designation</Text>
@@ -219,6 +309,7 @@ export default function Products() {
                 )}
                 onChangeText={(amountFieldValue) => {
                   setAmount(parseFloat(amountFieldValue));
+
                   let productTmp = { ...productDataTmp };
                   productTmp.amount = parseFloat(amountFieldValue);
                   setProductDataTmp(productTmp);
@@ -241,12 +332,15 @@ export default function Products() {
               ]}
             >
               <RNPickerSelect
-                value={1}
+                value={productDataTmp?.coefficient}
                 onValueChange={(dayFieldValue) => {
+
                   let productTmp = { ...productDataTmp };
                   productTmp.coefficient = parseInt(dayFieldValue);
+
                   setCoefficient(dayFieldValue);
-                  setProductDataTmp(productDataTmp);
+
+                  setProductDataTmp(productTmp);
                 }}
                 items={dayNumber ? dayNumber : []}
               ></RNPickerSelect>
@@ -255,17 +349,52 @@ export default function Products() {
         </View>
         <View style={styles.totalAmountContainer}>
           <Text style={styles.totalAmount}>
-            Total amount: {amount * coefficient} Ar
+            Total amount:{" "}
+            {productDataTmp
+              ? productDataTmp.amount * productDataTmp.coefficient
+              : amount * coefficient}{" "}
+            Ar
           </Text>
         </View>
-
-        <ErrorMessageModal
-          modalShown={modalShown[0]}
-          errorMessage={errorMessage}
-          setErrorMessage={setErrorMessage}
-          setModalShown={setModalShown}
-        />
       </Popup>
+
+      {/* popup filter by category*/}
+      <Popup
+        title="Filter Product"
+        buttonTitle="Go"
+        visible={popupFilterByProductVisible}
+        setVisible={setPopupFilterByProductVisible}
+        viewType="filterProduct"
+        datas={productData}
+        setData={setProductData}
+        setChange={setChange}
+        setshowLoading={setShowLoading}
+        setIsFilterSelected={setIsProductFilterSelected}
+      >
+        <View style={styles.popupLabelInput}>
+          <Text style={GloblalStyles.appLabel}>Products</Text>
+          <View style={GloblalStyles.appInput}>
+            <RNPickerSelect
+              onValueChange={(productSelected) => {
+                if (productSelected?.id) {
+                  setProductData([productSelected]);
+                }
+              }}
+              items={productItemFitler ? productItemFitler : []}
+            ></RNPickerSelect>
+          </View>
+        </View>
+      </Popup>
+
+      <ErrorMessageModal
+        modalShown={modalShown[0]}
+        errorMessage={errorMessage}
+        setErrorMessage={setErrorMessage}
+        setModalShown={setModalShown}
+        setShowLoading={setShowLoading}
+      />
+
+      <Loading showLoading={showLoading} />
     </KeyboardAvoidingView>
   );
 }
@@ -274,7 +403,7 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: "#fff",
     width: Dimensions.get("window").width,
-    height: 200,
+    height: 150,
     padding: 20,
     alignItems: "center",
     justifyContent: "center",
@@ -333,6 +462,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   chartImageContainer: {
+    marginBottom: 30,
     alignItems: "center",
     justifyContent: "center",
   },
