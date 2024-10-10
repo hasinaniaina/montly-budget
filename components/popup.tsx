@@ -11,6 +11,7 @@ import {
   Dimensions,
   ScrollView,
   ViewStyle,
+  Alert,
 } from "react-native";
 import ColorPickerViewNew from "./colorPickerNew";
 import {
@@ -18,11 +19,19 @@ import {
   editProduct,
   filterCategory,
   filterProduct,
+  retrieveCategoryAccordingToDate,
+  retrieveProduct,
+  retrieveUserCategory,
   saveProduct,
   upgradeCategory,
 } from "@/constants/Controller";
 import ErrorMessageModal from "./message/errorMessageModal";
 import { Category, Product } from "@/constants/interface";
+import {
+  amountRemainingProduct,
+  checkIfCategorylabelAlreadyStored,
+  isFilteredActivate,
+} from "@/constants/utils";
 
 export default function Popup({
   title,
@@ -33,9 +42,11 @@ export default function Popup({
   datas,
   setData,
   setChange,
-  setIsFilterSelected,
+  thereIsFilter,
+  setThereIsFilter,
   categoryDateFilter,
   setshowLoading,
+  category,
   children,
 }: {
   title: string;
@@ -46,9 +57,11 @@ export default function Popup({
   datas?: any;
   setData: (val: any) => void;
   setChange: (val: boolean) => void;
-  setIsFilterSelected?: (val: boolean | any) => void;
+  thereIsFilter?: boolean[];
+  setThereIsFilter: (val: boolean[]) => void;
   categoryDateFilter?: Date[];
   setshowLoading: (val: ViewStyle) => void;
+  category?: Category;
   children: ReactNode;
 }) {
   const categoryDataInit = {
@@ -68,8 +81,6 @@ export default function Popup({
     idCategory: datas?.idCategory!,
     coefficient: 1,
   };
-
-  const [color, setColor] = useState<String>("#FFF");
 
   let [errorMessage, setErrorMessage] = useState<string[]>([]);
   let [modalShown, setModalShown] = useState<boolean[]>([false]);
@@ -124,26 +135,40 @@ export default function Popup({
                         setData(categoryDataInit);
                         setVisible({ display: "none" });
                         setshowLoading({ display: "none" });
+                        setChange(true);
                       }
                     } else {
-                      const result = createCategory({
-                        datas,
-                        setErrorMessage,
-                        setModalShown,
-                      });
+                      const isCategoryLabelNotExist =
+                        await checkIfCategorylabelAlreadyStored(datas);
 
-                      if (await result) {
-                        setData(categoryDataInit);
+                      if (isCategoryLabelNotExist) {
+                        const result = createCategory({
+                          datas,
+                          setErrorMessage,
+                          setModalShown,
+                        });
+
+                        result.then((success) => {
+                          if (success) {
+                            setData(categoryDataInit);
+                            setshowLoading({ display: "none" });
+                            setChange(true);
+                          }
+                        });
+                      } else {
+                        setErrorMessage([
+                          datas.label + " category already exist!",
+                        ]);
+                        setModalShown([true]);
                         setshowLoading({ display: "none" });
                       }
                     }
 
-                    setChange(true);
                     break;
                   case "filterByCategory":
                     if (datas) {
                       let datasTmp = Array.isArray(datas) ? datas : [datas];
-                      
+
                       const datasAfterFilter = await filterCategory(
                         datasTmp,
                         categoryDateFilter!
@@ -151,74 +176,132 @@ export default function Popup({
 
                       setData(datasAfterFilter);
                       setVisible({ display: "none" });
-                      setIsFilterSelected!(true);
+
+                      const isFiltered = isFilteredActivate(
+                        thereIsFilter!,
+                        0,
+                        true
+                      );
+                      setThereIsFilter!(isFiltered);
+
                       setChange(true);
                       setshowLoading({ display: "none" });
                     }
                     break;
                   case "filterByDate":
-                    let datasTmp = Array.isArray(datas) ? datas : [datas];
-                    datasTmp =
-                      datasTmp.length == 0 || !datas[0]
-                        ? [categoryDataInit]
-                        : datasTmp;
-
-                    const datasAfterFilter = await filterCategory(
-                      datasTmp as Category[],
+                    let categories = await retrieveCategoryAccordingToDate(
                       categoryDateFilter!
                     );
+
+                    let datasTmp = thereIsFilter![0] ? datas : categories;
+
+                    const datasAfterFilter = await filterCategory(
+                      datasTmp,
+                      categoryDateFilter!
+                    );
+
                     setData(datasAfterFilter);
                     setVisible({ display: "none" });
-                    setIsFilterSelected!(true);
+
+                    const isFiltered = isFilteredActivate(
+                      thereIsFilter!,
+                      1,
+                      true
+                    );
+                    setThereIsFilter!(isFiltered);
+
                     setChange(true);
                     setshowLoading({ display: "none" });
                     break;
                   case "expenses":
+                    const products = await retrieveProduct(category!);
+
+                    let productAmountTmp = 0;
+
+                    products?.forEach((product) => {
+                      productAmountTmp += product.amount * product.coefficient;
+                    });
+
+                    // Get Product Amount remaining for the category
+                    const productAmountRemaining =
+                      parseFloat(category?.income!) - productAmountTmp;
+
                     if (datas.id == -1) {
-                      const insertProduct = await saveProduct(
+                      // Get if Amount insert by user exceed product amount remaining
+                      const isNotExceedAmountRemaining = amountRemainingProduct(
                         datas,
+                        productAmountRemaining,
                         setErrorMessage,
-                        setModalShown
+                        setModalShown,
+                        setshowLoading
                       );
 
-                      if (insertProduct) {
-                        setData(productDataInit);
-                        setChange(true);
+                      if (isNotExceedAmountRemaining) {
+                        const insertProduct = await saveProduct(
+                          datas,
+                          setErrorMessage,
+                          setModalShown
+                        );
 
-                        setTimeout(() => {
-                          setshowLoading({ display: "none" });
-                        }, 2000);
+                        if (insertProduct) {
+                          setData(productDataInit);
+                          setChange(true);
+
+                          setTimeout(() => {
+                            setshowLoading({ display: "none" });
+                          }, 2000);
+                        }
                       }
                     } else {
-                      const updateProduct = await editProduct(
+                      let oldAmount = 0;
+
+                      products?.forEach((product) => {
+                        if (product.id == datas.id) {
+                          oldAmount = product.amount;
+                        }
+                      });
+
+                      let amountRemaining = productAmountRemaining + oldAmount;
+
+                      // Get if Amount insert by user exceed product amount remaining
+                      const isNotExceedAmountRemaining = amountRemainingProduct(
                         datas,
+                        amountRemaining,
                         setErrorMessage,
-                        setModalShown
+                        setModalShown,
+                        setshowLoading
                       );
 
-                      if (updateProduct) {
-                        setData(productDataInit);
-                        setChange(true);
-                        setVisible({ display: "none" });
+                      if (isNotExceedAmountRemaining) {
+                        const updateProduct = await editProduct(
+                          datas,
+                          setErrorMessage,
+                          setModalShown
+                        );
 
-                        setTimeout(() => {
-                          setshowLoading({ display: "none" });
-                        }, 2000);
+                        if (updateProduct) {
+                          setData(productDataInit);
+                          setChange(true);
+                          setVisible({ display: "none" });
+
+                          setTimeout(() => {
+                            setshowLoading({ display: "none" });
+                          }, 2000);
+                        }
                       }
                     }
                     break;
                   case "filterProduct":
-                    const productsFiltered =  filterProduct(datas);
+                    const productsFiltered = await filterProduct(datas);
 
-                    productsFiltered.then((datasFiltered) => {
-                      setData(datasFiltered);
-                      setIsFilterSelected!(true);
-                      setVisible({ display: "none" });
-  
-                      setTimeout(() => {
-                        setshowLoading({ display: "none" });
-                      }, 2000);
-                    });
+                    setThereIsFilter([true]);
+                    setData(productsFiltered);
+                    setVisible({ display: "none" });
+                    setChange(true);
+
+                    setTimeout(() => {
+                      setshowLoading({ display: "none" });
+                    }, 2000);
                     break;
                 }
               }}

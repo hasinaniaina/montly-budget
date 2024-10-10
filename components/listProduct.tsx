@@ -17,6 +17,7 @@ import {
   retrieveProductByCategory,
 } from "@/constants/Controller";
 import { useEffect, useState } from "react";
+import ConfirmationMessageModal from "./message/confirmationMessageModal";
 
 export default function ListProduct({
   showActionButton,
@@ -37,7 +38,7 @@ export default function ListProduct({
   setShowAddListField: (val: ViewStyle) => void;
   setSelectProductForEdit: (val: Product) => void;
   productData: Product[];
-  setShowLoading?: (val: ViewStyle) => void;
+  setShowLoading: (val: ViewStyle) => void;
 }) {
   let options: Intl.DateTimeFormatOptions = {
     year: "numeric",
@@ -50,118 +51,132 @@ export default function ListProduct({
   let totalAmountTmp = 0;
 
   productData?.forEach((data) => {
-    totalAmountTmp += (data.amount * data.coefficient);
+    totalAmountTmp += data.amount * data.coefficient;
   });
 
+  // Confirmation delete confirmation modal
+  const [showConfirmationModal, setShowConfirmationModal] =
+    useState<boolean>(false);
+
+  const removeItem = async () => {
+    const result = await removeProduct(indexOfActionButtonShowed);
+
+    return result;
+  };
+
   return (
-    <FlatList
-      data={productData}
-      renderItem={({ item, index }) => (
-        <TouchableHighlight
-          onLongPress={() => {
-            let showActionButtonTmp = [...showActionButton];
-            showActionButtonTmp[index] = { display: "flex" };
+    
+    <>
+      <FlatList
+        data={productData}
+        renderItem={({ item, index }) => (
+          <TouchableHighlight
+            onLongPress={() => {
+              let showActionButtonTmp = [...showActionButton];
+              showActionButtonTmp[index] = { display: "flex" };
 
-            setShowActionButton(showActionButtonTmp);
+              setShowActionButton(showActionButtonTmp);
 
-            setIndexOfActionButtonShowed(index);
-          }}
-          onPressIn={() => {
-            setShowActionButton([]);
-            setIndexOfActionButtonShowed(-1);
-          }}
-          underlayColor="white"
-          style={styles.listProduct}
-        >
-          <View
-            style={[
-              styles.itemsContainer,
-              indexOfActionButtonShowed == index && {
-                backgroundColor: "#fff",
-                borderRadius: 5,
-              },
-            ]}
+              setIndexOfActionButtonShowed(item.id);
+            }}
+            onPressIn={() => {
+              setShowActionButton([]);
+              setIndexOfActionButtonShowed(-1);
+            }}
+            underlayColor="white"
+            style={styles.listProduct}
           >
-            <View style={styles.itemLeftContent}>
-              <View
-                style={[styles.itemColor, { backgroundColor: item.color }]}
-              ></View>
-              <View>
-                <Text
-                  style={[
-                    styles.productName,
-                    indexOfActionButtonShowed == index && {
-                      fontFamily: "k2d-bold",
-                      color: "#000",
-                    },
-                  ]}
-                >
-                  {item.designation}
-                </Text>
-                <Text style={styles.productCreatedDate}>
-                  {new Date(item.createdDate!).toLocaleDateString(
-                    "en-US",
-                    options
-                  )}
-                </Text>
-              </View>
-            </View>
             <View
               style={[
-                styles.itemRightContent,
-                indexOfActionButtonShowed == index && {
-                  display: "none",
+                styles.itemsContainer,
+                indexOfActionButtonShowed == item.id && {
+                  backgroundColor: "#fff",
+                  borderRadius: 5,
                 },
               ]}
             >
-              <Text style={styles.price}>{item.amount * item.coefficient} Ariary - </Text>
-              <Text style={styles.percentage}>
-                {Number(
-                  ((item.coefficient * item.amount) * 100) / totalAmountTmp
-                ).toFixed(2)}
-                %
-              </Text>
-            </View>
-
-            <View style={[styles.buttonsAction, showActionButton[index]]}>
-              <TouchableOpacity
-                style={styles.editIconContainer}
-                onPress={() => {
-                  setSelectProductForEdit(item);
-                  setIndexOfActionButtonShowed(-1);
-                  setShowAddListField({ display: "flex" });
-                }}
+              <View style={styles.itemLeftContent}>
+                <View
+                  style={[styles.itemColor, { backgroundColor: item.color }]}
+                ></View>
+                <View>
+                  <Text
+                    style={[
+                      styles.productName,
+                      indexOfActionButtonShowed == item.id && {
+                        fontFamily: "k2d-bold",
+                        color: "#000",
+                      },
+                    ]}
+                  >
+                    {item.designation}
+                  </Text>
+                  <Text style={styles.productCreatedDate}>
+                    {new Date(item.createdDate!).toLocaleDateString(
+                      "en-US",
+                      options
+                    )}
+                  </Text>
+                </View>
+              </View>
+              <View
+                style={[
+                  styles.itemRightContent,
+                  indexOfActionButtonShowed == item.id && {
+                    display: "none",
+                  },
+                ]}
               >
-                <Image
-                  style={styles.editIcon}
-                  source={require("@/assets/images/pencil.png")}
-                />
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.deleteIconContainer}
-                onPress={async () => {
-                  setShowLoading!({ display: "flex" });
-                  const deleted = await removeProduct(item.id);
-                  if (deleted) {
+                <Text style={styles.price}>
+                  {item.amount * item.coefficient} Ariary -{" "}
+                </Text>
+                <Text style={styles.percentage}>
+                  {Number(
+                    (item.coefficient * item.amount * 100) / totalAmountTmp
+                  ).toFixed(2)}
+                  %
+                </Text>
+              </View>
+
+              <View style={[styles.buttonsAction, showActionButton[index]]}>
+                <TouchableOpacity
+                  style={styles.editIconContainer}
+                  onPress={() => {
+                    setSelectProductForEdit(item);
                     setIndexOfActionButtonShowed(-1);
-                    setChange(true);
-
-                    setTimeout(() => {
-                      setShowLoading!({ display: "none" });
-                    }, 2000);
-                  }
-                }}
-              >
-                <Image
-                  style={styles.deleteIcon}
-                  source={require("@/assets/images/close.png")}
-                />
-              </TouchableOpacity>
+                    setShowAddListField({ display: "flex" });
+                  }}
+                >
+                  <Image
+                    style={styles.editIcon}
+                    source={require("@/assets/images/pencil.png")}
+                  />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.deleteIconContainer}
+                  onPress={async () => {
+                    setShowConfirmationModal(true);
+                  }}
+                >
+                  <Image
+                    style={styles.deleteIcon}
+                    source={require("@/assets/images/close.png")}
+                  />
+                </TouchableOpacity>
+              </View>
             </View>
-          </View>
-        </TouchableHighlight>
-      )}
-    />
+          </TouchableHighlight>
+        )}
+      />
+
+      <ConfirmationMessageModal
+        modalShown={showConfirmationModal}
+        removeItem={removeItem}
+        setModalShown={setShowConfirmationModal}
+        setShowLoading={setShowLoading}
+        setChange={setChange}
+      />
+    </>
   );
 }
 
@@ -194,7 +209,7 @@ const styles = StyleSheet.create({
   productCreatedDate: {
     fontFamily: "k2d-regular",
     color: TextColor,
-    fontSize: 8
+    fontSize: 8,
   },
   itemRightContent: {
     flexDirection: "row",

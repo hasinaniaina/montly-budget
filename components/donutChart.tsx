@@ -23,7 +23,6 @@ export default function DonutChart({
 
 
   const refresh = () => {
-
     productData?.map((data) => {
       productChartData.push({
         percentage: (data.coefficient * data.amount) / totalAmount,

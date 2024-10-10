@@ -5,7 +5,6 @@ import { TextColor, TitleColor, green, red } from "@/constants/Colors";
 import { retrieveProduct } from "@/constants/Controller";
 import { GloblalStyles } from "@/constants/GlobalStyles";
 import { Category, Product } from "@/constants/interface";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import RNPickerSelect, { Item } from "react-native-picker-select";
@@ -46,7 +45,13 @@ export default function Products() {
     display: "none",
   });
 
+  // Store product data
   const [productData, setProductData] = useState<Product[]>([]);
+
+  // Store product data
+  const [productDataForDonutChart, setProductDataForDonutChart] = useState<
+    Product[]
+  >([]);
 
   // Retrieve Categories for filter
   const [productItemFitler, setProductItemFilter] = useState<Item[]>();
@@ -68,14 +73,17 @@ export default function Products() {
     useState<ViewStyle>({ display: "none" });
 
   // Triggered when Product filter is selected
-  const [isProductFilterSelected, setIsProductFilterSelected] =
-    useState<boolean>(false);
+  const [isProductFilterSelected, setIsProductFilterSelected] = useState<
+    boolean[]
+  >([false]);
+
 
   // Initiate list day number
   const [dayNumber, setDayNumber] = useState<Item[]>();
 
   //   Stock Total amount in add expenses view
   const [amount, setAmount] = useState<number>(productDataTmp.amount);
+
   const [coefficient, setCoefficient] = useState<number>(
     productDataTmp.coefficient
   );
@@ -92,13 +100,22 @@ export default function Products() {
   let [modalShown, setModalShown] = useState<Array<boolean>>([false]);
 
   useEffect(() => {
-    setShowLoading({display: "flex"});
+    setShowLoading({ display: "flex" });
 
     const getProduct = async () => {
-      const products = await retrieveProduct(category);
+      let products: Product[] = [];
+      const productForDonutChart = await retrieveProduct(category);
+      const dataFromFilter: any = productDataTmp;
+
+      if (isProductFilterSelected[0]) {        
+        products = dataFromFilter;
+      } else {
+        products = await retrieveProduct(category);
+      }
 
       setProductData(products);
-      getTotalAmountProduct(products);
+      setProductDataForDonutChart(productForDonutChart);
+      getTotalAmountRemainingProduct(products);
       getCategoriesForFitler(products);
 
       // Initialize button action (edit, delete) of each product
@@ -127,11 +144,11 @@ export default function Products() {
       setDayNumber(dayNumberTmp);
     };
 
-    const getTotalAmountProduct = (products: [Product]) => {
+    const getTotalAmountRemainingProduct = (products: Product[]) => {
       let productAmountTmp = 0;
 
       products?.forEach((product) => {
-        productAmountTmp += (product.amount * product.coefficient);
+        productAmountTmp += product.amount * product.coefficient;
       });
 
       setProductTotalAmount(parseFloat(category.income!) - productAmountTmp);
@@ -158,7 +175,7 @@ export default function Products() {
     setChange(false);
 
     setTimeout(() => {
-      setShowLoading({display: "none"});
+      setShowLoading({ display: "none" });
     }, 2000);
   }, [change]);
 
@@ -194,7 +211,7 @@ export default function Products() {
           </View>
 
           <View style={styles.chartImageContainer}>
-            <DonutChart productData={productData} />
+            <DonutChart productData={productDataForDonutChart} />
           </View>
 
           <View
@@ -219,7 +236,8 @@ export default function Products() {
                   style={GloblalStyles.icon}
                 />
               </TouchableOpacity>
-              {!isProductFilterSelected && (
+
+              {!isProductFilterSelected[0] ? (
                 <TouchableOpacity
                   onPress={() => {
                     setShowAddListField({ display: "flex" });
@@ -231,13 +249,12 @@ export default function Products() {
                     style={GloblalStyles.icon}
                   />
                 </TouchableOpacity>
-              )}
-
-              {isProductFilterSelected && (
+              ) : (
                 <TouchableOpacity
                   onPress={() => {
-                    setIsProductFilterSelected(false);
+                    setIsProductFilterSelected([false]);
                     setShowLoading({ display: "flex" });
+                    setProductDataTmp(productDataInit);
                     setChange(true);
 
                     setTimeout(() => {
@@ -281,6 +298,8 @@ export default function Products() {
         setData={setProductDataTmp}
         setChange={setChange}
         setshowLoading={setShowLoading}
+        category={category}
+        setThereIsFilter={setIsProductFilterSelected}
       >
         <View style={styles.popupLabelInput}>
           <Text style={GloblalStyles.appLabel}>Designation</Text>
@@ -289,6 +308,7 @@ export default function Products() {
               placeholder="Exemple"
               value={productDataTmp?.designation}
               onChangeText={(designation) => {
+                
                 let productTmp = { ...productDataTmp };
                 productTmp.designation = designation;
                 setProductDataTmp(productTmp);
@@ -307,7 +327,7 @@ export default function Products() {
                 value={JSON.stringify(
                   productDataTmp?.amount ? productDataTmp?.amount : 0
                 )}
-                onChangeText={(amountFieldValue) => {
+                onChangeText={(amountFieldValue) => {                  
                   setAmount(parseFloat(amountFieldValue));
 
                   let productTmp = { ...productDataTmp };
@@ -334,7 +354,6 @@ export default function Products() {
               <RNPickerSelect
                 value={productDataTmp?.coefficient}
                 onValueChange={(dayFieldValue) => {
-
                   let productTmp = { ...productDataTmp };
                   productTmp.coefficient = parseInt(dayFieldValue);
 
@@ -365,23 +384,34 @@ export default function Products() {
         visible={popupFilterByProductVisible}
         setVisible={setPopupFilterByProductVisible}
         viewType="filterProduct"
-        datas={productData}
-        setData={setProductData}
+        datas={productDataTmp}
+        setData={setProductDataTmp}
         setChange={setChange}
         setshowLoading={setShowLoading}
-        setIsFilterSelected={setIsProductFilterSelected}
+        setThereIsFilter={setIsProductFilterSelected}
       >
         <View style={styles.popupLabelInput}>
           <Text style={GloblalStyles.appLabel}>Products</Text>
           <View style={GloblalStyles.appInput}>
-            <RNPickerSelect
+            {/* <RNPickerSelect
               onValueChange={(productSelected) => {
                 if (productSelected?.id) {
                   setProductData([productSelected]);
                 }
               }}
               items={productItemFitler ? productItemFitler : []}
-            ></RNPickerSelect>
+            ></RNPickerSelect> */}
+
+            <TextInput
+              placeholder="Exemple"
+              value={productDataTmp.designation}
+              onChangeText={(productFiltered) => {                
+                let productTmp = { ...productDataTmp };
+                  productTmp.designation = productFiltered;
+
+                setProductDataTmp(productTmp)
+              }}
+            />
           </View>
         </View>
       </Popup>

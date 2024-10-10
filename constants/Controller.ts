@@ -14,6 +14,7 @@ import {
   insertProduct,
   updateProduct,
   getProductFilter,
+  getUserCategory,
 } from "./db";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Category, Product } from "./interface";
@@ -134,6 +135,7 @@ export const sendEMail = async ({
   }
 };
 
+// =========================== Product =========================
 export const saveProduct = async (
   datas: Product,
   setErrorMessage: (val: string[]) => void,
@@ -172,13 +174,21 @@ export const retrieveProductByCategory = async () => {
 
 export const retrieveProduct = async (category: Category) => {
   const products = await getProducts(category);
-  return products as [Product];
+  return products as Product[];
 };
+
+export const filterProduct = async (datas: Product): Promise<Product[]> => {
+  return await getProductFilter(datas) as Product[];
+};
+
 
 export const removeProduct = async (id: number) => {
   const result = await deleteProduct(id);
   return true;
 };
+
+
+// =========================== Category =========================
 
 export const createCategory = async ({
   datas,
@@ -188,7 +198,7 @@ export const createCategory = async ({
   datas?: Category;
   setErrorMessage: (val: string[]) => void;
   setModalShown: (val: boolean[]) => void;
-}) => {
+}): Promise<boolean> => {
   let error = false;
   const user: any = await AsyncStorage.getItem("userCredentials");
 
@@ -213,10 +223,18 @@ export const createCategory = async ({
       return true;
     }
   }
+
+  return false;
 };
 
-export const retrieveCategory = async (categoryDateFilter: Date[]) => {
+export const retrieveUserCategory = async (): Promise<Category[]> => {
   const user: any = await AsyncStorage.getItem("userCredentials");
+  return await getUserCategory(JSON.parse(user));
+}
+
+export const retrieveCategoryAccordingToDate = async (categoryDateFilter: Date[]) => {
+  const user: any = await AsyncStorage.getItem("userCredentials");
+
   return await getCategory(JSON.parse(user), categoryDateFilter);
 };
 
@@ -279,13 +297,9 @@ export const filterCategory = async (datas: Category[], date: Date[]) => {
   return await getCategoryFilter(datas, date);
 };
 
-export const filterProduct = async (datas: Product[]): Promise<Product[]> => {
-  console.log("datas =>" + datas);
-
-  return await getProductFilter(datas);
-};
-
+// ======================= User ==========================================
 export const getUserEmail = async (): Promise<String> => {
   const user = await AsyncStorage.getItem("userCredentials");
   return user!;
 };
+

@@ -177,21 +177,20 @@ export const insertProduct = async (
   }
 };
 
-export const getProductFilter = async (datas: Product[]) => {
+export const getProductFilter = async (datas: Product) => {
   try {
     let product: any = "";
 
     let query = "SELECT * FROM Product WHERE designation LIKE ";
 
-    datas.forEach((data, index) => {
-      query += " '%" + data.designation + "%' ";
-    });
+    query += " '" + datas.designation + "%' ";
 
-    query += " AND idCategory= " + datas[0].idCategory;
+    query += " AND idCategory= " + datas.idCategory;
 
     product = await (await db).getAllAsync(query);
 
     return product;
+    
   } catch (error) {
     console.log("fitler by product and date error =>", error);
     return false;
@@ -230,20 +229,38 @@ export const insertCategory = async (datas: Category, user: User) => {
 
 export const getCategory = async (user: User, categoryDateFilter: Date[]) => {
   try {
-    const categories: any = await (
-      await db
-    ).getAllAsync(
-      "SELECT * FROM Category WHERE idUser=" +
-        user.id +
-        " AND createdDate BETWEEN " +
-        JSON.stringify(categoryDateFilter[0]) +
-        " AND " +
-        JSON.stringify(categoryDateFilter[1])
-    );
+    const dateFrom = categoryDateFilter[0].toISOString();
+    const dateTo = categoryDateFilter[1].toISOString();
+
+    let query = "SELECT * FROM Category WHERE idUser=" + user.id;
+
+    if (dateFrom !== dateTo) {
+      query +=
+        " AND createdDate BETWEEN '" + dateFrom + "' AND '" + dateTo + "'";
+    } else {
+      query += " AND createdDate LIKE '" + dateFrom.split("T")[0] + "%' ";
+    }
+
+    // console.log(query);
+
+    const categories: any = await (await db).getAllAsync(query);
 
     return categories;
   } catch (error) {
     console.log("Category retrieve error =>", error);
+    return false;
+  }
+};
+
+export const getUserCategory = async (user: User) => {
+  try {
+    const categories: any = await (
+      await db
+    ).getAllAsync("SELECT * FROM Category WHERE idUser=" + user.id);
+
+    return categories;
+  } catch (error) {
+    console.log("User category retrieve error =>", error);
     return false;
   }
 };
@@ -261,7 +278,7 @@ export const getCategoryById = async (id: number) => {
 };
 
 export const deleteCategory = async (id: number) => {
-  const dbtmp = await await db;
+  const dbtmp = await db;
   try {
     const deleteCategory: any = dbtmp.runAsync(
       "DELETE FROM Category WHERE id=" + id
@@ -301,38 +318,33 @@ export const updateCategory = async (datas: Category) => {
 
 export const getCategoryFilter = async (datas: Category[], date: Date[]) => {
   try {
-    let category: any = "";
+    let category: any = [];
 
-    if (datas[0].id != -1) {
-      let query = "SELECT * FROM Category WHERE label LIKE ";
+    const dateFrom = date[0].toISOString();
+    const dateTo = date[1].toISOString();
 
-      datas.forEach((data, index) => {
-        query += " '%" + data.label + "%' ";
-        if (index < datas.length - 1) {
-          query += " OR label LIKE ";
-        }
-      });
+    if (datas.length > 0) {
+      let query = "SELECT * FROM Category WHERE ";
 
-      query +=
-        " AND createdDate BETWEEN '" +
-        date[0].toISOString().split("T")[0] +
-        "' AND '" +
-        date[1].toISOString().split("T")[0] +
-        "' AND idUser = " +
-        datas[0].idUser;
+      if (datas[0].id != -1) {
+        datas.forEach((data, index) => {
+          query += " '%" + data.label + "%' ";
+          if (index < datas.length - 1) {
+            query += " OR label LIKE ";
+          }
+        });
+      }
+
+      if (dateFrom !== dateTo) {
+        query +=
+          " AND createdDate BETWEEN '" + dateFrom + "' AND '" + dateTo + "'";
+      } else {
+        query += " AND createdDate LIKE '" + dateFrom.split("T")[0] + "%' ";
+      }
+
+      query += " AND idUser = " + datas[0].idUser;
 
       category = await (await db).getAllAsync(query);
-    } else {
-      category = await (
-        await db
-      ).getAllAsync(
-        "SELECT * FROM Category WHERE createdDate BETWEEN '" +
-          date[0].toISOString().split("T")[0] +
-          "' AND '" +
-          date[1].toISOString().split("T")[0] +
-          "' AND idUser = " +
-          datas[0].idUser
-      );
     }
 
     return category;
