@@ -49,7 +49,7 @@ export default function Products() {
   const [productData, setProductData] = useState<Product[]>([]);
 
   // Store product data
-  const [productDataForDonutChart, setProductDataForDonutChart] = useState<
+  const [productDataWithoutFilter, setProductDataWithoutFilter] = useState<
     Product[]
   >([]);
 
@@ -114,7 +114,7 @@ export default function Products() {
       }
 
       setProductData(products);
-      setProductDataForDonutChart(productForDonutChart);
+      setProductDataWithoutFilter(productForDonutChart);
       getTotalAmountRemainingProduct(products);
       getCategoriesForFitler(products);
 
@@ -211,7 +211,7 @@ export default function Products() {
           </View>
 
           <View style={styles.chartImageContainer}>
-            <DonutChart productData={productDataForDonutChart} />
+            <DonutChart productData={productDataWithoutFilter} />
           </View>
 
           <View
@@ -282,6 +282,7 @@ export default function Products() {
               setSelectProductForEdit={setProductDataTmp}
               productData={productData}
               setShowLoading={setShowLoading}
+              productDataWithoutFilter={productDataWithoutFilter}
             />
           </View>
         </View>

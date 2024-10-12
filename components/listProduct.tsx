@@ -9,15 +9,13 @@ import {
   ViewStyle,
 } from "react-native";
 import { TextColor, green, red } from "@/constants/Colors";
-import { Styles } from "react-native-svg";
 import { Product } from "@/constants/interface";
 import {
   removeProduct,
-  retrieveProduct,
-  retrieveProductByCategory,
 } from "@/constants/Controller";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import ConfirmationMessageModal from "./message/confirmationMessageModal";
+import { GloblalStyles } from "@/constants/GlobalStyles";
 
 export default function ListProduct({
   showActionButton,
@@ -29,6 +27,7 @@ export default function ListProduct({
   setSelectProductForEdit,
   productData,
   setShowLoading,
+  productDataWithoutFilter
 }: {
   showActionButton: ViewStyle[];
   setShowActionButton: (val: ViewStyle[]) => void;
@@ -39,18 +38,17 @@ export default function ListProduct({
   setSelectProductForEdit: (val: Product) => void;
   productData: Product[];
   setShowLoading: (val: ViewStyle) => void;
+  productDataWithoutFilter: Product[];
 }) {
   let options: Intl.DateTimeFormatOptions = {
     year: "numeric",
     month: "short",
     day: "numeric",
-    hour: "numeric",
-    minute: "numeric",
   };
 
   let totalAmountTmp = 0;
 
-  productData?.forEach((data) => {
+  productDataWithoutFilter?.forEach((data) => {
     totalAmountTmp += data.amount * data.coefficient;
   });
 
@@ -60,12 +58,10 @@ export default function ListProduct({
 
   const removeItem = async () => {
     const result = await removeProduct(indexOfActionButtonShowed);
-
     return result;
   };
 
   return (
-    
     <>
       <FlatList
         data={productData}
@@ -111,7 +107,7 @@ export default function ListProduct({
                   >
                     {item.designation}
                   </Text>
-                  <Text style={styles.productCreatedDate}>
+                  <Text style={GloblalStyles.CreatedDate}>
                     {new Date(item.createdDate!).toLocaleDateString(
                       "en-US",
                       options
@@ -205,11 +201,6 @@ const styles = StyleSheet.create({
   productName: {
     fontFamily: "k2d-bold",
     color: TextColor,
-  },
-  productCreatedDate: {
-    fontFamily: "k2d-regular",
-    color: TextColor,
-    fontSize: 8,
   },
   itemRightContent: {
     flexDirection: "row",

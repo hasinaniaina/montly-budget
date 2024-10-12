@@ -1,5 +1,5 @@
 import { StyleSheet } from "react-native";
-import { TitleColor, green, red } from "./Colors";
+import { TextColor, TitleColor, green, red } from "./Colors";
 
 export const GloblalStyles = StyleSheet.create({
   container: {
@@ -121,5 +121,10 @@ export const GloblalStyles = StyleSheet.create({
   deleteIcon: {
     width: 15,
     height: 15,
+  },
+  CreatedDate: {
+    fontFamily: "k2d-regular",
+    color: TextColor,
+    fontSize: 8,
   },
 });

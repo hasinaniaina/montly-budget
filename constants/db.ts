@@ -190,7 +190,6 @@ export const getProductFilter = async (datas: Product) => {
     product = await (await db).getAllAsync(query);
 
     return product;
-    
   } catch (error) {
     console.log("fitler by product and date error =>", error);
     return false;
@@ -229,21 +228,16 @@ export const insertCategory = async (datas: Category, user: User) => {
 
 export const getCategory = async (user: User, categoryDateFilter: Date[]) => {
   try {
-    const dateFrom = categoryDateFilter[0].toISOString();
-    const dateTo = categoryDateFilter[1].toISOString();
+    const dateFrom =
+      categoryDateFilter[0].toISOString().split("T")[0] + " 01:00:00";
+    const dateTo =
+      categoryDateFilter[1].toISOString().split("T")[0] + " 24:00:00";
 
     let query = "SELECT * FROM Category WHERE idUser=" + user.id;
 
-    if (dateFrom !== dateTo) {
-      query +=
-        " AND createdDate BETWEEN '" + dateFrom + "' AND '" + dateTo + "'";
-    } else {
-      query += " AND createdDate LIKE '" + dateFrom.split("T")[0] + "%' ";
-    }
-
-    // console.log(query);
-
-    const categories: any = await (await db).getAllAsync(query);
+    query += " AND createdDate BETWEEN '" + dateFrom + "' AND '" + dateTo + "'";
+    
+    const categories: any = await (await db).getAllAsync(query);  
 
     return categories;
   } catch (error) {
@@ -343,7 +337,6 @@ export const getCategoryFilter = async (datas: Category[], date: Date[]) => {
       }
 
       query += " AND idUser = " + datas[0].idUser;
-
       category = await (await db).getAllAsync(query);
     }
 

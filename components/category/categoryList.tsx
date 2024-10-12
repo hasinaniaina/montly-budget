@@ -48,6 +48,11 @@ export default function CategoryList({
   change: boolean;
   setChange: (val: boolean) => void;
 }) {
+  let options: Intl.DateTimeFormatOptions = {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  };
   // Retrieve Category Selected
   const categoryDataInit = {
     id: -1,
@@ -212,6 +217,12 @@ export default function CategoryList({
                           <Text style={styles.transaction}>
                             {categoriesTransactionNumber[index]} transaction(s)
                           </Text>
+                          <Text style={GloblalStyles.CreatedDate}>
+                            {new Date(category.createdDate!).toLocaleDateString(
+                              "en-US",
+                              options
+                            )}
+                          </Text>
                         </View>
                       </View>
 
@@ -322,6 +333,7 @@ const styles = StyleSheet.create({
   transaction: {
     fontFamily: "k2d-regular",
     color: TextColor,
+    fontSize: 9,
   },
   categoryIncome: {
     fontFamily: "k2d-bold",
