@@ -84,7 +84,7 @@ export default function Popup({
     designation: "",
     productAmount: 0,
     color: "#000",
-    idCreationCategory: datas?.idCategory!,
+    idCreationCategory: (datas as CreationCategory)?.idCreationCategory!,
     productCoefficient: 1,
   };
 

@@ -273,7 +273,8 @@ export const insertProduct = async (
         (datas as CreationProduct).idCreationCategory,
         insertProduct.lastInsertRowId
       );
-
+        console.log(insertCreationProduct.changes);
+        
       return insertCreationProduct.changes;
     }
 
@@ -283,10 +284,7 @@ export const insertProduct = async (
   }
 };
 
-export const getProductFilter = async (datas: Product | CreationProduct) => {
-  console.log(datas);
-  return
-  
+export const getProductFilter = async (datas: Product | CreationProduct) => {  
   try {
     let product: any = "";
 

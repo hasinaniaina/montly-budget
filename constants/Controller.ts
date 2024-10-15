@@ -159,7 +159,7 @@ export const saveProduct = async (
     return false;
   }
 
-  const save = await insertProduct(datas);
+  const save = await insertProduct(datas);  
 
   return save;
 };
