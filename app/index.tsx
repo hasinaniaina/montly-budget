@@ -31,7 +31,6 @@ export default function Login() {
   useEffect(() => {
     const checkUserSigned = async () => {
       let user: any = await AsyncStorage.getItem("userCredentials");
-      console.log(user);
       let userLogged = user ? true : false;
       setIsUSerLogged(userLogged);
     };

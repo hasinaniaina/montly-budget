@@ -1,16 +1,19 @@
 import * as SQLite from "expo-sqlite";
-import { Category, Product, User } from "./interface";
+import {
+  Category,
+  CreationCategory,
+  CreationProduct,
+  Product,
+  User,
+} from "./interface";
 
 const db = SQLite.openDatabaseAsync("monthlyBudget", {
   useNewConnection: true,
 });
 
 export const init = async () => {
-  // deleteTable();
+  // await deleteTable();
   await createTable();
-  // await setYear();
-  // await setMonths();
-  // deleteMonth();
 };
 
 export const createTable = async () => {
@@ -23,28 +26,39 @@ export const createTable = async () => {
           id INTEGER PRIMARY KEY AUTOINCREMENT, 
           email TEXT NOT NULL, 
           password TEXT NOT NULL);
-      CREATE TABLE IF NOT EXISTS Product (
-          id INTEGER PRIMARY KEY  AUTOINCREMENT, 
-          designation TEXT NOT NULL, 
-          amount REAL,
-          coefficient INTEGER,
-          idCategory INTEGER,
-          color TEXT,
-          createdDate  DATETIME DEFAULT CURRENT_TIMESTAMP,
-          FOREIGN KEY(idCategory) REFERENCES Category(id)
-          );
       CREATE TABLE IF NOT EXISTS Category (
-          id INTEGER PRIMARY KEY  AUTOINCREMENT, 
+          idCategory INTEGER PRIMARY KEY  AUTOINCREMENT, 
           label TEXT NOT NULL,
-          income REAL NOT NULL,
-          color TEXT NOT NULL,
-          idUser INTEGER,
+          color TEXT NOT NULL
+          );
+      CREATE TABLE IF NOT EXISTS CreationCategory (
+        idCreationCategory INTEGER PRIMARY KEY  AUTOINCREMENT, 
+        createdDate  DATETIME DEFAULT CURRENT_TIMESTAMP,
+        idCategory INTEGER,
+        idUser INTEGER,
+        categoryIncome REAL NOT NULL,
+        FOREIGN KEY(idCategory) REFERENCES Category(id),
+        FOREIGN KEY(idUser) REFERENCES User(id)
+        );
+      CREATE TABLE IF NOT EXISTS Product (
+          idProduct INTEGER PRIMARY KEY  AUTOINCREMENT, 
+          designation TEXT NOT NULL, 
+          color TEXT
+          );
+      CREATE TABLE IF NOT EXISTS CreationProduct (
+          idCreationProduct INTEGER PRIMARY KEY  AUTOINCREMENT, 
+          productAmount REAL,
+          productCoefficient INTEGER,
+          idCreationCategory INTEGER,
+          idProduct INTEGER,
           createdDate  DATETIME DEFAULT CURRENT_TIMESTAMP,
-          FOREIGN KEY(idUser) REFERENCES User(id)
+          FOREIGN KEY(idCreationCategory) REFERENCES CreationCategory(id),
+          FOREIGN KEY(idProduct) REFERENCES Product(id)
           );
       `);
 
     console.log("Database initialized!");
+    return true;
   } catch (error) {
     console.log("Error while initializing the database", error);
   }
@@ -55,12 +69,16 @@ export const deleteTable = async () => {
     await (
       await db
     ).execAsync(`
-      DROP TABLE User;
-      DROP TABLE Product;
-      DROP TABLE Category;
+      DROP TABLE IF EXISTS User;
+      DROP TABLE IF EXISTS Category;
+      DROP TABLE IF EXISTS CreationCategory;
+      DROP TABLE IF EXISTS CreationProduct;
+      DROP TABLE IF EXISTS Product;
     `);
 
     console.log("Table deleted!");
+
+    return true;
   } catch (error) {
     console.log("Error while drop the database", error);
   }
@@ -115,77 +133,170 @@ export const getUserByEmail = async (email: string): Promise<User> => {
   }
 };
 
-export const getProducts = async (category: Category) => {
+export const getProducts = async (category: Category | CreationCategory) => {
   try {
     const product: any = await (
       await db
-    ).getAllAsync("SELECT * FROM Product WHERE idCategory=" + category.id);
+    ).getAllAsync(`SELECT * 
+    FROM Product prod INNER JOIN CreationProduct creatProd ON prod.idProduct = creatProd.idProduct
+     WHERE creatProd.idCreationCategory=${
+       (category as CreationCategory).idCreationCategory
+     }`);
+
     return product ? product : ([] as Product[]);
   } catch (error) {
-    console.log("Retrieve year error => ", error);
+    console.log("Retrieve products error => ", error);
   }
 };
 
 export const getProductsNew = async () => {
   try {
-    const product: any = await (await db).getAllAsync("SELECT * FROM Product");
-    return product ? product : ([] as Product[]);
+    const product: any = await (
+      await db
+    ).getAllAsync(
+      `SELECT * 
+      FROM Product as prod INNER JOIN CreationProduct as creatProd ON prod.idProduct = creatProd.idProduct`
+    );
+
+    return product ? product : ([] as Product[] & CreationProduct[]);
   } catch (error) {
-    console.log("Retrieve year error => ", error);
+    console.log("Retrieve products new error => ", error);
   }
 };
 
-export const updateProduct = async (datas: Product) => {
+export const getProductByIdCreationCategory = async (
+  idCreationCategory: number
+) => {
   try {
-    let update = await (
+    const product: any = await (
       await db
-    ).runAsync(
-      `UPDATE Product SET designation = ?, amount = ?, coefficient = ?, color = ? WHERE id = ?`,
-      datas.designation,
-      datas.amount,
-      datas.coefficient,
-      datas.color,
-      datas.id
+    ).getAllAsync(
+      `SELECT * 
+      FROM Product as prod INNER JOIN CreationProduct as creatProd 
+      ON prod.idProduct = creatProd.idProduct 
+      WHERE creatProd.idCreationCategory=${idCreationCategory}`
     );
 
-    return update.changes;
+    return product ? product : ([] as Product[] & CreationProduct[]);
   } catch (error) {
-    console.log("Year insertion error => ", error);
+    console.log(
+      "Retrieve products By id Creation Category new error => ",
+      error
+    );
+  }
+};
+
+export const getProductByIdCreationProduct = async (idCreationProduct: number) => {
+  try {
+    const product: any = await (
+      await db
+    ).getFirstAsync(
+      `SELECT prod.idProduct
+      FROM Product as prod INNER JOIN CreationProduct as creatProd 
+      ON prod.idProduct = creatProd.idProduct 
+      WHERE creatProd.idCreationProduct=${idCreationProduct}`
+    );
+
+    if (product.changes) {
+      const productCreationProduct: any = await (
+        await db
+      ).getFirstAsync(
+        `SELECT *  FROM CreationProduct 
+        WHERE idProduct=${product.idProduct}`
+      );
+
+      return productCreationProduct;
+    }
+
+    return [];
+  } catch (error) {
+    console.log(
+      "Retrieve products By id Creation Category new error => ",
+      error
+    );
+  }
+}
+
+export const updateProduct = async (datas: Product | CreationProduct) => {
+  try {
+    let updateProduct = await (
+      await db
+    ).runAsync(
+      `UPDATE Product SET designation = ?, color = ? WHERE idProduct = ?`,
+      (datas as Product).designation,
+      (datas as Product).color,
+      (datas as Product).idProduct
+    );
+
+    if (updateProduct.changes) {
+      let updateCreationProduct = await (
+        await db
+      ).runAsync(
+        `UPDATE CreationProduct SET productAmount = ?, productCoefficient = ? WHERE idCreationProduct = ?`,
+        (datas as CreationProduct).productAmount,
+        (datas as CreationProduct).productCoefficient,
+        (datas as CreationProduct).idCreationProduct
+      );
+
+      return updateCreationProduct.changes;
+    }
+
+    return 0;
+  } catch (error) {
+    console.log("Product Update error => ", error);
   }
 };
 
 export const insertProduct = async (
-  datas: Product
+  datas: Product | CreationProduct
 ): Promise<number | undefined> => {
   try {
-    let insert = await (
+    let insertProduct = await (
       await db
     ).runAsync(
       `INSERT INTO Product 
-    (designation, amount, idCategory, coefficient, color) 
-    VALUES (?, ? , ?, ?, ?)`,
-      datas.designation,
-      datas.amount,
-      datas.idCategory,
-      datas.coefficient,
-      datas.color
+    (designation, color) 
+    VALUES (?, ?)`,
+      (datas as Product).designation,
+      (datas as Product).color
     );
 
-    return insert.changes;
+    if (insertProduct.changes) {
+      let insertCreationProduct = await (
+        await db
+      ).runAsync(
+        `INSERT INTO CreationProduct 
+      (productAmount, productCoefficient, idCreationCategory, idProduct) 
+      VALUES (?, ? , ?, ?)`,
+        (datas as CreationProduct).productAmount,
+        (datas as CreationProduct).productCoefficient,
+        (datas as CreationProduct).idCreationCategory,
+        insertProduct.lastInsertRowId
+      );
+
+      return insertCreationProduct.changes;
+    }
+
+    return 0;
   } catch (error) {
-    console.log("Year insertion error => ", error);
+    console.log("Product insertion error => ", error);
   }
 };
 
-export const getProductFilter = async (datas: Product) => {
+export const getProductFilter = async (datas: Product | CreationProduct) => {
+  console.log(datas);
+  return
+  
   try {
     let product: any = "";
 
-    let query = "SELECT * FROM Product WHERE designation LIKE ";
+    let query = `SELECT * 
+    FROM Product prod INNER JOIN CreationProduct creatProd ON prod.idProduct = creatProd.idProduct
+    WHERE prod.designation LIKE `;
 
-    query += " '" + datas.designation + "%' ";
+    query += " '" + (datas as Product).designation + "%' ";
 
-    query += " AND idCategory= " + datas.idCategory;
+    query += " AND idCreationCategory= " + (datas as CreationProduct).idCreationCategory;
 
     product = await (await db).getAllAsync(query);
 
@@ -196,30 +307,57 @@ export const getProductFilter = async (datas: Product) => {
   }
 };
 
-export const deleteProduct = async (id: number) => {
+export const deleteProduct = async (idCreationProduct: number, removeProductTable: boolean) => {
   try {
-    let deleted = await (
-      await db
-    ).runAsync("DELETE FROM Product WHERE id=" + id);
-    return deleted.changes;
+    let deleteProduct: any = null;
+
+    if (removeProductTable) {
+      deleteProduct = await (
+        await db
+      ).runAsync(`DELETE FROM Product WHERE idProduct = (
+      SELECT prod.idProduct 
+      FROM Product prod INNER JOIN CreationProduct creatProd 
+      ON prod.idProduct = creatProd.idProduct
+      WHERE creatProd.idCreationProduct=${idCreationProduct})`);
+    } 
+
+     let  deleteCreationCategory = await (
+        await db
+      ).runAsync("DELETE FROM CreationProduct WHERE idCreationProduct=" + idCreationProduct);
+    
+
+    return deleteCreationCategory.changes;
+
   } catch (error) {
     console.log("Delete month record error => ", error);
   }
 };
 
-export const insertCategory = async (datas: Category, user: User) => {
+export const insertCategory = async (
+  datas: Category & CreationCategory,
+  user: User
+) => {
   try {
-    let query = await (
+    let insertCategory = await (
       await db
     ).runAsync(
-      "INSERT INTO Category (label, income, color, idUser) VALUES (?, ?, ?, ?)",
+      "INSERT INTO Category (label, color) VALUES (?, ?)",
       datas.label!,
-      datas.income!,
-      datas.color!,
-      user.id
+      datas.color!
     );
 
-    return query;
+    if (insertCategory.changes) {
+      const insertCreationCategory = await (
+        await db
+      ).runAsync(
+        "INSERT INTO CreationCategory (idCategory, idUser, categoryIncome) VALUES (?, ?, ?)",
+        insertCategory.lastInsertRowId,
+        user.id,
+        datas.categoryIncome!
+      );
+
+      return insertCreationCategory;
+    }
   } catch (error) {
     console.log("Category insertion error =>", error);
     return false;
@@ -227,22 +365,32 @@ export const insertCategory = async (datas: Category, user: User) => {
 };
 
 export const getCategory = async (user: User, categoryDateFilter: Date[]) => {
-  try {
-    const dateFrom =
-      categoryDateFilter[0].toISOString().split("T")[0] + " 01:00:00";
-    const dateTo =
-      categoryDateFilter[1].toISOString().split("T")[0] + " 24:00:00";
+  if (user && categoryDateFilter) {
+    try {
+      const dateFrom =
+        categoryDateFilter[0].toISOString().split("T")[0] + " 01:00:00";
+      const dateTo =
+        categoryDateFilter[1].toISOString().split("T")[0] + " 24:00:00";
 
-    let query = "SELECT * FROM Category WHERE idUser=" + user.id;
+      let query = `SELECT *
+                FROM Category as cat INNER JOIN CreationCategory as creatCat 
+                ON cat.idCategory = creatCat.idCategory
+                WHERE creatCat.idUser=${user.id} `;
 
-    query += " AND createdDate BETWEEN '" + dateFrom + "' AND '" + dateTo + "'";
-    
-    const categories: any = await (await db).getAllAsync(query);  
+      query +=
+        " AND creatCat.createdDate BETWEEN '" +
+        dateFrom +
+        "' AND '" +
+        dateTo +
+        "'";
 
-    return categories;
-  } catch (error) {
-    console.log("Category retrieve error =>", error);
-    return false;
+      const categories: any = await (await db).getAllAsync(query);
+
+      return categories;
+    } catch (error) {
+      console.log("Category retrieve error =>", error);
+      return false;
+    }
   }
 };
 
@@ -250,7 +398,10 @@ export const getUserCategory = async (user: User) => {
   try {
     const categories: any = await (
       await db
-    ).getAllAsync("SELECT * FROM Category WHERE idUser=" + user.id);
+    ).getAllAsync(`SELECT * 
+    FROM Category as cat INNER JOIN CreationCategory as creatCat
+    ON cat.idCategory == creatCat.idCategory
+    WHERE idUser=${user.id}`);
 
     return categories;
   } catch (error) {
@@ -259,11 +410,17 @@ export const getUserCategory = async (user: User) => {
   }
 };
 
-export const getCategoryById = async (id: number) => {
+export const getCategoryById = async (idCreationCategory: number) => {
+  console.log(idCreationCategory);
+
   try {
     const category: any = await (
       await db
-    ).getFirstAsync("SELECT * FROM Category WHERE id=" + id);
+    ).getFirstAsync(`SELECT * 
+    FROM Category cat INNER JOIN CreationCategory creatCat
+    ON cat.idCategory = creatCat.idCategory 
+    WHERE creatCat.idCreationCategory=${idCreationCategory}`);
+
     return category;
   } catch (error) {
     console.log("Category by id retrieve error =>", error);
@@ -271,72 +428,126 @@ export const getCategoryById = async (id: number) => {
   }
 };
 
-export const deleteCategory = async (id: number) => {
+export const deleteCategory = async (
+  idCreationCategory: number,
+  removeCategory: boolean
+) => {
   const dbtmp = await db;
   try {
-    const deleteCategory: any = dbtmp.runAsync(
-      "DELETE FROM Category WHERE id=" + id
-    );
-
-    setTimeout(() => {
-      const deleteProduct: any = dbtmp.runAsync(
-        "DELETE FROM Product WHERE idCategory=" + id
+    if (removeCategory) {
+      const selectCreationCategory: any = await dbtmp.getFirstAsync(
+        "SELECT idCategory FROM CreationCategory WHERE idCreationCategory=" +
+          idCreationCategory
       );
-    }, 1000);
 
-    return deleteCategory;
+      if (selectCreationCategory) {
+        const deleteCategory: any = await dbtmp.runAsync(
+          "DELETE FROM Category WHERE idCategory=" +
+            selectCreationCategory.idCategory
+        );
+
+        if (deleteCategory.changes) {
+          const deleteCreationCategory = await dbtmp.runAsync(
+            "DELETE FROM CreationCategory WHERE idCreationCategory=" +
+              idCreationCategory
+          );
+
+          return deleteCreationCategory;
+        }
+      } else {
+        const deleteCreationCategory = await dbtmp.runAsync(
+          "DELETE FROM CreationCategory WHERE idCreationCategory=" +
+            idCreationCategory
+        );
+
+        if (deleteCreationCategory.changes) {
+          setTimeout(() => {
+            const deleteProduct: any = dbtmp.runAsync(
+              "DELETE FROM CreationProduct WHERE idCreationCategory=" +
+                idCreationCategory
+            );
+          }, 1000);
+
+          return deleteProduct;
+        }
+      }
+    }
+
+    return true;
   } catch (error) {
     console.log("Delete category error =>", error);
     return false;
   }
 };
 
-export const updateCategory = async (datas: Category) => {
+export const updateCategory = async (datas: Category | CreationCategory) => {
   try {
-    const update: any = await (
+    const updateCategory: any = await (
       await db
     ).runAsync(
-      "UPDATE Category SET label = ? , income = ? , color = ? WHERE id = ? ",
-      datas.label!,
-      datas.income!,
-      datas.color!,
-      datas.id!
+      "UPDATE Category SET label = ? , color = ? WHERE idCategory = ? ",
+      (datas as Category).label!,
+      (datas as Category).color!,
+      datas.idCategory!
     );
 
-    return update;
+    if (updateCategory.changes) {
+      const updateCategory: any = await (
+        await db
+      ).runAsync(
+        "UPDATE CreationCategory SET categoryIncome = ? WHERE idCreationCategory = ? ",
+        (datas as CreationCategory).categoryIncome,
+        (datas as CreationCategory).idCreationCategory!
+      );
+
+      return updateCategory;
+    }
   } catch (error) {
     console.log("Update category error =>", error);
     return false;
   }
 };
 
-export const getCategoryFilter = async (datas: Category[], date: Date[]) => {
+export const getCategoryFilter = async (
+  datas: Category[] & CreationCategory[],
+  date: Date[]
+) => {
   try {
     let category: any = [];
 
-    const dateFrom = date[0].toISOString();
-    const dateTo = date[1].toISOString();
+    const dateFrom = date[0].toISOString().split("T")[0] + " 01:00:00";
+    const dateTo = date[1].toISOString().split("T")[0] + " 24:00:00";
 
     if (datas.length > 0) {
-      let query = "SELECT * FROM Category WHERE ";
+      let query = `SELECT * 
+      FROM Category cat INNER JOIN CreationCategory creatCat ON cat.idCategory = creatCat.idCategory
+        `;
 
-      if (datas[0].id != -1) {
+      if (datas[0].idCategory != -1) {
+        query += " WHERE ";
         datas.forEach((data, index) => {
-          query += " '%" + data.label + "%' ";
+          query += " cat.label LIKE '" + data.label + "%' ";
           if (index < datas.length - 1) {
-            query += " OR label LIKE ";
+            query += " OR ";
           }
         });
-      }
 
-      if (dateFrom !== dateTo) {
         query +=
-          " AND createdDate BETWEEN '" + dateFrom + "' AND '" + dateTo + "'";
+          " AND creatCat.createdDate BETWEEN '" +
+          dateFrom +
+          "' AND '" +
+          dateTo +
+          "' ";
       } else {
-        query += " AND createdDate LIKE '" + dateFrom.split("T")[0] + "%' ";
+        query +=
+          " WHERE creatCat.createdDate BETWEEN '" +
+          dateFrom +
+          "' AND '" +
+          dateTo +
+          "' ";
       }
+      query += " AND creatCat.idUser = " + datas[0].idUser;
 
-      query += " AND idUser = " + datas[0].idUser;
       category = await (await db).getAllAsync(query);
     }
 

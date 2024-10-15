@@ -1,12 +1,12 @@
 import { TextColor, TitleColor, green, orange, red } from "@/constants/Colors";
-import { Product } from "@/constants/interface";
+import { CreationProduct, Product } from "@/constants/interface";
 import { useEffect, useState } from "react";
 import { StyleSheet, Text } from "react-native";
 import Svg, { Circle, G, Text as TextSvg } from "react-native-svg";
 export default function DonutChart({
   productData,
 }: {
-  productData: Product[];
+  productData: Product[] | CreationProduct[];
 }) {
   const center = 200 / 2;
   const radius = (200 - 70) / 2;
@@ -18,15 +18,19 @@ export default function DonutChart({
 
   let totalAmount = 0;
   productData?.forEach((data) => {
-    totalAmount += (data.amount * data.coefficient);
+    totalAmount +=
+      (data as CreationProduct).productAmount *
+      (data as CreationProduct).productCoefficient;
   });
-
 
   const refresh = () => {
     productData?.map((data) => {
       productChartData.push({
-        percentage: (data.coefficient * data.amount) / totalAmount,
-        color: data.color,
+        percentage:
+          ((data as CreationProduct).productCoefficient *
+            (data as CreationProduct).productAmount) /
+          totalAmount,
+        color: (data as Product).color,
       });
     });
 
@@ -35,7 +39,11 @@ export default function DonutChart({
 
     productData?.forEach((data) => {
       angles.push(angle);
-      angle += ((data.coefficient * data.amount) / totalAmount) * 360;
+      angle +=
+        (((data as CreationProduct).productCoefficient *
+          (data as CreationProduct).productAmount) /
+          totalAmount) *
+        360;
     });
 
     setExpensesCount(productChartData.length);
@@ -56,16 +64,26 @@ export default function DonutChart({
                 cx={center}
                 cy={center}
                 r={radius}
-                stroke={value.color}
+                stroke={(value as Product).color}
                 strokeWidth="30"
                 fill="transparent"
                 strokeDasharray={circonference}
-                strokeDashoffset={circonference * (1 - ((value.coefficient * value.amount) / totalAmount))}
+                strokeDashoffset={
+                  circonference *
+                  (1 -
+                    ((value as CreationProduct).productCoefficient *
+                      (value as CreationProduct).productAmount) /
+                      totalAmount)
+                }
                 originX={center}
                 originY={center}
                 rotation={startAngle[index]}
               />
-              <TextSvg fill="black">{(value.coefficient * value.amount) / totalAmount}</TextSvg>
+              <TextSvg fill="black">
+                {((value as CreationProduct).productCoefficient *
+                  (value as CreationProduct).productAmount) /
+                  totalAmount}
+              </TextSvg>
             </G>
           );
         })}

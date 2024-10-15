@@ -18,7 +18,7 @@ import {
   Pressable,
   BackHandler,
 } from "react-native";
-import { Category, Product } from "@/constants/interface";
+import { Category, CreationCategory, Product } from "@/constants/interface";
 import {
   getUserEmail,
   logout,
@@ -32,6 +32,7 @@ import Loading from "@/components/loading";
 import Header from "@/components/category/header";
 import Resumes from "@/components/category/resume";
 import CategoryList from "@/components/category/categoryList";
+import { categoryDataInit } from "@/constants/utils";
 
 export default function Home() {
   let options: Intl.DateTimeFormatOptions = {
@@ -39,7 +40,6 @@ export default function Home() {
     month: "short",
     day: "numeric",
   };
-
 
   const [popupAddCategoryVisible, setPopupAddCategoryVisible] =
     useState<ViewStyle>({ display: "none" });
@@ -59,22 +59,15 @@ export default function Home() {
   // if new category
   const [change, setChange] = useState<boolean>(false);
 
-  // Retrieve Category Selected
-  const categoryDataInit = {
-    id: -1,
-    color: "#000",
-    income: "",
-    label: "",
-    idUser: 1,
-  };
-  const [categoryData, setCategoryData] = useState<Category>(categoryDataInit);
+  const [categoryData, setCategoryData] = useState<Category & CreationCategory>(
+    categoryDataInit
+  );
 
   // Triggered when category filter is selected
   const isFilterActivateInit = [false, false];
 
   const [isCategoryFiltered, setIsCategoryFilterSelected] =
     useState<boolean[]>(isFilterActivateInit);
-
 
   // Retrieve Categories for filter
   const [categoriesFitler, setCategoriesFilter] = useState<Item[]>();
@@ -101,7 +94,7 @@ export default function Home() {
 
   const getCategory = async (
     categoryDateFilter: Date[]
-  ): Promise<Category[]> => {
+  ): Promise<Category[] & CreationCategory[]> => {
     let category = await retrieveCategoryAccordingToDate(categoryDateFilter);
     let categories: any = null;
 
@@ -110,7 +103,7 @@ export default function Home() {
     } else {
       categories = categoryData;
     }
-    
+
     return categories;
   };
 
@@ -158,7 +151,6 @@ export default function Home() {
       setShowLoading({ display: "flex" });
 
       getCategory(categoryDateFilter).then((categories) => {
-
         getCountOfCategory(categories);
 
         getCategoriesForFitler(categories);
@@ -245,10 +237,10 @@ export default function Home() {
             <TextInput
               placeholder="0"
               keyboardType="numeric"
-              value={categoryData?.income}
+              value={JSON.stringify((categoryData?.categoryIncome) ? categoryData?.categoryIncome : 0)}
               onChangeText={(val) => {
                 let dataTmp = { ...categoryData };
-                dataTmp.income = val;
+                dataTmp.categoryIncome = parseFloat(val);
                 setCategoryData(dataTmp);
               }}
             />

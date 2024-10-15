@@ -26,7 +26,12 @@ import {
   upgradeCategory,
 } from "@/constants/Controller";
 import ErrorMessageModal from "./message/errorMessageModal";
-import { Category, Product } from "@/constants/interface";
+import {
+  Category,
+  CreationCategory,
+  CreationProduct,
+  Product,
+} from "@/constants/interface";
 import {
   amountRemainingProduct,
   checkIfCategorylabelAlreadyStored,
@@ -61,7 +66,7 @@ export default function Popup({
   setThereIsFilter: (val: boolean[]) => void;
   categoryDateFilter?: Date[];
   setshowLoading: (val: ViewStyle) => void;
-  category?: Category;
+  category?: Category & CreationCategory;
   children: ReactNode;
 }) {
   const categoryDataInit = {
@@ -73,13 +78,14 @@ export default function Popup({
   };
 
   // Get product for edit
-  const productDataInit: Product = {
-    id: -1,
+  const productDataInit: Product & CreationProduct = {
+    idProduct: -1,
+    idCreationProduct: -1,
     designation: "",
-    amount: 0,
+    productAmount: 0,
     color: "#000",
-    idCategory: datas?.idCategory!,
-    coefficient: 1,
+    idCreationCategory: datas?.idCategory!,
+    productCoefficient: 1,
   };
 
   let [errorMessage, setErrorMessage] = useState<string[]>([]);
@@ -124,7 +130,7 @@ export default function Popup({
                 setshowLoading({ display: "flex" });
                 switch (viewType) {
                   case "category":
-                    if (datas?.id! > 0) {
+                    if (datas?.idCategory! > 0) {
                       const result = upgradeCategory({
                         datas,
                         setErrorMessage,
@@ -213,20 +219,25 @@ export default function Popup({
                     setChange(true);
                     setshowLoading({ display: "none" });
                     break;
+
                   case "expenses":
                     const products = await retrieveProduct(category!);
 
                     let productAmountTmp = 0;
 
-                    products?.forEach((product) => {
-                      productAmountTmp += product.amount * product.coefficient;
-                    });
+                    for (let product of products) {
+                      productAmountTmp +=
+                        (product as CreationProduct).productAmount *
+                        (product as CreationProduct).productCoefficient;
+                    }
 
                     // Get Product Amount remaining for the category
                     const productAmountRemaining =
-                      parseFloat(category?.income!) - productAmountTmp;
-
-                    if (datas.id == -1) {
+                      (category as CreationCategory)?.categoryIncome! -
+                      productAmountTmp;
+                    
+                      
+                    if (datas.idCreationProduct == -1) {
                       // Get if Amount insert by user exceed product amount remaining
                       const isNotExceedAmountRemaining = amountRemainingProduct(
                         datas,
@@ -255,14 +266,19 @@ export default function Popup({
                     } else {
                       let oldAmount = 0;
 
-                      products?.forEach((product) => {
-                        if (product.id == datas.id) {
-                          oldAmount = product.amount;
+                      for (let product of products) {
+                        if (
+                          (product as CreationProduct).idCreationProduct ==
+                          datas.idCreationProduct
+                        ) {
+                          oldAmount =
+                            (product as CreationProduct).productAmount *
+                            (product as CreationProduct).productCoefficient;
                         }
-                      });
+                      }
 
                       let amountRemaining = productAmountRemaining + oldAmount;
-
+                      
                       // Get if Amount insert by user exceed product amount remaining
                       const isNotExceedAmountRemaining = amountRemainingProduct(
                         datas,

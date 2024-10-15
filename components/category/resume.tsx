@@ -1,7 +1,7 @@
 import { TextColor, TitleColor } from "@/constants/Colors";
 import { retrieveProductByCategory } from "@/constants/Controller";
 import { GloblalStyles } from "@/constants/GlobalStyles";
-import { Category } from "@/constants/interface";
+import { Category, CreationCategory } from "@/constants/interface";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import {
@@ -50,18 +50,18 @@ export default function Resumes({
     return product;
   };
 
-  const getSumIncome = async (category: Category[]): Promise<number> => {
+  const getSumIncome = async (category: Category[] & CreationCategory[]): Promise<number> => {
     let categoryCount = 0;
     let sumIncomeTmp = 0;
 
     while (categoryCount < category.length) {
-      sumIncomeTmp += parseFloat(category[categoryCount].income!);
+      sumIncomeTmp += category[categoryCount].categoryIncome;
       categoryCount += 1;
     }
     return sumIncomeTmp;
   };
 
-  const getSumExpense = async (category: Category[]): Promise<number> => {
+  const getSumExpense = async (category: Category[] & CreationCategory[]): Promise<number> => {
     const product = await getProduct();
     let categoryCount = 0;
     let sumExpensiveTmp = 0;
@@ -71,9 +71,9 @@ export default function Resumes({
       let productCount = 0;
 
       while (productCount < product.length) {
-        if (product[productCount].idCategory == category[categoryCount].id) {
+        if (product[productCount].idCreationCategory == category[categoryCount].idCreationCategory) {
           sumExpensiveTmp +=
-            product[productCount].amount * product[productCount].coefficient;
+            product[productCount].productAmount * product[productCount].productCoefficient;
           transactionNumber += 1;
         }
         productCount++;
@@ -86,8 +86,8 @@ export default function Resumes({
 
   useEffect(() => {
     getCategories(categoryDateFilter).then((categories) => {
-      getSumIncome(categories).then((sumIncome) => {
-        getSumExpense(categories).then((sumExpense) => {
+      getSumIncome(categories as Category[] & CreationCategory[]).then((sumIncome) => {
+        getSumExpense(categories as Category[] & CreationCategory[]).then((sumExpense) => {
           const sumTmp: Resume = {
             income: sumIncome,
             expense: sumExpense,

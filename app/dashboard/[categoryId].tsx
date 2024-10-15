@@ -4,7 +4,12 @@ import TextInputAddList from "@/components/textInputAddList";
 import { TextColor, TitleColor, green, red } from "@/constants/Colors";
 import { retrieveProduct } from "@/constants/Controller";
 import { GloblalStyles } from "@/constants/GlobalStyles";
-import { Category, Product } from "@/constants/interface";
+import {
+  Category,
+  CreationCategory,
+  CreationProduct,
+  Product,
+} from "@/constants/interface";
 import { useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import RNPickerSelect, { Item } from "react-native-picker-select";
@@ -26,7 +31,9 @@ import Loading from "@/components/loading";
 
 export default function Products() {
   const { categoryId } = useLocalSearchParams();
-  const category: Category = JSON.parse(categoryId! as string);
+  const category: Category & CreationCategory = JSON.parse(
+    categoryId! as string
+  );
 
   // Show button edit, delete
   const [showActionButton, setShowActionButton] = useState<ViewStyle[]>([]);
@@ -46,27 +53,29 @@ export default function Products() {
   });
 
   // Store product data
-  const [productData, setProductData] = useState<Product[]>([]);
+  const [productData, setProductData] = useState<Product[] & CreationProduct[]>([]);
 
   // Store product data
   const [productDataWithoutFilter, setProductDataWithoutFilter] = useState<
-    Product[]
+    Product[] | CreationProduct[]
   >([]);
 
   // Retrieve Categories for filter
   const [productItemFitler, setProductItemFilter] = useState<Item[]>();
 
   // Get product for edit
-  const productDataInit: Product = {
-    id: -1,
+  const productDataInit: Product | CreationProduct = {
+    idProduct: -1,
+    idCreationProduct: -1,
     designation: "",
-    amount: 0,
+    productAmount: 0,
     color: "#000",
-    idCategory: category.id!,
-    coefficient: 1,
+    idCreationCategory: (category as CreationCategory).idCreationCategory!,
+    productCoefficient: 1,
   };
-  const [productDataTmp, setProductDataTmp] =
-    useState<Product>(productDataInit);
+  const [productDataTmp, setProductDataTmp] = useState<
+    Product | CreationProduct
+  >(productDataInit);
 
   // Triggered when category filter is selected
   const [popupFilterByProductVisible, setPopupFilterByProductVisible] =
@@ -77,15 +86,16 @@ export default function Products() {
     boolean[]
   >([false]);
 
-
   // Initiate list day number
   const [dayNumber, setDayNumber] = useState<Item[]>();
 
   //   Stock Total amount in add expenses view
-  const [amount, setAmount] = useState<number>(productDataTmp.amount);
+  const [amount, setAmount] = useState<number>(
+    (productDataTmp as CreationProduct).productCoefficient
+  );
 
   const [coefficient, setCoefficient] = useState<number>(
-    productDataTmp.coefficient
+    (productDataTmp as CreationProduct).productCoefficient
   );
 
   // Product total amount
@@ -103,11 +113,11 @@ export default function Products() {
     setShowLoading({ display: "flex" });
 
     const getProduct = async () => {
-      let products: Product[] = [];
+      let products: Product[] & CreationProduct[] = [];
       const productForDonutChart = await retrieveProduct(category);
       const dataFromFilter: any = productDataTmp;
 
-      if (isProductFilterSelected[0]) {        
+      if (isProductFilterSelected[0]) {
         products = dataFromFilter;
       } else {
         products = await retrieveProduct(category);
@@ -144,17 +154,23 @@ export default function Products() {
       setDayNumber(dayNumberTmp);
     };
 
-    const getTotalAmountRemainingProduct = (products: Product[]) => {
+    const getTotalAmountRemainingProduct = (
+      products: Product[] | CreationProduct[]
+    ) => {
       let productAmountTmp = 0;
 
       products?.forEach((product) => {
-        productAmountTmp += product.amount * product.coefficient;
+        productAmountTmp +=
+          (product as CreationProduct).productAmount *
+          (product as CreationProduct).productCoefficient;
       });
 
-      setProductTotalAmount(parseFloat(category.income!) - productAmountTmp);
+      setProductTotalAmount(
+        (category as CreationCategory).categoryIncome - productAmountTmp
+      );
     };
 
-    const getCategoriesForFitler = (products: Product[]) => {
+    const getCategoriesForFitler = (products: Product[] & CreationProduct[]) => {
       let productCount = 0;
       let productTmp: Item[] = [];
 
@@ -183,7 +199,9 @@ export default function Products() {
     <KeyboardAvoidingView style={[GloblalStyles.container]}>
       <View style={styles.header}>
         <View style={styles.top}>
-          <Text style={styles.categoryLabel}>{category.label}</Text>
+          <Text style={styles.categoryLabel}>
+            {(category as Category).label}
+          </Text>
           <Text
             style={[
               styles.amountRemain,
@@ -307,11 +325,10 @@ export default function Products() {
           <View style={GloblalStyles.appInput}>
             <TextInput
               placeholder="Exemple"
-              value={productDataTmp?.designation}
+              value={(productDataTmp as Product)?.designation}
               onChangeText={(designation) => {
-                
                 let productTmp = { ...productDataTmp };
-                productTmp.designation = designation;
+                (productTmp as Product).designation = designation;
                 setProductDataTmp(productTmp);
               }}
             />
@@ -326,13 +343,16 @@ export default function Products() {
                 placeholder="0"
                 keyboardType="numeric"
                 value={JSON.stringify(
-                  productDataTmp?.amount ? productDataTmp?.amount : 0
+                  (productDataTmp as CreationProduct)?.productAmount
+                    ? (productDataTmp as CreationProduct)?.productAmount
+                    : 0
                 )}
-                onChangeText={(amountFieldValue) => {                  
+                onChangeText={(amountFieldValue) => {
                   setAmount(parseFloat(amountFieldValue));
 
                   let productTmp = { ...productDataTmp };
-                  productTmp.amount = parseFloat(amountFieldValue);
+                  (productTmp as CreationProduct).productAmount =
+                    parseFloat(amountFieldValue);
                   setProductDataTmp(productTmp);
                 }}
               />
@@ -353,10 +373,11 @@ export default function Products() {
               ]}
             >
               <RNPickerSelect
-                value={productDataTmp?.coefficient}
+                value={(productDataTmp as CreationProduct)?.productCoefficient}
                 onValueChange={(dayFieldValue) => {
                   let productTmp = { ...productDataTmp };
-                  productTmp.coefficient = parseInt(dayFieldValue);
+                  (productTmp as CreationProduct).productCoefficient =
+                    parseInt(dayFieldValue);
 
                   setCoefficient(dayFieldValue);
 
@@ -371,7 +392,8 @@ export default function Products() {
           <Text style={styles.totalAmount}>
             Total amount:{" "}
             {productDataTmp
-              ? productDataTmp.amount * productDataTmp.coefficient
+              ? (productDataTmp as CreationProduct).productAmount *
+                (productDataTmp as CreationProduct).productCoefficient
               : amount * coefficient}{" "}
             Ar
           </Text>
@@ -405,12 +427,12 @@ export default function Products() {
 
             <TextInput
               placeholder="Exemple"
-              value={productDataTmp.designation}
-              onChangeText={(productFiltered) => {                
+              value={(productDataTmp as Product).designation}
+              onChangeText={(productFiltered) => {
                 let productTmp = { ...productDataTmp };
-                  productTmp.designation = productFiltered;
+                (productTmp as Product).designation = productFiltered;
 
-                setProductDataTmp(productTmp)
+                setProductDataTmp(productTmp);
               }}
             />
           </View>

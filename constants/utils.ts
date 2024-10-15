@@ -1,15 +1,15 @@
 import { ViewStyle } from "react-native";
-import { Category } from "./interface";
+import { Category, CreationCategory, CreationProduct, Product } from "./interface";
 import { removeCategory, retrieveUserCategory } from "./Controller";
 
 export const amountRemainingProduct = (
-  datas: any,
+  datas: Product | CreationProduct,
   amountRemaining: number,
   setErrorMessage: (val: string[]) => void,
   setModalShown: (val: boolean[]) => void,
   setshowLoading: (val: ViewStyle) => void
 ) => {
-  if (parseFloat(datas.amount) * datas.coefficient > amountRemaining) {
+  if ((datas as CreationProduct).productAmount * (datas as CreationProduct).productCoefficient > amountRemaining) {
     setErrorMessage([
       "The amount should not exceed: " + amountRemaining + " Ar",
     ]);
@@ -37,8 +37,8 @@ export const checkIfCategorylabelAlreadyStored = async (datas: Category) => {
   const dateCreatedFormated = dateCreated[1] + "-" + dateCreated[0];
 
   //  Check if category exist on database
-  userCategories.forEach((userCategory: Category) => {
-    let dateCategoryStoredCreated = new Date(userCategory.createdDate!)
+  userCategories.forEach((userCategory: Category | CreationCategory) => {
+    let dateCategoryStoredCreated = new Date((userCategory as CreationCategory).createdDate!)
       .toISOString()
       .split("T")[0]
       .split("-");
@@ -46,7 +46,7 @@ export const checkIfCategorylabelAlreadyStored = async (datas: Category) => {
     let dateCategoryStoredCreatedFormated =
       dateCategoryStoredCreated[1] + "-" + dateCategoryStoredCreated[0];
 
-    if (userCategory.label?.toLocaleLowerCase() === label?.toLocaleLowerCase()) {
+    if ((userCategory as Category).label?.toLocaleLowerCase() === label?.toLocaleLowerCase()) {
       if (dateCategoryStoredCreatedFormated === dateCreatedFormated) {
         isCategoryLabelNotExist = false;
       }
@@ -60,6 +60,16 @@ export const isFilteredActivate = (isCategoryFiltered: boolean[], index: number,
   let isFiltered = [...isCategoryFiltered!];
   isFiltered[index] = true;
   return isFiltered;
+};
+
+
+export const categoryDataInit = {
+  idCategory: -1,
+  color: "#000",
+  label: "",
+  idCreationCategory: -1,
+  categoryIncome: 0,
+  idUser: 1,
 };
 
 

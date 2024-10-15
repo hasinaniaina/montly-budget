@@ -15,9 +15,17 @@ import {
   updateProduct,
   getProductFilter,
   getUserCategory,
+  getProductByIdCreationCategory,
+  getProductByIdCreationProduct,
 } from "./db";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Category, Product } from "./interface";
+import {
+  Category,
+  CreationCategory,
+  CreationProduct,
+  Product,
+} from "./interface";
+import { SQLiteRunResult } from "expo-sqlite";
 
 export const saveUser = async ({
   email,
@@ -137,12 +145,15 @@ export const sendEMail = async ({
 
 // =========================== Product =========================
 export const saveProduct = async (
-  datas: Product,
+  datas: Product & CreationProduct,
   setErrorMessage: (val: string[]) => void,
   setModalShown: (val: boolean[]) => void
 ) => {
-
-  if (datas.color == "" || datas.designation == "" || datas.amount == 0) {
+  if (
+    datas.color == "" ||
+    datas.designation == "" ||
+    datas.productAmount == 0
+  ) {
     setErrorMessage(["All Fields should not be empty!"]);
     setModalShown([true]);
     return false;
@@ -153,8 +164,9 @@ export const saveProduct = async (
   return save;
 };
 
-export const editProduct = async (datas: Product,
-   setErrorMessage: (val: string[]) => void,
+export const editProduct = async (
+  datas: Product,
+  setErrorMessage: (val: string[]) => void,
   setModalShown: (val: boolean[]) => void
 ) => {
   if (datas.color == "" || datas.designation == "") {
@@ -169,24 +181,29 @@ export const editProduct = async (datas: Product,
 
 export const retrieveProductByCategory = async () => {
   const products = await getProductsNew();
-  return products as Product[];
+  return products as Product[] & CreationProduct[];
 };
 
-export const retrieveProduct = async (category: Category) => {
+export const retrieveProduct = async (category: Category & CreationCategory) => {
   const products = await getProducts(category);
-  return products as Product[];
+  return products as Product[] & CreationProduct[];
 };
 
 export const filterProduct = async (datas: Product): Promise<Product[]> => {
-  return await getProductFilter(datas) as Product[];
+  return (await getProductFilter(datas)) as Product[];
 };
 
+export const removeProduct = async (idCreationProduct: number) => {
+  const productAlreadyExistBefore =  await getProductByIdCreationProduct(idCreationProduct);
 
-export const removeProduct = async (id: number) => {
-  const result = await deleteProduct(id);
+  if (productAlreadyExistBefore.length > 1) {
+    const result = await deleteProduct(idCreationProduct, false);
+  } else {
+    const result = await deleteProduct(idCreationProduct, true);
+  }
+  
   return true;
 };
-
 
 // =========================== Category =========================
 
@@ -195,10 +212,10 @@ export const createCategory = async ({
   setErrorMessage,
   setModalShown,
 }: {
-  datas?: Category;
+  datas?: Category & CreationCategory;
   setErrorMessage: (val: string[]) => void;
   setModalShown: (val: boolean[]) => void;
-}): Promise<boolean> => {
+}): Promise<boolean | number> => {
   let error = false;
   const user: any = await AsyncStorage.getItem("userCredentials");
 
@@ -210,7 +227,7 @@ export const createCategory = async ({
     error = true;
   }
 
-  if (datas?.income == "") {
+  if (JSON.stringify(datas?.categoryIncome) == "") {
     error = true;
   }
 
@@ -219,9 +236,8 @@ export const createCategory = async ({
     setModalShown([true]);
   } else {
     const CategoryCreated = await insertCategory(datas!, JSON.parse(user));
-    if (CategoryCreated) {
-      return true;
-    }
+
+    return (CategoryCreated as SQLiteRunResult).changes;
   }
 
   return false;
@@ -230,16 +246,24 @@ export const createCategory = async ({
 export const retrieveUserCategory = async (): Promise<Category[]> => {
   const user: any = await AsyncStorage.getItem("userCredentials");
   return await getUserCategory(JSON.parse(user));
-}
+};
 
-export const retrieveCategoryAccordingToDate = async (categoryDateFilter: Date[]) => {
+export const retrieveCategoryAccordingToDate = async (
+  categoryDateFilter: Date[]
+) => {
   const user: any = await AsyncStorage.getItem("userCredentials");
 
   return await getCategory(JSON.parse(user), categoryDateFilter);
 };
 
-export const removeCategory = async (id: number) => {
-  const result = await deleteCategory(id);
+export const removeCategory = async (idCreationCategory: number) => {
+  const creationProduct = await getProductByIdCreationCategory(idCreationCategory);
+  let result: any = "";
+  if (creationProduct.length > 0) {
+    result = await deleteCategory(idCreationCategory, false);
+  } else {
+    result = await deleteCategory(idCreationCategory, true);
+  }
 
   if (result.changes) {
     return true;
@@ -257,7 +281,7 @@ export const upgradeCategory = async ({
   setErrorMessage,
   setModalShown,
 }: {
-  datas?: Category;
+  datas?: Category & CreationCategory;
   setErrorMessage: (val: string[]) => void;
   setModalShown: (val: boolean[]) => void;
 }) => {
@@ -271,7 +295,7 @@ export const upgradeCategory = async ({
     error = true;
   }
 
-  if (datas?.income == "") {
+  if (JSON.stringify(datas?.categoryIncome) == "") {
     error = true;
   }
 
@@ -281,16 +305,19 @@ export const upgradeCategory = async ({
   } else {
     const updated = await updateCategory(datas!);
 
-    if (updated) {
+    if (updated.changes) {
       return true;
     }
   }
 };
 
-export const filterCategory = async (datas: Category[], date: Date[]) => {
+export const filterCategory = async (
+  datas: Category[] & CreationCategory[],
+  date: Date[]
+) => {
   const user: any = await AsyncStorage.getItem("userCredentials");
 
-  datas.forEach((data, index) => { 
+  datas.forEach((data, index) => {
     datas[index].idUser = JSON.parse(user).id;
   });
 
@@ -302,4 +329,3 @@ export const getUserEmail = async (): Promise<String> => {
   const user = await AsyncStorage.getItem("userCredentials");
   return user!;
 };
-

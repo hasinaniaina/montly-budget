@@ -4,21 +4,32 @@ export type User = {
     password: string
 }
 
-export type Product = {
-    id: number,
-    designation: string,
-    amount: number,
-    color: string,
+export type Category = {
     idCategory: number,
-    coefficient: number,
-    createdDate?: Date
+    label: string,
+    color: string,
 }
 
-export type Category = {
-    id?: number,
-    label?: string,
-    income?: string,
-    color?: string,
+
+export type CreationCategory = {
+    idCreationCategory: number,
     createdDate?: Date,
-    idUser?: number
+    idCategory: number,
+    idUser: number,
+    categoryIncome: number
+}
+
+export type Product = {
+    idProduct: number,
+    designation: string,
+    color: string,
+}
+
+export type CreationProduct = {
+    idCreationProduct: number,
+    idProduct: number,
+    productAmount: number,
+    productCoefficient: number,
+    createdDate?: Date,
+    idCreationCategory: number
 }

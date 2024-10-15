@@ -9,10 +9,8 @@ import {
   ViewStyle,
 } from "react-native";
 import { TextColor, green, red } from "@/constants/Colors";
-import { Product } from "@/constants/interface";
-import {
-  removeProduct,
-} from "@/constants/Controller";
+import { CreationProduct, Product } from "@/constants/interface";
+import { removeProduct } from "@/constants/Controller";
 import { useState } from "react";
 import ConfirmationMessageModal from "./message/confirmationMessageModal";
 import { GloblalStyles } from "@/constants/GlobalStyles";
@@ -27,7 +25,7 @@ export default function ListProduct({
   setSelectProductForEdit,
   productData,
   setShowLoading,
-  productDataWithoutFilter
+  productDataWithoutFilter,
 }: {
   showActionButton: ViewStyle[];
   setShowActionButton: (val: ViewStyle[]) => void;
@@ -36,9 +34,9 @@ export default function ListProduct({
   setChange: (val: boolean) => void;
   setShowAddListField: (val: ViewStyle) => void;
   setSelectProductForEdit: (val: Product) => void;
-  productData: Product[];
+  productData: Product[] & CreationProduct[];
   setShowLoading: (val: ViewStyle) => void;
-  productDataWithoutFilter: Product[];
+  productDataWithoutFilter: Product[] | CreationProduct[];
 }) {
   let options: Intl.DateTimeFormatOptions = {
     year: "numeric",
@@ -49,7 +47,9 @@ export default function ListProduct({
   let totalAmountTmp = 0;
 
   productDataWithoutFilter?.forEach((data) => {
-    totalAmountTmp += data.amount * data.coefficient;
+    totalAmountTmp +=
+      (data as CreationProduct).productAmount *
+      (data as CreationProduct).productCoefficient;
   });
 
   // Confirmation delete confirmation modal
@@ -73,7 +73,9 @@ export default function ListProduct({
 
               setShowActionButton(showActionButtonTmp);
 
-              setIndexOfActionButtonShowed(item.id);
+              setIndexOfActionButtonShowed(
+                (item as CreationProduct).idCreationProduct
+              );
             }}
             onPressIn={() => {
               setShowActionButton([]);
@@ -85,7 +87,8 @@ export default function ListProduct({
             <View
               style={[
                 styles.itemsContainer,
-                indexOfActionButtonShowed == item.id && {
+                indexOfActionButtonShowed ==
+                  (item as CreationProduct).idCreationProduct && {
                   backgroundColor: "#fff",
                   borderRadius: 5,
                 },
@@ -99,7 +102,8 @@ export default function ListProduct({
                   <Text
                     style={[
                       styles.productName,
-                      indexOfActionButtonShowed == item.id && {
+                      indexOfActionButtonShowed ==
+                        (item as CreationProduct).idCreationProduct && {
                         fontFamily: "k2d-bold",
                         color: "#000",
                       },
@@ -108,27 +112,31 @@ export default function ListProduct({
                     {item.designation}
                   </Text>
                   <Text style={GloblalStyles.CreatedDate}>
-                    {new Date(item.createdDate!).toLocaleDateString(
-                      "en-US",
-                      options
-                    )}
+                    {new Date(
+                      (item as CreationProduct).createdDate!
+                    ).toLocaleDateString("en-US", options)}
                   </Text>
                 </View>
               </View>
               <View
                 style={[
                   styles.itemRightContent,
-                  indexOfActionButtonShowed == item.id && {
+                  indexOfActionButtonShowed == (item as CreationProduct).idCreationProduct && {
                     display: "none",
                   },
                 ]}
               >
                 <Text style={styles.price}>
-                  {item.amount * item.coefficient} Ariary -{" "}
+                  {(item as CreationProduct).productAmount *
+                    (item as CreationProduct).productCoefficient}{" "}
+                  Ariary -{" "}
                 </Text>
                 <Text style={styles.percentage}>
                   {Number(
-                    (item.coefficient * item.amount * 100) / totalAmountTmp
+                    ((item as CreationProduct).productCoefficient *
+                      (item as CreationProduct).productAmount *
+                      100) /
+                      totalAmountTmp
                   ).toFixed(2)}
                   %
                 </Text>

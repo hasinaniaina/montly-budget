@@ -7,10 +7,10 @@ import {
   ViewStyle,
   TouchableOpacity,
 } from "react-native";
-import React, { useEffect, useState } from "react";
+import React, { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { GloblalStyles } from "@/constants/GlobalStyles";
 import { TextColor, TitleColor } from "@/constants/Colors";
-import { Category } from "@/constants/interface";
+import { Category, CreationCategory, Product } from "@/constants/interface";
 import { router } from "expo-router";
 import {
   removeCategory,
@@ -18,6 +18,7 @@ import {
   retrieveProductByCategory,
 } from "@/constants/Controller";
 import ConfirmationMessageModal from "../message/confirmationMessageModal";
+import { categoryDataInit } from "@/constants/utils";
 
 export default function CategoryList({
   getCategories,
@@ -34,13 +35,13 @@ export default function CategoryList({
   change,
   setChange,
 }: {
-  getCategories: (val: Date[]) => Promise<Category[]>;
+  getCategories: (val: Date[]) => Promise<Category[] & CreationCategory[]>;
   categoryDateFilter: Date[];
   setPopupFilterByCategoryVisible: (val: ViewStyle) => void;
   isCategoryFiltered: boolean[];
   setIsCategoryFilterSelected: (val: boolean[]) => void;
   setPopupAddCategoryVisible: (val: ViewStyle) => void;
-  setCategoryData: (val: Category) => void;
+  setCategoryData: (val: Category & CreationCategory) => void;
   showActionButton: ViewStyle[];
   setShowActionButton: (val: ViewStyle[]) => void;
   setCategoryDateFilter: (val: Date[]) => void;
@@ -52,14 +53,6 @@ export default function CategoryList({
     year: "numeric",
     month: "short",
     day: "numeric",
-  };
-  // Retrieve Category Selected
-  const categoryDataInit = {
-    id: -1,
-    color: "#000",
-    income: "",
-    label: "",
-    idUser: 1,
   };
 
   // Retrieve Category date filter
@@ -78,7 +71,7 @@ export default function CategoryList({
   const [categoriesTransactionNumber, setCategoriesTransactionNumber] =
     useState<number[]>([]);
 
-  const getCategoryTransactionNumber = async (category: Category[]) => {
+  const getCategoryTransactionNumber = async (category: Category[] & CreationCategory[]) => {
     const product = await retrieveProductByCategory();
     let categoryCount = 0;
     let sumExpensiveTmp = 0;
@@ -89,7 +82,7 @@ export default function CategoryList({
       let productCount = 0;
 
       while (productCount < product.length) {
-        if (product[productCount].idCategory == category[categoryCount].id) {
+        if (product[productCount].idCreationCategory == category[categoryCount].idCreationCategory) {
           sumExpensiveTmp += transactionNumber += 1;
         }
         productCount++;
@@ -102,7 +95,7 @@ export default function CategoryList({
   };
 
   // Retrieve Categories
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [categories, setCategories] = useState<Category[] | CreationCategory[]>([]);
 
   // Confirmation delete confirmation modal
   const [showConfirmationModal, setShowConfirmationModal] =
@@ -116,6 +109,8 @@ export default function CategoryList({
 
   useEffect(() => {
     getCategories(categoryDateFilter).then((categories) => {
+ 
+      
       setCategories(categories);
       getCategoryTransactionNumber(categories);
     });
@@ -180,6 +175,8 @@ export default function CategoryList({
             )}
           </View>
         </View>
+
+
         {/* Category Content */}
         <View style={{ flex: 1 }}>
           <ScrollView>
@@ -194,7 +191,8 @@ export default function CategoryList({
                         let showActionButtonTmp = [...showActionButton];
                         showActionButtonTmp[index] = { display: "flex" };
                         setShowActionButton(showActionButtonTmp);
-                        setIndexOfActionButtonShowed(category.id!);
+                        
+                        setIndexOfActionButtonShowed((category as CreationCategory).idCreationCategory!);
                       }}
                       onPress={() => {
                         setShowActionButton(showActionButtonInit);
@@ -209,16 +207,16 @@ export default function CategoryList({
                         <View
                           style={[
                             styles.colorCategory,
-                            { backgroundColor: category?.color },
+                            { backgroundColor: (category as Category).color },
                           ]}
                         ></View>
                         <View style={styles.categoryName}>
-                          <Text style={styles.name}>{category?.label}</Text>
+                          <Text style={styles.name}>{(category as Category).label}</Text>
                           <Text style={styles.transaction}>
                             {categoriesTransactionNumber[index]} transaction(s)
                           </Text>
                           <Text style={GloblalStyles.CreatedDate}>
-                            {new Date(category.createdDate!).toLocaleDateString(
+                            {new Date((category as CreationCategory).createdDate!).toLocaleDateString(
                               "en-US",
                               options
                             )}
@@ -228,7 +226,7 @@ export default function CategoryList({
 
                       <View>
                         <Text style={styles.categoryIncome}>
-                          Ar {category?.income}
+                          Ar {(category as CreationCategory).categoryIncome}
                         </Text>
                       </View>
 
@@ -237,7 +235,7 @@ export default function CategoryList({
                         style={[GloblalStyles.action, showActionButton[index]]}
                       >
                         <TouchableOpacity
-                          onPress={async () => {
+                          onPress={async () => {                            
                             const category = await retrieveCategoryById(
                               indexOfActionButtonShowed
                             );
