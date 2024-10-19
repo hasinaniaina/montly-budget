@@ -26,7 +26,7 @@ export default function CategoryList({
   setPopupFilterByCategoryVisible,
   isCategoryFiltered,
   setIsCategoryFilterSelected,
-  setPopupAddCategoryVisible,
+  setOpenCloseModalChooseAdd,
   setCategoryData,
   showActionButton,
   setShowActionButton,
@@ -40,7 +40,7 @@ export default function CategoryList({
   setPopupFilterByCategoryVisible: (val: ViewStyle) => void;
   isCategoryFiltered: boolean[];
   setIsCategoryFilterSelected: (val: boolean[]) => void;
-  setPopupAddCategoryVisible: (val: ViewStyle) => void;
+  setOpenCloseModalChooseAdd: (val: boolean) => void;
   setCategoryData: (val: Category & CreationCategory) => void;
   showActionButton: ViewStyle[];
   setShowActionButton: (val: ViewStyle[]) => void;
@@ -71,7 +71,9 @@ export default function CategoryList({
   const [categoriesTransactionNumber, setCategoriesTransactionNumber] =
     useState<number[]>([]);
 
-  const getCategoryTransactionNumber = async (category: Category[] & CreationCategory[]) => {
+  const getCategoryTransactionNumber = async (
+    category: Category[] & CreationCategory[]
+  ) => {
     const product = await retrieveProductByCategory();
     let categoryCount = 0;
     let sumExpensiveTmp = 0;
@@ -82,7 +84,10 @@ export default function CategoryList({
       let productCount = 0;
 
       while (productCount < product.length) {
-        if (product[productCount].idCreationCategory == category[categoryCount].idCreationCategory) {
+        if (
+          product[productCount].idCreationCategory ==
+          category[categoryCount].idCreationCategory
+        ) {
           sumExpensiveTmp += transactionNumber += 1;
         }
         productCount++;
@@ -95,7 +100,9 @@ export default function CategoryList({
   };
 
   // Retrieve Categories
-  const [categories, setCategories] = useState<Category[] | CreationCategory[]>([]);
+  const [categories, setCategories] = useState<Category[] | CreationCategory[]>(
+    []
+  );
 
   // Confirmation delete confirmation modal
   const [showConfirmationModal, setShowConfirmationModal] =
@@ -109,8 +116,6 @@ export default function CategoryList({
 
   useEffect(() => {
     getCategories(categoryDateFilter).then((categories) => {
- 
-      
       setCategories(categories);
       getCategoryTransactionNumber(categories);
     });
@@ -128,18 +133,6 @@ export default function CategoryList({
             <Text style={GloblalStyles.titleSection}>Category</Text>
           </View>
           <View style={styles.iconFilterAddContainer}>
-            <TouchableOpacity
-              style={styles.iconFilter}
-              onPress={() => {
-                setPopupFilterByCategoryVisible({ display: "flex" });
-              }}
-            >
-              <Image
-                source={require("@/assets/images/filter.png")}
-                style={GloblalStyles.icon}
-              />
-            </TouchableOpacity>
-
             {isCategoryFiltered[0] || isCategoryFiltered[1] ? (
               <TouchableOpacity
                 style={styles.iconFilter}
@@ -161,21 +154,33 @@ export default function CategoryList({
                 />
               </TouchableOpacity>
             ) : (
-              <TouchableOpacity
-                style={styles.iconAdd}
-                onPress={() => {
-                  setPopupAddCategoryVisible({ display: "flex" });
-                }}
-              >
-                <Image
-                  source={require("@/assets/images/plus.png")}
-                  style={GloblalStyles.icon}
-                />
-              </TouchableOpacity>
+              <>
+                <TouchableOpacity
+                  style={styles.iconFilter}
+                  onPress={() => {
+                    setPopupFilterByCategoryVisible({ display: "flex" });
+                  }}
+                >
+                  <Image
+                    source={require("@/assets/images/filter.png")}
+                    style={GloblalStyles.icon}
+                  />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.iconAdd}
+                  onPress={() => {
+                    setOpenCloseModalChooseAdd(false);
+                  }}
+                >
+                  <Image
+                    source={require("@/assets/images/plus.png")}
+                    style={GloblalStyles.icon}
+                  />
+                </TouchableOpacity>
+              </>
             )}
           </View>
         </View>
-
 
         {/* Category Content */}
         <View style={{ flex: 1 }}>
@@ -191,8 +196,10 @@ export default function CategoryList({
                         let showActionButtonTmp = [...showActionButton];
                         showActionButtonTmp[index] = { display: "flex" };
                         setShowActionButton(showActionButtonTmp);
-                        
-                        setIndexOfActionButtonShowed((category as CreationCategory).idCreationCategory!);
+
+                        setIndexOfActionButtonShowed(
+                          (category as CreationCategory).idCreationCategory!
+                        );
                       }}
                       onPress={() => {
                         setShowActionButton(showActionButtonInit);
@@ -211,15 +218,16 @@ export default function CategoryList({
                           ]}
                         ></View>
                         <View style={styles.categoryName}>
-                          <Text style={styles.name}>{(category as Category).label}</Text>
+                          <Text style={styles.name}>
+                            {(category as Category).label}
+                          </Text>
                           <Text style={styles.transaction}>
                             {categoriesTransactionNumber[index]} transaction(s)
                           </Text>
                           <Text style={GloblalStyles.CreatedDate}>
-                            {new Date((category as CreationCategory).createdDate!).toLocaleDateString(
-                              "en-US",
-                              options
-                            )}
+                            {new Date(
+                              (category as CreationCategory).createdDate!
+                            ).toLocaleDateString("en-US", options)}
                           </Text>
                         </View>
                       </View>
@@ -235,12 +243,12 @@ export default function CategoryList({
                         style={[GloblalStyles.action, showActionButton[index]]}
                       >
                         <TouchableOpacity
-                          onPress={async () => {                            
+                          onPress={async () => {
                             const category = await retrieveCategoryById(
                               indexOfActionButtonShowed
                             );
                             setCategoryData(category);
-                            setPopupAddCategoryVisible({ display: "flex" });
+                            setOpenCloseModalChooseAdd(true);
                           }}
                           style={GloblalStyles.editIconContainer}
                         >

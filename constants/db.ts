@@ -3,6 +3,7 @@ import {
   Category,
   CreationCategory,
   CreationProduct,
+  ItemAddCategory,
   Product,
   User,
 } from "./interface";
@@ -361,6 +362,28 @@ export const insertCategory = async (
     return false;
   }
 };
+
+export const insertExistingCategories = async (items: ItemAddCategory[], user: User) => {
+  try {
+    let insertCreationCategory: any = "";
+    
+    for (let item of items ) {
+      insertCreationCategory = await (
+        await db
+      ).runAsync(
+        "INSERT INTO CreationCategory (idCategory, idUser, categoryIncome) VALUES (?, ?, ?)",
+        item.idCategory,
+        user.id,
+        0
+      );
+    }
+
+    return insertCreationCategory;
+  } catch (error) {
+    console.log("Categories insertion error =>", error);
+    return false;
+  }
+}
 
 export const getCategory = async (user: User, categoryDateFilter: Date[]) => {
   if (user && categoryDateFilter) {

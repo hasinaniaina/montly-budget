@@ -18,6 +18,7 @@ import {
   Image,
   KeyboardAvoidingView,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -28,6 +29,7 @@ import {
 import Popup from "@/components/popup";
 import ErrorMessageModal from "@/components/message/errorMessageModal";
 import Loading from "@/components/loading";
+import ColorPickerViewNew from "@/components/colorPickerNew";
 
 export default function Products() {
   const { categoryId } = useLocalSearchParams();
@@ -53,7 +55,9 @@ export default function Products() {
   });
 
   // Store product data
-  const [productData, setProductData] = useState<Product[] & CreationProduct[]>([]);
+  const [productData, setProductData] = useState<Product[] & CreationProduct[]>(
+    []
+  );
 
   // Store product data
   const [productDataWithoutFilter, setProductDataWithoutFilter] = useState<
@@ -170,7 +174,9 @@ export default function Products() {
       );
     };
 
-    const getCategoriesForFitler = (products: Product[] & CreationProduct[]) => {
+    const getCategoriesForFitler = (
+      products: Product[] & CreationProduct[]
+    ) => {
       let productCount = 0;
       let productTmp: Item[] = [];
 
@@ -320,84 +326,94 @@ export default function Products() {
         category={category}
         setThereIsFilter={setIsProductFilterSelected}
       >
-        <View style={styles.popupLabelInput}>
-          <Text style={GloblalStyles.appLabel}>Designation</Text>
-          <View style={GloblalStyles.appInput}>
-            <TextInput
-              placeholder="Exemple"
-              value={(productDataTmp as Product)?.designation}
-              onChangeText={(designation) => {
-                let productTmp = { ...productDataTmp };
-                (productTmp as Product).designation = designation;
-                setProductDataTmp(productTmp);
-              }}
+        <ScrollView>
+          <View style={{ alignItems: "center", justifyContent: "center" }}>
+            <ColorPickerViewNew
+              data={productDataTmp}
+              setData={setProductDataTmp}
             />
-          </View>
-        </View>
+            <View style={styles.popupLabelInput}>
+              <Text style={GloblalStyles.appLabel}>Designation</Text>
+              <View style={GloblalStyles.appInput}>
+                <TextInput
+                  placeholder="Exemple"
+                  value={(productDataTmp as Product)?.designation}
+                  onChangeText={(designation) => {
+                    let productTmp = { ...productDataTmp };
+                    (productTmp as Product).designation = designation;
+                    setProductDataTmp(productTmp);
+                  }}
+                />
+              </View>
+            </View>
 
-        <View style={[styles.popupLabelInput, { flexDirection: "row" }]}>
-          <View style={{ width: "58%", marginRight: 10 }}>
-            <Text style={GloblalStyles.appLabel}>Amount</Text>
-            <View style={GloblalStyles.appInput}>
-              <TextInput
-                placeholder="0"
-                keyboardType="numeric"
-                value={JSON.stringify(
-                  (productDataTmp as CreationProduct)?.productAmount
-                    ? (productDataTmp as CreationProduct)?.productAmount
-                    : 0
-                )}
-                onChangeText={(amountFieldValue) => {
-                  setAmount(parseFloat(amountFieldValue));
+            <View style={[styles.popupLabelInput, { flexDirection: "row" }]}>
+              <View style={{ width: "58%", marginRight: 10 }}>
+                <Text style={GloblalStyles.appLabel}>Amount</Text>
+                <View style={GloblalStyles.appInput}>
+                  <TextInput
+                    placeholder="0"
+                    keyboardType="numeric"
+                    value={JSON.stringify(
+                      (productDataTmp as CreationProduct)?.productAmount
+                        ? (productDataTmp as CreationProduct)?.productAmount
+                        : 0
+                    )}
+                    onChangeText={(amountFieldValue) => {
+                      setAmount(parseFloat(amountFieldValue));
 
-                  let productTmp = { ...productDataTmp };
-                  (productTmp as CreationProduct).productAmount =
-                    parseFloat(amountFieldValue);
-                  setProductDataTmp(productTmp);
-                }}
-              />
+                      let productTmp = { ...productDataTmp };
+                      (productTmp as CreationProduct).productAmount =
+                        parseFloat(amountFieldValue);
+                      setProductDataTmp(productTmp);
+                    }}
+                  />
+                </View>
+              </View>
+
+              <View style={{ width: "40%", marginRight: 10 }}>
+                <Text style={GloblalStyles.appLabel}>Day</Text>
+                <View
+                  style={[
+                    GloblalStyles.appInput,
+                    {
+                      height: 40,
+                      flex: 1,
+                      alignItems: "center",
+                      justifyContent: "center",
+                    },
+                  ]}
+                >
+                  <RNPickerSelect
+                    value={
+                      (productDataTmp as CreationProduct)?.productCoefficient
+                    }
+                    onValueChange={(dayFieldValue) => {
+                      let productTmp = { ...productDataTmp };
+                      (productTmp as CreationProduct).productCoefficient =
+                        parseInt(dayFieldValue);
+
+                      setCoefficient(dayFieldValue);
+
+                      setProductDataTmp(productTmp);
+                    }}
+                    items={dayNumber ? dayNumber : []}
+                  ></RNPickerSelect>
+                </View>
+              </View>
+            </View>
+            <View style={styles.totalAmountContainer}>
+              <Text style={styles.totalAmount}>
+                Total amount:{" "}
+                {productDataTmp
+                  ? (productDataTmp as CreationProduct).productAmount *
+                    (productDataTmp as CreationProduct).productCoefficient
+                  : amount * coefficient}{" "}
+                Ar
+              </Text>
             </View>
           </View>
-
-          <View style={{ width: "40%", marginRight: 10 }}>
-            <Text style={GloblalStyles.appLabel}>Day</Text>
-            <View
-              style={[
-                GloblalStyles.appInput,
-                {
-                  height: 40,
-                  flex: 1,
-                  alignItems: "center",
-                  justifyContent: "center",
-                },
-              ]}
-            >
-              <RNPickerSelect
-                value={(productDataTmp as CreationProduct)?.productCoefficient}
-                onValueChange={(dayFieldValue) => {
-                  let productTmp = { ...productDataTmp };
-                  (productTmp as CreationProduct).productCoefficient =
-                    parseInt(dayFieldValue);
-
-                  setCoefficient(dayFieldValue);
-
-                  setProductDataTmp(productTmp);
-                }}
-                items={dayNumber ? dayNumber : []}
-              ></RNPickerSelect>
-            </View>
-          </View>
-        </View>
-        <View style={styles.totalAmountContainer}>
-          <Text style={styles.totalAmount}>
-            Total amount:{" "}
-            {productDataTmp
-              ? (productDataTmp as CreationProduct).productAmount *
-                (productDataTmp as CreationProduct).productCoefficient
-              : amount * coefficient}{" "}
-            Ar
-          </Text>
-        </View>
+        </ScrollView>
       </Popup>
 
       {/* popup filter by category*/}

@@ -28,10 +28,10 @@ function ConfirmationMessageModal({
       <View style={styles.confirmationMessageContainer}>
         <View style={{ backgroundColor: "#FFF", borderRadius: 20 }}>
           <View style={styles.confirmationMessageHeader}>
-            <Text style={{ color: "#FFF" }}>Confirmation!</Text>
+            <Text style={{ color: "#FFF", fontFamily: "k2d-bold" }}>Confirmation!</Text>
           </View>
           <View style={styles.errorMessageContent}>
-            <Text style={{ textAlign: "center" }}>Are you sure to delete?</Text>
+            <Text style={{ textAlign: "center", fontFamily: "k2d-regular" }}>Are you sure to delete?</Text>
             <View style={{ flexDirection: "row" }}>
               <TouchableOpacity
                 style={[styles.ModalButtonYes, styles.modalButton]}
@@ -100,6 +100,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 20,
     width: 250,
+    borderTopLeftRadius: 10,
+    borderTopRightRadius: 10,
   },
   errorMessageContent: {
     padding: 20,
@@ -114,6 +116,7 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     borderRadius: 10,
     marginHorizontal: 4,
+    fontFamily: "k2d-bold"
   },
   ModalButtonNo: {
     backgroundColor: "#dc2626",

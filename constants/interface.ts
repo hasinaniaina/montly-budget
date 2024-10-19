@@ -1,17 +1,17 @@
-export type User = {
+export interface User {
     id: number,
     email: string,
     password: string
 }
 
-export type Category = {
+export interface Category {
     idCategory: number,
     label: string,
     color: string,
 }
 
 
-export type CreationCategory = {
+export interface CreationCategory {
     idCreationCategory: number,
     createdDate?: Date,
     idCategory: number,
@@ -19,13 +19,13 @@ export type CreationCategory = {
     categoryIncome: number
 }
 
-export type Product = {
+export interface Product {
     idProduct: number,
     designation: string,
     color: string,
 }
 
-export type CreationProduct = {
+export interface CreationProduct {
     idCreationProduct: number,
     idProduct: number,
     productAmount: number,
@@ -33,3 +33,8 @@ export type CreationProduct = {
     createdDate?: Date,
     idCreationCategory: number
 }
+
+export interface ItemAddCategory {
+    checked: boolean,
+    idCategory: number,
+  }

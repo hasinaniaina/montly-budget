@@ -17,12 +17,14 @@ import {
   getUserCategory,
   getProductByIdCreationCategory,
   getProductByIdCreationProduct,
+  insertExistingCategories,
 } from "./db";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   Category,
   CreationCategory,
   CreationProduct,
+  ItemAddCategory,
   Product,
 } from "./interface";
 import { SQLiteRunResult } from "expo-sqlite";
@@ -159,7 +161,7 @@ export const saveProduct = async (
     return false;
   }
 
-  const save = await insertProduct(datas);  
+  const save = await insertProduct(datas);
 
   return save;
 };
@@ -184,7 +186,9 @@ export const retrieveProductByCategory = async () => {
   return products as Product[] & CreationProduct[];
 };
 
-export const retrieveProduct = async (category: Category & CreationCategory) => {
+export const retrieveProduct = async (
+  category: Category & CreationCategory
+) => {
   const products = await getProducts(category);
   return products as Product[] & CreationProduct[];
 };
@@ -194,14 +198,16 @@ export const filterProduct = async (datas: Product): Promise<Product[]> => {
 };
 
 export const removeProduct = async (idCreationProduct: number) => {
-  const productAlreadyExistBefore =  await getProductByIdCreationProduct(idCreationProduct);
+  const productAlreadyExistBefore = await getProductByIdCreationProduct(
+    idCreationProduct
+  );
 
   if (productAlreadyExistBefore.length > 1) {
     const result = await deleteProduct(idCreationProduct, false);
   } else {
     const result = await deleteProduct(idCreationProduct, true);
   }
-  
+
   return true;
 };
 
@@ -257,7 +263,9 @@ export const retrieveCategoryAccordingToDate = async (
 };
 
 export const removeCategory = async (idCreationCategory: number) => {
-  const creationProduct = await getProductByIdCreationCategory(idCreationCategory);
+  const creationProduct = await getProductByIdCreationCategory(
+    idCreationCategory
+  );
   let result: any = "";
   if (creationProduct.length > 0) {
     result = await deleteCategory(idCreationCategory, false);
@@ -324,6 +332,15 @@ export const filterCategory = async (
   return await getCategoryFilter(datas, date);
 };
 
+export const retrieveCurrentUserCategory = async () => {
+  const user: any = await AsyncStorage.getItem("userCredentials");
+  return await getUserCategory(JSON.parse(user));
+};
+
+export const createExistingCategories = async (item: ItemAddCategory[]) => {
+  const user: any = await AsyncStorage.getItem("userCredentials");
+  return await insertExistingCategories(item, JSON.parse(user));
+};
 // ======================= User ==========================================
 export const getUserEmail = async (): Promise<String> => {
   const user = await AsyncStorage.getItem("userCredentials");
