@@ -26,12 +26,12 @@ function ErrorMessageModal({
        <View style={styles.backgroundBlackTransparent}></View>
       <View style={styles.errorMessageContainer}>
         <View style={{ backgroundColor: "#FFF" , borderRadius: 20}}>
-          <View style={styles.errorMessageHeader}>
-            <Text style={{ color: "#FFF" }}>Oopss!</Text>
+          <View style={[styles.errorMessageHeader, {borderTopRightRadius: 20, borderTopLeftRadius: 20}]}>
+            <Text style={{ color: "#FFF", fontFamily: "k2d-bold" }}>Oopss!</Text>
           </View>
           <View style={styles.errorMessageContent}>
             {errorMessage.map((message, index) => {
-              return <Text key={index}>- {message}</Text>;
+              return <Text key={index} style={{fontFamily: "k2d-regular", textAlign: "center"}}>* {message}</Text>;
             })}
             <TouchableOpacity
               style={styles.ModalButton}
@@ -44,6 +44,7 @@ function ErrorMessageModal({
               <Text
                 style={{
                   color: "#fff",
+                  fontFamily: "k2d-regular"
                 }}
               >
                 Cancel

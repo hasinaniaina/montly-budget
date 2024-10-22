@@ -17,24 +17,30 @@ export default function RetrievedPasswordMessageModal({
 
   return (
     <Modal animationType="fade" transparent={true} visible={modalShown}>
+      <View style={styles.backgroundBlackTransparent}></View>
       <View style={styles.errorMessageContainer}>
-        <View style={{ backgroundColor: "#FFF" }}>
-          <View style={styles.errorMessageHeader}>
-            <Text style={{ color: "#FFF" }}>Forgot password!</Text>
+        <View style={{ backgroundColor: "#FFF" , borderRadius: 20 }}>
+          <View style={[styles.errorMessageHeader, {borderTopRightRadius: 20, borderTopLeftRadius: 20}]}>
+            <Text style={{ color: "#FFF", fontFamily: "k2d-bold" }}>
+              Forgot password!
+            </Text>
           </View>
           <View style={styles.errorMessageContent}>
-            <Text>{message}</Text>
+            <Text style={{ fontFamily: "k2d-regular", textAlign: "center" }}>
+              {message}
+            </Text>
             <Pressable
               style={styles.ModalButton}
               onPress={() => {
                 setMessage("");
                 setModalShown([false, false]);
-                router.navigate("/(authentification)");
+                router.push("/");
               }}
             >
               <Text
                 style={{
                   color: "#fff",
+                  fontFamily: "k2d-regular",
                 }}
               >
                 Cancel
@@ -52,6 +58,14 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
+  },
+
+  backgroundBlackTransparent: {
+    position: "absolute",
+    width: "100%",
+    height: "100%",
+    backgroundColor: "#000",
+    opacity: .5
   },
   errorMessageHeader: {
     backgroundColor: green,
