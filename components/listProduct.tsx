@@ -45,12 +45,22 @@ export default function ListProduct({
   };
 
   let totalAmountTmp = 0;
+  let price: string[] = [];
+  let coefficient: string[] = [];
 
   productDataWithoutFilter?.forEach((data) => {
     totalAmountTmp +=
       (data as CreationProduct).productAmount *
       (data as CreationProduct).productCoefficient;
   });
+
+  for (let data of productData) {
+    const priceTmp = data.productAmount * data.productCoefficient;
+    price.push(priceTmp.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "."));
+
+    const coefficientTmp = (priceTmp * 100) / totalAmountTmp
+    coefficient.push(coefficientTmp.toString())
+  }
 
   // Confirmation delete confirmation modal
   const [showConfirmationModal, setShowConfirmationModal] =
@@ -126,20 +136,8 @@ export default function ListProduct({
                   },
                 ]}
               >
-                <Text style={styles.price}>
-                  {(item as CreationProduct).productAmount *
-                    (item as CreationProduct).productCoefficient}{" "}
-                  Ariary -{" "}
-                </Text>
-                <Text style={styles.percentage}>
-                  {Number(
-                    ((item as CreationProduct).productCoefficient *
-                      (item as CreationProduct).productAmount *
-                      100) /
-                      totalAmountTmp
-                  ).toFixed(2)}
-                  %
-                </Text>
+                <Text style={styles.price}>{price[index]}{" "}Ar-{" "}</Text>
+                <Text style={styles.percentage}>{Number(coefficient[index]).toFixed(2)}%</Text>
               </View>
 
               <View style={[styles.buttonsAction, showActionButton[index]]}>

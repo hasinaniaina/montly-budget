@@ -18,6 +18,8 @@ import {
   getProductByIdCreationCategory,
   getProductByIdCreationProduct,
   insertExistingCategories,
+  getUserByPassword,
+  updateUserPasssword,
 } from "./db";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
@@ -26,6 +28,7 @@ import {
   CreationProduct,
   ItemAddCategory,
   Product,
+  settingsPassword,
 } from "./interface";
 import { SQLiteRunResult } from "expo-sqlite";
 
@@ -341,8 +344,65 @@ export const createExistingCategories = async (item: ItemAddCategory[]) => {
   const user: any = await AsyncStorage.getItem("userCredentials");
   return await insertExistingCategories(item, JSON.parse(user));
 };
+
 // ======================= User ==========================================
 export const getUserEmail = async (): Promise<String> => {
   const user = await AsyncStorage.getItem("userCredentials");
   return user!;
+};
+
+// ======================= Change password ==========================================
+export const changePassword = async ({
+  passwords,
+  setErrorMessage,
+  setModalShown,
+}: {
+  passwords: settingsPassword;
+  setErrorMessage: (val: string[]) => void;
+  setModalShown: (val: boolean[]) => void;
+}) => {
+  let error = false;
+  let message: string[] = [];
+
+  if (
+    passwords.currentPassword == "" ||
+    passwords.newPassword == "" ||
+    passwords.confirmNewPassword == ""
+  ) {
+    error = true;
+    message = ["All Fields should not be empty!"];
+  }
+
+  if (passwords.newPassword.length < 8) {
+    error = true;
+    message = ["New password should countain at least 8 characters"];
+  }
+
+  if (passwords.newPassword != passwords.confirmNewPassword) {
+    error = true;
+    message = ["New Password and Confirm new Password not match!"];
+  }
+
+  if (error) {
+    setErrorMessage(message);
+    setModalShown([true]);
+  } else {
+    const user: any = await AsyncStorage.getItem("userCredentials");
+    const userTmp = JSON.parse(user);
+    const stockedCurrentPassword = await getUserByEmail(userTmp.email);
+    
+    if (stockedCurrentPassword && stockedCurrentPassword.password == passwords.currentPassword) {
+      const result = await updateUserPasssword(
+        passwords.newPassword,
+        userTmp
+      );
+
+      return true;
+    } else {
+      setErrorMessage(["Current password is not valid!"]);
+      setModalShown([true]);
+    }
+  }
+
+  return false;
 };

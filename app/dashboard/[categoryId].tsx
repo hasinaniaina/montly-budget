@@ -214,7 +214,7 @@ export default function Products() {
               productTotalAmount < 0 ? { color: red } : { color: TitleColor },
             ]}
           >
-            Income remains: {productTotalAmount} Ar
+            Income remains: {productTotalAmount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")} Ar
           </Text>
         </View>
       </View>
@@ -339,8 +339,11 @@ export default function Products() {
                   placeholder="Exemple"
                   value={(productDataTmp as Product)?.designation}
                   onChangeText={(designation) => {
+
                     let productTmp = { ...productDataTmp };
                     (productTmp as Product).designation = designation;
+                    console.log(designation);
+                    
                     setProductDataTmp(productTmp);
                   }}
                 />
@@ -354,17 +357,17 @@ export default function Products() {
                   <TextInput
                     placeholder="0"
                     keyboardType="numeric"
-                    value={JSON.stringify(
-                      (productDataTmp as CreationProduct)?.productAmount
-                        ? (productDataTmp as CreationProduct)?.productAmount
-                        : 0
-                    )}
+                    value={
+                      (productDataTmp as CreationProduct)?.productAmount != 0
+                        ? (productDataTmp as CreationProduct)?.productAmount?.toString()
+                        : ""
+                    }
                     onChangeText={(amountFieldValue) => {
                       setAmount(parseFloat(amountFieldValue));
 
                       let productTmp = { ...productDataTmp };
-                      (productTmp as CreationProduct).productAmount =
-                        parseFloat(amountFieldValue);
+                      (productTmp as CreationProduct).productAmount = 
+                       (amountFieldValue) ? parseFloat(amountFieldValue) :  0;
                       setProductDataTmp(productTmp);
                     }}
                   />
@@ -432,22 +435,13 @@ export default function Products() {
         <View style={styles.popupLabelInput}>
           <Text style={GloblalStyles.appLabel}>Products</Text>
           <View style={GloblalStyles.appInput}>
-            {/* <RNPickerSelect
-              onValueChange={(productSelected) => {
-                if (productSelected?.id) {
-                  setProductData([productSelected]);
-                }
-              }}
-              items={productItemFitler ? productItemFitler : []}
-            ></RNPickerSelect> */}
-
             <TextInput
               placeholder="Exemple"
               value={(productDataTmp as Product).designation}
               onChangeText={(productFiltered) => {
-                let productTmp = { ...productDataTmp };
-                (productTmp as Product).designation = productFiltered;
 
+                let productTmp = { ...productDataTmp };
+                (productTmp as Product).designation = productFiltered;                
                 setProductDataTmp(productTmp);
               }}
             />

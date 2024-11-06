@@ -75,12 +75,14 @@ export default function Home() {
     false,
   ]);
 
-  // if new category
+  // if new event
   const [change, setChange] = useState<boolean>(false);
 
+  // data storage
   const [categoryData, setCategoryData] = useState<Category & CreationCategory>(
     categoryDataInit
   );
+
 
   const [userCategory, setuserCategory] = useState<
     Category[] & CreationCategory[]
@@ -89,6 +91,7 @@ export default function Home() {
   const [itemAddCategoryIndex, setItemAddCategoryIndex] = useState<
     ItemAddCategory[]
   >([]);
+
   // Triggered when category filter is selected
   const isFilterActivateInit = [false, false];
 
@@ -118,6 +121,7 @@ export default function Home() {
   const [showActionButton, setShowActionButton] =
     useState<ViewStyle[]>(showActionButtonInit);
 
+
   const getCategory = async (
     categoryDateFilter: Date[]
   ): Promise<Category[] & CreationCategory[]> => {
@@ -136,7 +140,6 @@ export default function Home() {
   const modalOpenCloseAddListChoose = (openAddFieldCategory: boolean) => {
     if (openAddFieldCategory || userCategory.length == 0) {
       setPopupAddCategoryVisible({ display: "flex" });
-
     } else {
       setPopupChooseAddCategory(!popupChooseAddCategory);
     }
@@ -154,7 +157,6 @@ export default function Home() {
 
   const getAllCurrentUserCategory = async () => {
     let userCategories = await retrieveCurrentUserCategory();
-    let categoryNotExist = [];
 
     let itemIndexTmp = [...itemAddCategoryIndex];
 
@@ -189,7 +191,7 @@ export default function Home() {
 
   const confirmAddExistingCategory = async () => {
     if (itemAddCategoryIndex.length > 0) {
-      let itemTmp = []
+      let itemTmp = [];
 
       for (let item of itemAddCategoryIndex) {
         if (item.checked) {
@@ -202,11 +204,11 @@ export default function Home() {
 
         if (result.changes) {
           setChange(true);
-          setPopupChooseAddExistingCategoryVisible({display: "none"})
+          setPopupChooseAddExistingCategoryVisible({ display: "none" });
 
           setTimeout(() => {
             setShowLoading({ display: "none" });
-          }, 2000)
+          }, 2000);
         }
       }
     }
@@ -328,7 +330,7 @@ export default function Home() {
         <ScrollView>
           <View style={{ alignItems: "center", justifyContent: "center" }}>
             <ColorPickerViewNew data={categoryData} setData={setCategoryData} />
-            <View style={styles.popupLabelInput}>
+            <View style={GloblalStyles.popupLabelInput}>
               <Text style={GloblalStyles.appLabel}>Label</Text>
               <View style={GloblalStyles.appInput}>
                 <TextInput
@@ -342,20 +344,20 @@ export default function Home() {
                 />
               </View>
             </View>
-            <View style={styles.popupLabelInput}>
+            <View style={GloblalStyles.popupLabelInput}>
               <Text style={GloblalStyles.appLabel}>Income</Text>
               <View style={GloblalStyles.appInput}>
                 <TextInput
                   placeholder="0"
                   keyboardType="numeric"
-                  value={JSON.stringify(
-                    categoryData?.categoryIncome
-                      ? categoryData?.categoryIncome
-                      : 0
-                  )}
+                  value={
+                    categoryData?.categoryIncome != 0
+                      ? categoryData?.categoryIncome?.toString()
+                      : ""
+                  }
                   onChangeText={(val) => {
                     let dataTmp = { ...categoryData };
-                    dataTmp.categoryIncome = parseFloat(val);
+                    dataTmp.categoryIncome = val ? parseFloat(val) : 0;
                     setCategoryData(dataTmp);
                   }}
                 />
@@ -438,12 +440,12 @@ export default function Home() {
         categoryDateFilter={categoryDateFilter}
         setshowLoading={setShowLoading}
       >
-        <View style={styles.popupLabelInput}>
+        <View style={GloblalStyles.popupLabelInput}>
           <Text style={GloblalStyles.appLabel}>Categories</Text>
           <View style={GloblalStyles.appInput}>
             <RNPickerSelect
-              onValueChange={(categorySelected) => {
-                if (categorySelected?.id) {
+              onValueChange={(categorySelected) => {                
+                if (categorySelected?.idCreationCategory) {
                   setCategoryData(categorySelected);
                 }
               }}
@@ -520,8 +522,9 @@ export default function Home() {
                 categoryDateFilterTmp[1] = dateFormat;
               }
 
-              setCategoryDateFilter(categoryDateFilterTmp);
+
               setOpenDatePicker([false, false]);
+              setCategoryDateFilter(categoryDateFilterTmp);
             }}
             onCancel={() => {
               setOpenDatePicker([false, false]);
@@ -552,13 +555,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
-  popupLabelInput: {
-    paddingVertical: 6,
-    paddingHorizontal: 20,
-    width: Dimensions.get("screen").width,
-    alignItems: "center",
-    justifyContent: "center",
-  },
   popupDatecontainer: {
     flexDirection: "row",
   },

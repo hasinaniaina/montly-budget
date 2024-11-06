@@ -134,6 +134,35 @@ export const getUserByEmail = async (email: string): Promise<User> => {
   }
 };
 
+export const getUserByPassword = async (password: string): Promise<User> => {
+  try {
+    const result: any = await (
+      await db
+    ).getFirstAsync("SELECT * FROM User WHERE password='" + password + "'");
+    return result;
+  } catch (error) {
+    throw "Get User with password error => " + error;
+  }
+};
+
+export const updateUserPasssword = async (newPassword: string, user: User) => {
+  
+  try {
+    let updateUser = await (
+    await db
+  ).runAsync(
+    `UPDATE User SET password = ? WHERE id = ?`,
+    newPassword,
+    user.id
+    );
+
+    return updateUser;
+  } catch (error) {
+    console.log("Update user password error => ", error);
+    
+  }
+}
+
 export const getProducts = async (category: Category | CreationCategory) => {
   try {
     const product: any = await (
@@ -293,9 +322,12 @@ export const getProductFilter = async (datas: Product | CreationProduct) => {
     FROM Product prod INNER JOIN CreationProduct creatProd ON prod.idProduct = creatProd.idProduct
     WHERE prod.designation LIKE `;
 
-    query += " '" + (datas as Product).designation + "%' ";
+    query += " '" + (datas as Product).designation.trim() + "%' ";
 
     query += " AND idCreationCategory= " + (datas as CreationProduct).idCreationCategory;
+
+    console.log(query);
+    
 
     product = await (await db).getAllAsync(query);
 

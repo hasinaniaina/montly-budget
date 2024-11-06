@@ -186,7 +186,7 @@ export default function CategoryList({
         <View style={{ flex: 1 }}>
           <ScrollView>
             <View style={styles.categoryContent}>
-              {categories ? (
+              {categories.length > 0 ? (
                 categories.map((category, index) => {
                   return (
                     <TouchableOpacity
@@ -234,7 +234,10 @@ export default function CategoryList({
 
                       <View>
                         <Text style={styles.categoryIncome}>
-                          Ar {(category as CreationCategory).categoryIncome}
+                          {(category as CreationCategory).categoryIncome
+                            .toString()
+                            .replace(/\B(?=(\d{3})+(?!\d))/g, ".")}{" "}
+                          Ar
                         </Text>
                       </View>
 
@@ -274,7 +277,7 @@ export default function CategoryList({
                 })
               ) : (
                 <View style={styles.noCategory}>
-                  <Text>No Category</Text>
+                  <Text style={{fontFamily: "k2d-bold", color: "red"}}>No Category</Text>
                 </View>
               )}
             </View>

@@ -1,7 +1,6 @@
 import YearListModal from "@/components/yearListModal";
 import { TextColor, TitleColor, greyMonth, orange, purple, red } from "@/constants/Colors";
 import { GloblalStyles } from "@/constants/GlobalStyles";
-import { getMonth } from "@/constants/db";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import {

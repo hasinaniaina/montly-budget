@@ -1,4 +1,4 @@
-import { StyleSheet } from "react-native";
+import { Dimensions, StyleSheet } from "react-native";
 import { TextColor, TitleColor, green, red } from "./Colors";
 
 export const GloblalStyles = StyleSheet.create({
@@ -8,6 +8,21 @@ export const GloblalStyles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#FFF",
     position: "relative",
+  },
+
+  avatarEmailContainer: {
+    paddingVertical: 40,
+  },
+  avatarContainer: {
+    alignItems: "center",
+  },
+  avatar: {},
+  email: {
+    textAlign: "center",
+    marginTop: 20,
+    color: TitleColor,
+    fontFamily: "k2d-bold",
+    fontSize: 16,
   },
   authentificationIcon: {
     width: 100,
@@ -100,7 +115,7 @@ export const GloblalStyles = StyleSheet.create({
     justifyContent: "center",
     paddingVertical: 6,
     borderRadius: 5,
-    display: "none"
+    display: "none",
   },
   editIconContainer: {
     backgroundColor: green,
@@ -126,5 +141,12 @@ export const GloblalStyles = StyleSheet.create({
     fontFamily: "k2d-regular",
     color: TextColor,
     fontSize: 8,
+  },
+  popupLabelInput: {
+    paddingVertical: 6,
+    paddingHorizontal: 20,
+    width: Dimensions.get("screen").width,
+    alignItems: "center",
+    justifyContent: "center",
   },
 });

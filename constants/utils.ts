@@ -1,6 +1,16 @@
 import { ViewStyle } from "react-native";
-import { Category, CreationCategory, CreationProduct, Product } from "./interface";
-import { removeCategory, retrieveUserCategory } from "./Controller";
+import {
+  Category,
+  CreationCategory,
+  CreationProduct,
+  Product,
+} from "./interface";
+import {
+  removeCategory,
+  removeProduct,
+  retrieveUserCategory,
+} from "./Controller";
+import { getProductByIdCreationCategory } from "./db";
 
 export const amountRemainingProduct = (
   datas: Product | CreationProduct,
@@ -9,9 +19,13 @@ export const amountRemainingProduct = (
   setModalShown: (val: boolean[]) => void,
   setshowLoading: (val: ViewStyle) => void
 ) => {
-  if ((datas as CreationProduct).productAmount * (datas as CreationProduct).productCoefficient > amountRemaining) {
+  if (
+    (datas as CreationProduct).productAmount *
+      (datas as CreationProduct).productCoefficient >
+    amountRemaining
+  ) {
     setErrorMessage([
-      "The amount should not exceed: " + amountRemaining + " Ar",
+      "The amount should not exceed: " + amountRemaining.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".") + " Ar",
     ]);
 
     setModalShown([true]);
@@ -38,7 +52,9 @@ export const checkIfCategorylabelAlreadyStored = async (datas: Category) => {
 
   //  Check if category exist on database
   userCategories.forEach((userCategory: Category | CreationCategory) => {
-    let dateCategoryStoredCreated = new Date((userCategory as CreationCategory).createdDate!)
+    let dateCategoryStoredCreated = new Date(
+      (userCategory as CreationCategory).createdDate!
+    )
       .toISOString()
       .split("T")[0]
       .split("-");
@@ -46,7 +62,10 @@ export const checkIfCategorylabelAlreadyStored = async (datas: Category) => {
     let dateCategoryStoredCreatedFormated =
       dateCategoryStoredCreated[1] + "-" + dateCategoryStoredCreated[0];
 
-    if ((userCategory as Category).label?.toLocaleLowerCase() === label?.toLocaleLowerCase()) {
+    if (
+      (userCategory as Category).label?.toLocaleLowerCase() ===
+      label?.toLocaleLowerCase()
+    ) {
       if (dateCategoryStoredCreatedFormated === dateCreatedFormated) {
         isCategoryLabelNotExist = false;
       }
@@ -56,12 +75,33 @@ export const checkIfCategorylabelAlreadyStored = async (datas: Category) => {
   return isCategoryLabelNotExist;
 };
 
-export const isFilteredActivate = (isCategoryFiltered: boolean[], index: number, value: boolean ) => {
+export const checkIfProductCategoryExistAndAmountNotLessProduct = async (
+  datas: Category & CreationCategory
+) => {
+  const products = await getProductByIdCreationCategory(datas.idCreationCategory);
+  let productTotalAmount = 0;
+
+  for (let product of products) {
+    productTotalAmount += product.productAmount;
+  }
+  
+
+  if (datas.categoryIncome < productTotalAmount) {
+    return {notLess: false, amount: productTotalAmount};
+  }
+
+  return {notLess: true};
+};
+
+export const isFilteredActivate = (
+  isCategoryFiltered: boolean[],
+  index: number,
+  value: boolean
+) => {
   let isFiltered = [...isCategoryFiltered!];
   isFiltered[index] = true;
   return isFiltered;
 };
-
 
 export const categoryDataInit = {
   idCategory: -1,
@@ -71,5 +111,3 @@ export const categoryDataInit = {
   categoryIncome: 0,
   idUser: 1,
 };
-
-
