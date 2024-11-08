@@ -1,5 +1,4 @@
-import ColorPickerView from "@/components/colorPicker";
-import { TitleColor, green } from "@/constants/Colors";
+import { green } from "@/constants/Colors";
 import { GloblalStyles } from "@/constants/GlobalStyles";
 import { ReactNode, useEffect, useState } from "react";
 import {
@@ -12,7 +11,6 @@ import {
   ViewStyle,
   Keyboard,
 } from "react-native";
-import ColorPickerViewNew from "./colorPickerNew";
 import {
   createCategory,
   editProduct,
@@ -31,9 +29,7 @@ import {
   Product,
 } from "@/constants/interface";
 import {
-  amountRemainingProduct,
   checkIfCategorylabelAlreadyStored,
-  checkIfProductCategoryExistAndAmountNotLessProduct,
   isFilteredActivate,
 } from "@/constants/utils";
 
@@ -97,33 +93,19 @@ export default function Popup({
     display: "flex",
   });
 
-  const addOrUpdateCategory = async () => {
+  const addCategory = async () => {
     if (datas?.idCategory! > 0) {
-      const categoryAmount =
-        await checkIfProductCategoryExistAndAmountNotLessProduct(datas);
+      const result = upgradeCategory({
+        datas,
+        setErrorMessage,
+        setModalShown,
+      });
 
-      if (categoryAmount.notLess) {
-        const result = upgradeCategory({
-          datas,
-          setErrorMessage,
-          setModalShown,
-        });
-
-        if (await result) {
-          setData(categoryDataInit);
-          setVisible({ display: "none" });
-          setshowLoading({ display: "none" });
-          setChange(true);
-        }
-      } else {
-        setErrorMessage([
-          datas.label +
-            " amount should not be less than " +
-            categoryAmount.amount?.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".") +
-            " Ar",
-        ]);
-        setModalShown([true]);
+      if (await result) {
+        setData(categoryDataInit);
+        setVisible({ display: "none" });
         setshowLoading({ display: "none" });
+        setChange(true);
       }
     } else {
       const isCategoryLabelNotExist = await checkIfCategorylabelAlreadyStored(
@@ -155,7 +137,7 @@ export default function Popup({
   const filterByCategory = async () => {
     if (datas) {
       let datasTmp = Array.isArray(datas) ? datas : [datas];
-      
+
       const datasAfterFilter = await filterCategory(
         datasTmp,
         categoryDateFilter!
@@ -204,34 +186,22 @@ export default function Popup({
     }
 
     // Get Product Amount remaining for the category
-    const productAmountRemaining =
-      (category as CreationCategory)?.categoryIncome! - productAmountTmp;
+    const productAmountRemaining = productAmountTmp;
 
     if (datas.idCreationProduct == -1) {
-      // Get if Amount insert by user exceed product amount remaining
-      const isNotExceedAmountRemaining = amountRemainingProduct(
+      const insertProduct = await saveProduct(
         datas,
-        productAmountRemaining,
         setErrorMessage,
-        setModalShown,
-        setshowLoading
+        setModalShown
       );
 
-      if (isNotExceedAmountRemaining) {
-        const insertProduct = await saveProduct(
-          datas,
-          setErrorMessage,
-          setModalShown
-        );
+      if (insertProduct) {
+        setData(productDataInit);
+        setChange(true);
 
-        if (insertProduct) {
-          setData(productDataInit);
-          setChange(true);
-
-          setTimeout(() => {
-            setshowLoading({ display: "none" });
-          }, 2000);
-        }
+        setTimeout(() => {
+          setshowLoading({ display: "none" });
+        }, 2000);
       }
     } else {
       let oldAmount = 0;
@@ -247,38 +217,25 @@ export default function Popup({
         }
       }
 
-      let amountRemaining = productAmountRemaining + oldAmount;
-
-      // Get if Amount insert by user exceed product amount remaining
-      const isNotExceedAmountRemaining = amountRemainingProduct(
+      const updateProduct = await editProduct(
         datas,
-        amountRemaining,
         setErrorMessage,
-        setModalShown,
-        setshowLoading
+        setModalShown
       );
 
-      if (isNotExceedAmountRemaining) {
-        const updateProduct = await editProduct(
-          datas,
-          setErrorMessage,
-          setModalShown
-        );
+      if (updateProduct) {
+        setData(productDataInit);
+        setChange(true);
+        setVisible({ display: "none" });
 
-        if (updateProduct) {
-          setData(productDataInit);
-          setChange(true);
-          setVisible({ display: "none" });
-
-          setTimeout(() => {
-            setshowLoading({ display: "none" });
-          }, 2000);
-        }
+        setTimeout(() => {
+          setshowLoading({ display: "none" });
+        }, 2000);
       }
     }
   };
 
-  const filterProducts = async () => {    
+  const filterProducts = async () => {
     const productsFiltered = await filterProduct(datas);
 
     setThereIsFilter([true]);
@@ -355,7 +312,7 @@ export default function Popup({
             setshowLoading({ display: "flex" });
             switch (viewType) {
               case "category":
-                addOrUpdateCategory();
+                addCategory();
                 break;
               case "categoryExisting":
                 confirmAddExistingCategory!();

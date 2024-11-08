@@ -169,9 +169,7 @@ export default function Products() {
           (product as CreationProduct).productCoefficient;
       });
 
-      setProductTotalAmount(
-        (category as CreationCategory).categoryIncome - productAmountTmp
-      );
+      setProductTotalAmount(productAmountTmp);
     };
 
     const getCategoriesForFitler = (
@@ -214,7 +212,7 @@ export default function Products() {
               productTotalAmount < 0 ? { color: red } : { color: TitleColor },
             ]}
           >
-            Income remains: {productTotalAmount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")} Ar
+            Total expenses: {productTotalAmount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")} Ar
           </Text>
         </View>
       </View>

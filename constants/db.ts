@@ -37,7 +37,6 @@ export const createTable = async () => {
         createdDate  DATETIME DEFAULT CURRENT_TIMESTAMP,
         idCategory INTEGER,
         idUser INTEGER,
-        categoryIncome REAL NOT NULL,
         FOREIGN KEY(idCategory) REFERENCES Category(id),
         FOREIGN KEY(idUser) REFERENCES User(id)
         );
@@ -381,10 +380,9 @@ export const insertCategory = async (
       const insertCreationCategory = await (
         await db
       ).runAsync(
-        "INSERT INTO CreationCategory (idCategory, idUser, categoryIncome) VALUES (?, ?, ?)",
+        "INSERT INTO CreationCategory (idCategory, idUser) VALUES (?, ?)",
         insertCategory.lastInsertRowId,
         user.id,
-        datas.categoryIncome!
       );
 
       return insertCreationCategory;
@@ -544,17 +542,18 @@ export const updateCategory = async (datas: Category | CreationCategory) => {
       datas.idCategory!
     );
 
-    if (updateCategory.changes) {
-      const updateCategory: any = await (
-        await db
-      ).runAsync(
-        "UPDATE CreationCategory SET categoryIncome = ? WHERE idCreationCategory = ? ",
-        (datas as CreationCategory).categoryIncome,
-        (datas as CreationCategory).idCreationCategory!
-      );
+    return updateCategory;
 
-      return updateCategory;
-    }
+    // if (updateCategory.changes) {
+    //   const updateCategory: any = await (
+    //     await db
+    //   ).runAsync(
+    //     "UPDATE CreationCategory SET categoryIncome = ? WHERE idCreationCategory = ? ",
+    //     (datas as CreationCategory).idCreationCategory!
+    //   );
+
+    //   return updateCategory;
+    // }
   } catch (error) {
     console.log("Update category error =>", error);
     return false;

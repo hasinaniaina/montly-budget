@@ -1,4 +1,4 @@
-import { TextColor, TitleColor } from "@/constants/Colors";
+import { TextColor, TitleColor, orange } from "@/constants/Colors";
 import { retrieveProductByCategory } from "@/constants/Controller";
 import { GloblalStyles } from "@/constants/GlobalStyles";
 import { Category, CreationCategory } from "@/constants/interface";
@@ -34,14 +34,10 @@ export default function Resumes({
 
   // Sum of all expenses, income, saving
   type Resume = {
-    income: number;
-    saving: number;
     expense: number;
   };
 
   const [sum, setSum] = useState<Resume>({
-    income: 0,
-    saving: 0,
     expense: 0,
   });
 
@@ -50,18 +46,9 @@ export default function Resumes({
     return product;
   };
 
-  const getSumIncome = async (category: Category[] & CreationCategory[]): Promise<number> => {
-    let categoryCount = 0;
-    let sumIncomeTmp = 0;
-
-    while (categoryCount < category.length) {
-      sumIncomeTmp += category[categoryCount].categoryIncome;
-      categoryCount += 1;
-    }
-    return sumIncomeTmp;
-  };
-
-  const getSumExpense = async (category: Category[] & CreationCategory[]): Promise<number> => {
+  const getSumExpense = async (
+    category: Category[] & CreationCategory[]
+  ): Promise<number> => {
     const product = await getProduct();
     let categoryCount = 0;
     let sumExpensiveTmp = 0;
@@ -71,9 +58,13 @@ export default function Resumes({
       let productCount = 0;
 
       while (productCount < product.length) {
-        if (product[productCount].idCreationCategory == category[categoryCount].idCreationCategory) {
+        if (
+          product[productCount].idCreationCategory ==
+          category[categoryCount].idCreationCategory
+        ) {
           sumExpensiveTmp +=
-            product[productCount].productAmount * product[productCount].productCoefficient;
+            product[productCount].productAmount *
+            product[productCount].productCoefficient;
           transactionNumber += 1;
         }
         productCount++;
@@ -86,17 +77,15 @@ export default function Resumes({
 
   useEffect(() => {
     getCategories(categoryDateFilter).then((categories) => {
-      getSumIncome(categories as Category[] & CreationCategory[]).then((sumIncome) => {
-        getSumExpense(categories as Category[] & CreationCategory[]).then((sumExpense) => {
+      getSumExpense(categories as Category[] & CreationCategory[]).then(
+        (sumExpense) => {
           const sumTmp: Resume = {
-            income: sumIncome,
             expense: sumExpense,
-            saving: sumIncome - sumExpense,
           };
 
           setSum(sumTmp);
-        });
-      });
+        }
+      );
     });
   }, [change]);
 
@@ -134,18 +123,13 @@ export default function Resumes({
         </View>
         <View style={styles.numberTitleContainer}>
           <View style={styles.incomeSavingExpenses}>
-            <Text style={styles.number}>{sum.income ? sum.income : 0} Ar</Text>
-            <Text style={styles.title}>Income</Text>
-          </View>
-          <View style={styles.incomeSavingExpenses}>
             <Text style={styles.number}>
-              {sum.expense ? sum.expense : 0} Ar
+              {sum.expense
+                ? sum.expense.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")
+                : 0}{" "}
+              Ar
             </Text>
             <Text style={styles.title}>Expenses</Text>
-          </View>
-          <View style={styles.incomeSavingExpenses}>
-            <Text style={styles.number}>{sum.saving ? sum.saving : 0} Ar</Text>
-            <Text style={styles.title}>Saving</Text>
           </View>
         </View>
       </View>
@@ -167,17 +151,24 @@ const styles = StyleSheet.create({
   dateFilter: {},
   numberTitleContainer: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "center",
     marginTop: 20,
     paddingHorizontal: 20,
   },
-  incomeSavingExpenses: {},
+  incomeSavingExpenses: {
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: orange,
+    paddingHorizontal: 40,
+    paddingVertical: 15,
+    borderRadius: 20,
+  },
   number: {
     color: TitleColor,
     fontFamily: "k2d-bold",
   },
   title: {
-    color: TextColor,
+    color: "#fff",
     fontFamily: "k2d-regular",
   },
 });

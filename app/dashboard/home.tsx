@@ -316,7 +316,7 @@ export default function Home() {
       {/* popup add new category*/}
       <Popup
         title="Category"
-        buttonTitle="Add"
+        buttonTitle={"Save"}
         visible={popupAddCategoryVisible}
         setVisible={setPopupAddCategoryVisible}
         viewType="category"
@@ -339,25 +339,6 @@ export default function Home() {
                   onChangeText={(val) => {
                     let dataTmp = { ...categoryData };
                     dataTmp.label = val;
-                    setCategoryData(dataTmp);
-                  }}
-                />
-              </View>
-            </View>
-            <View style={GloblalStyles.popupLabelInput}>
-              <Text style={GloblalStyles.appLabel}>Income</Text>
-              <View style={GloblalStyles.appInput}>
-                <TextInput
-                  placeholder="0"
-                  keyboardType="numeric"
-                  value={
-                    categoryData?.categoryIncome != 0
-                      ? categoryData?.categoryIncome?.toString()
-                      : ""
-                  }
-                  onChangeText={(val) => {
-                    let dataTmp = { ...categoryData };
-                    dataTmp.categoryIncome = val ? parseFloat(val) : 0;
                     setCategoryData(dataTmp);
                   }}
                 />

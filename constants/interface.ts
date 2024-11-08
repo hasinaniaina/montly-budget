@@ -15,7 +15,6 @@ export interface CreationCategory {
   createdDate?: Date;
   idCategory: number;
   idUser: number;
-  categoryIncome: number;
 }
 
 export interface Product {

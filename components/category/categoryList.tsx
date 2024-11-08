@@ -7,7 +7,7 @@ import {
   ViewStyle,
   TouchableOpacity,
 } from "react-native";
-import React, { Dispatch, SetStateAction, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { GloblalStyles } from "@/constants/GlobalStyles";
 import { TextColor, TitleColor } from "@/constants/Colors";
 import { Category, CreationCategory, Product } from "@/constants/interface";
@@ -108,16 +108,58 @@ export default function CategoryList({
   const [showConfirmationModal, setShowConfirmationModal] =
     useState<boolean>(false);
 
+  // Sum expenses each categories
+  const [sumCategoryExpenses, setSumCategoryExpenses] = useState<number[]>();
+
   const removeItem = async () => {
     const result = await removeCategory(indexOfActionButtonShowed);
 
     return result;
   };
 
+  const getSumExpense = async (
+    category: Category[] & CreationCategory[]
+  ): Promise<number[]> => {
+    let product = await retrieveProductByCategory();
+    let categoryCount = 0;
+    let sumCategoryExpensesTmp = [];
+
+    while (categoryCount < category.length) {
+      let transactionNumber = 0;
+      let productCount = 0;
+      let sumExpensiveTmp = 0;
+
+      while (productCount < product.length) {
+        if (
+          product[productCount].idCreationCategory ==
+          category[categoryCount].idCreationCategory
+        ) {
+          sumExpensiveTmp +=
+            product[productCount].productAmount *
+            product[productCount].productCoefficient;
+          transactionNumber += 1;
+        }
+        productCount++;
+      }
+
+      sumCategoryExpensesTmp.push(sumExpensiveTmp);
+      
+      categoryCount++;
+    }
+
+    console.log(sumCategoryExpensesTmp);
+    
+
+    return sumCategoryExpensesTmp;
+  };
+
   useEffect(() => {
     getCategories(categoryDateFilter).then((categories) => {
-      setCategories(categories);
-      getCategoryTransactionNumber(categories);
+      getSumExpense(categories).then((sumCategoryExpense) => {
+        setSumCategoryExpenses(sumCategoryExpense);
+        setCategories(categories);
+        getCategoryTransactionNumber(categories);
+      });
     });
   }, [change]);
 
@@ -234,9 +276,11 @@ export default function CategoryList({
 
                       <View>
                         <Text style={styles.categoryIncome}>
-                          {(category as CreationCategory).categoryIncome
-                            .toString()
-                            .replace(/\B(?=(\d{3})+(?!\d))/g, ".")}{" "}
+                          {sumCategoryExpenses && sumCategoryExpenses[index]
+                            ? sumCategoryExpenses[index]
+                                .toString()
+                                .replace(/\B(?=(\d{3})+(?!\d))/g, ".")
+                            : 0}{" "}
                           Ar
                         </Text>
                       </View>
@@ -277,7 +321,9 @@ export default function CategoryList({
                 })
               ) : (
                 <View style={styles.noCategory}>
-                  <Text style={{fontFamily: "k2d-bold", color: "red"}}>No Category</Text>
+                  <Text style={{ fontFamily: "k2d-bold", color: "red" }}>
+                    No Category
+                  </Text>
                 </View>
               )}
             </View>

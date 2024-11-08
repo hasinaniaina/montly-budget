@@ -1,12 +1,10 @@
-import { Redirect, Stack } from "expo-router";
+import { Stack } from "expo-router";
 import { useFonts } from "expo-font";
 import * as SplashScreen from "expo-splash-screen";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect } from "react";
 import { SQLiteProvider } from "expo-sqlite";
 import { init } from "@/constants/db";
 import FallBack from "@/components/fallBack";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { NavigationContainer } from "@react-navigation/native";
 
 const color = "#717171";
 

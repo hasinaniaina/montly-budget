@@ -236,9 +236,6 @@ export const createCategory = async ({
     error = true;
   }
 
-  if (JSON.stringify(datas?.categoryIncome) == "") {
-    error = true;
-  }
 
   if (error) {
     setErrorMessage(["All Fields should not be empty!"]);
@@ -303,10 +300,6 @@ export const upgradeCategory = async ({
   }
 
   if (datas?.color == "") {
-    error = true;
-  }
-
-  if (JSON.stringify(datas?.categoryIncome) == "") {
     error = true;
   }
 

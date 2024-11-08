@@ -10,34 +10,7 @@ import {
   removeProduct,
   retrieveUserCategory,
 } from "./Controller";
-import { getProductByIdCreationCategory } from "./db";
 
-export const amountRemainingProduct = (
-  datas: Product | CreationProduct,
-  amountRemaining: number,
-  setErrorMessage: (val: string[]) => void,
-  setModalShown: (val: boolean[]) => void,
-  setshowLoading: (val: ViewStyle) => void
-) => {
-  if (
-    (datas as CreationProduct).productAmount *
-      (datas as CreationProduct).productCoefficient >
-    amountRemaining
-  ) {
-    setErrorMessage([
-      "The amount should not exceed: " + amountRemaining.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".") + " Ar",
-    ]);
-
-    setModalShown([true]);
-
-    setTimeout(() => {
-      setshowLoading({ display: "none" });
-    }, 2000);
-
-    return false;
-  }
-  return true;
-};
 
 export const checkIfCategorylabelAlreadyStored = async (datas: Category) => {
   const userCategories = await retrieveUserCategory();
@@ -75,23 +48,23 @@ export const checkIfCategorylabelAlreadyStored = async (datas: Category) => {
   return isCategoryLabelNotExist;
 };
 
-export const checkIfProductCategoryExistAndAmountNotLessProduct = async (
-  datas: Category & CreationCategory
-) => {
-  const products = await getProductByIdCreationCategory(datas.idCreationCategory);
-  let productTotalAmount = 0;
+// export const checkIfProductCategoryExistAndAmountNotLessProduct = async (
+//   datas: Category & CreationCategory
+// ) => {
+//   const products = await getProductByIdCreationCategory(datas.idCreationCategory);
+//   let productTotalAmount = 0;
 
-  for (let product of products) {
-    productTotalAmount += product.productAmount;
-  }
+//   for (let product of products) {
+//     productTotalAmount += product.productAmount;
+//   }
   
 
-  if (datas.categoryIncome < productTotalAmount) {
-    return {notLess: false, amount: productTotalAmount};
-  }
+//   if (datas.categoryIncome < productTotalAmount) {
+//     return {notLess: false, amount: productTotalAmount};
+//   }
 
-  return {notLess: true};
-};
+//   return {notLess: true};
+// };
 
 export const isFilteredActivate = (
   isCategoryFiltered: boolean[],
