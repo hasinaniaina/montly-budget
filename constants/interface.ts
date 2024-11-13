@@ -1,35 +1,35 @@
 export interface User {
-  id: number;
+  id: string;
   email: string;
   password: string;
 }
 
 export interface Category {
-  idCategory: number;
+  idCategory: string;
   label: string;
   color: string;
 }
 
 export interface CreationCategory {
-  idCreationCategory: number;
+  idCreationCategory: string;
   createdDate?: Date;
-  idCategory: number;
-  idUser: number;
+  idCategory: string;
+  idUser: string;
 }
 
 export interface Product {
-  idProduct: number;
+  idProduct: string;
   designation: string;
   color: string;
 }
 
 export interface CreationProduct {
-  idCreationProduct: number;
-  idProduct: number;
+  idCreationProduct: string;
+  idProduct: string;
   productAmount: number;
   productCoefficient: number;
   createdDate?: Date;
-  idCreationCategory: number;
+  idCreationCategory: string;
 }
 
 export interface ItemAddCategory {

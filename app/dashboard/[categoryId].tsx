@@ -42,7 +42,7 @@ export default function Products() {
 
   // retrieve index of edit, delete action button
   const [indexOfActionButtonShowed, setIndexOfActionButtonShowed] =
-    useState<number>(-1);
+    useState<string>("");
 
   // Show loading when add category or product
   const [showLoading, setShowLoading] = useState<ViewStyle>({
@@ -69,14 +69,15 @@ export default function Products() {
 
   // Get product for edit
   const productDataInit: Product | CreationProduct = {
-    idProduct: -1,
-    idCreationProduct: -1,
+    idProduct: "",
+    idCreationProduct: "",
     designation: "",
     productAmount: 0,
     color: "#000",
     idCreationCategory: (category as CreationCategory).idCreationCategory!,
     productCoefficient: 1,
   };
+  
   const [productDataTmp, setProductDataTmp] = useState<
     Product | CreationProduct
   >(productDataInit);
@@ -220,7 +221,7 @@ export default function Products() {
         style={[styles.content, { position: "relative" }]}
         onPress={() => {
           setShowActionButton([]);
-          setIndexOfActionButtonShowed(-1);
+          setIndexOfActionButtonShowed("");
         }}
       >
         <View style={styles.scrollView}>
@@ -310,7 +311,7 @@ export default function Products() {
         </View>
       </Pressable>
 
-      {/* popup filter by category*/}
+      {/* popup Add new product*/}
       <Popup
         title="Expenses"
         buttonTitle="Save"

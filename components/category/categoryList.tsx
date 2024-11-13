@@ -65,7 +65,7 @@ export default function CategoryList({
 
   // Index of the category list selected
   const [indexOfActionButtonShowed, setIndexOfActionButtonShowed] =
-    useState<number>(-1);
+    useState<string>("");
 
   //  Retrieve transactions for each categorie
   const [categoriesTransactionNumber, setCategoriesTransactionNumber] =
@@ -146,9 +146,6 @@ export default function CategoryList({
       
       categoryCount++;
     }
-
-    console.log(sumCategoryExpensesTmp);
-    
 
     return sumCategoryExpensesTmp;
   };
@@ -238,14 +235,14 @@ export default function CategoryList({
                         let showActionButtonTmp = [...showActionButton];
                         showActionButtonTmp[index] = { display: "flex" };
                         setShowActionButton(showActionButtonTmp);
-
+                        
                         setIndexOfActionButtonShowed(
                           (category as CreationCategory).idCreationCategory!
                         );
                       }}
                       onPress={() => {
                         setShowActionButton(showActionButtonInit);
-                        setIndexOfActionButtonShowed(-1);
+                        setIndexOfActionButtonShowed("");
                         router.push({
                           pathname: "/dashboard/[categoryId]",
                           params: { categoryId: JSON.stringify(category) },
@@ -264,7 +261,7 @@ export default function CategoryList({
                             {(category as Category).label}
                           </Text>
                           <Text style={styles.transaction}>
-                            {categoriesTransactionNumber[index]} transaction(s)
+                            {categoriesTransactionNumber[index]} expense(s)
                           </Text>
                           <Text style={GloblalStyles.CreatedDate}>
                             {new Date(

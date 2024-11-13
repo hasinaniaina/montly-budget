@@ -29,8 +29,8 @@ export default function ListProduct({
 }: {
   showActionButton: ViewStyle[];
   setShowActionButton: (val: ViewStyle[]) => void;
-  indexOfActionButtonShowed: number;
-  setIndexOfActionButtonShowed: (val: number) => void;
+  indexOfActionButtonShowed: string;
+  setIndexOfActionButtonShowed: (val: string) => void;
   setChange: (val: boolean) => void;
   setShowAddListField: (val: ViewStyle) => void;
   setSelectProductForEdit: (val: Product) => void;
@@ -54,12 +54,14 @@ export default function ListProduct({
       (data as CreationProduct).productCoefficient;
   });
 
-  for (let data of productData) {
-    const priceTmp = data.productAmount * data.productCoefficient;
-    price.push(priceTmp.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "."));
+  if (productData) {
+    for (let data of productData) {
+      const priceTmp = data.productAmount * data.productCoefficient;
+      price.push(priceTmp.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "."));
 
-    const coefficientTmp = (priceTmp * 100) / totalAmountTmp
-    coefficient.push(coefficientTmp.toString())
+      const coefficientTmp = (priceTmp * 100) / totalAmountTmp;
+      coefficient.push(coefficientTmp.toString());
+    }
   }
 
   // Confirmation delete confirmation modal
@@ -89,7 +91,7 @@ export default function ListProduct({
             }}
             onPressIn={() => {
               setShowActionButton([]);
-              setIndexOfActionButtonShowed(-1);
+              setIndexOfActionButtonShowed("");
             }}
             underlayColor="white"
             style={styles.listProduct}
@@ -131,13 +133,16 @@ export default function ListProduct({
               <View
                 style={[
                   styles.itemRightContent,
-                  indexOfActionButtonShowed == (item as CreationProduct).idCreationProduct && {
+                  indexOfActionButtonShowed ==
+                    (item as CreationProduct).idCreationProduct && {
                     display: "none",
                   },
                 ]}
               >
-                <Text style={styles.price}>{price[index]}{" "}Ar-{" "}</Text>
-                <Text style={styles.percentage}>{Number(coefficient[index]).toFixed(2)}%</Text>
+                <Text style={styles.price}>{price[index]} Ar- </Text>
+                <Text style={styles.percentage}>
+                  {Number(coefficient[index]).toFixed(2)}%
+                </Text>
               </View>
 
               <View style={[styles.buttonsAction, showActionButton[index]]}>
@@ -145,7 +150,7 @@ export default function ListProduct({
                   style={styles.editIconContainer}
                   onPress={() => {
                     setSelectProductForEdit(item);
-                    setIndexOfActionButtonShowed(-1);
+                    setIndexOfActionButtonShowed("");
                     setShowAddListField({ display: "flex" });
                   }}
                 >

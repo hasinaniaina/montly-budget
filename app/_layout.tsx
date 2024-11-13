@@ -5,6 +5,7 @@ import { Suspense, useEffect } from "react";
 import { SQLiteProvider } from "expo-sqlite";
 import { init } from "@/constants/db";
 import FallBack from "@/components/fallBack";
+import 'react-native-random-uuid'
 
 const color = "#717171";
 

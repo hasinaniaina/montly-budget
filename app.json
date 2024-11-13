@@ -37,6 +37,13 @@
       "eas": {
         "projectId": "34650af2-e819-4d40-b0d4-6e46fcff6f41"
       }
-    }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/34650af2-e819-4d40-b0d4-6e46fcff6f41"
+    },
+    "owner": "hasinaniaina_harilanto"
   }
 }

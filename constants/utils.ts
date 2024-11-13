@@ -1,13 +1,8 @@
-import { ViewStyle } from "react-native";
 import {
   Category,
   CreationCategory,
-  CreationProduct,
-  Product,
 } from "./interface";
 import {
-  removeCategory,
-  removeProduct,
   retrieveUserCategory,
 } from "./Controller";
 
@@ -77,10 +72,11 @@ export const isFilteredActivate = (
 };
 
 export const categoryDataInit = {
-  idCategory: -1,
+  idCategory: "",
   color: "#000",
   label: "",
-  idCreationCategory: -1,
+  idCreationCategory: "",
   categoryIncome: 0,
-  idUser: 1,
+  idUser: "",
 };
+

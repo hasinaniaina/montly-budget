@@ -29,6 +29,7 @@ import {
   Product,
 } from "@/constants/interface";
 import {
+  categoryDataInit,
   checkIfCategorylabelAlreadyStored,
   isFilteredActivate,
 } from "@/constants/utils";
@@ -66,18 +67,11 @@ export default function Popup({
   confirmAddExistingCategory?: () => void;
   children: ReactNode;
 }) {
-  const categoryDataInit = {
-    id: -1,
-    color: "#000",
-    income: "",
-    label: "",
-    idUser: 1,
-  };
 
   // Get product for edit
   const productDataInit: Product & CreationProduct = {
-    idProduct: -1,
-    idCreationProduct: -1,
+    idProduct: "",
+    idCreationProduct: "",
     designation: "",
     productAmount: 0,
     color: "#000",
@@ -93,8 +87,8 @@ export default function Popup({
     display: "flex",
   });
 
-  const addCategory = async () => {
-    if (datas?.idCategory! > 0) {
+  const addCategory = async () => {    
+    if (datas?.idCategory! != "") {
       const result = upgradeCategory({
         datas,
         setErrorMessage,
@@ -185,10 +179,8 @@ export default function Popup({
         (product as CreationProduct).productCoefficient;
     }
 
-    // Get Product Amount remaining for the category
-    const productAmountRemaining = productAmountTmp;
 
-    if (datas.idCreationProduct == -1) {
+    if (datas.idCreationProduct == "") {
       const insertProduct = await saveProduct(
         datas,
         setErrorMessage,

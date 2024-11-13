@@ -18,7 +18,6 @@ import {
   getProductByIdCreationCategory,
   getProductByIdCreationProduct,
   insertExistingCategories,
-  getUserByPassword,
   updateUserPasssword,
 } from "./db";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -200,7 +199,7 @@ export const filterProduct = async (datas: Product): Promise<Product[]> => {
   return (await getProductFilter(datas)) as Product[];
 };
 
-export const removeProduct = async (idCreationProduct: number) => {
+export const removeProduct = async (idCreationProduct: string) => {
   const productAlreadyExistBefore = await getProductByIdCreationProduct(
     idCreationProduct
   );
@@ -228,6 +227,8 @@ export const createCategory = async ({
   let error = false;
   const user: any = await AsyncStorage.getItem("userCredentials");
 
+  console.log('ldskfjsdlkfjsdklfj');
+  
   if (datas?.label == "") {
     error = true;
   }
@@ -240,7 +241,7 @@ export const createCategory = async ({
   if (error) {
     setErrorMessage(["All Fields should not be empty!"]);
     setModalShown([true]);
-  } else {
+  } else {    
     const CategoryCreated = await insertCategory(datas!, JSON.parse(user));
 
     return (CategoryCreated as SQLiteRunResult).changes;
@@ -262,24 +263,28 @@ export const retrieveCategoryAccordingToDate = async (
   return await getCategory(JSON.parse(user), categoryDateFilter);
 };
 
-export const removeCategory = async (idCreationCategory: number) => {
+export const removeCategory = async (idCreationCategory: string) => { 
+   
   const creationProduct = await getProductByIdCreationCategory(
     idCreationCategory
-  );
+  );  
+
   let result: any = "";
+
   if (creationProduct.length > 0) {
     result = await deleteCategory(idCreationCategory, false);
   } else {
     result = await deleteCategory(idCreationCategory, true);
   }
-
+  
   if (result.changes) {
     return true;
   }
+  
   return false;
 };
 
-export const retrieveCategoryById = async (id: number) => {
+export const retrieveCategoryById = async (id: string) => {
   const category = await getCategoryById(id);
   return category;
 };

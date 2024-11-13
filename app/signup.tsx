@@ -75,6 +75,7 @@ export default function Singup() {
           }}
         ></AuthentificationButton>
       </SafeAreaView>
+
       <ErrorMessageModal
         modalShown={modalShown[0]}
         errorMessage={errorMessage}
@@ -82,6 +83,7 @@ export default function Singup() {
         setModalShown={setModalShown}
         setShowLoading={setShowLoading}
       />
+      
       <Loading showLoading={showLoading} />
     </View>
   );
