@@ -151,6 +151,8 @@ export default function CategoryList({
   };
 
   useEffect(() => {
+    console.log(isCategoryFiltered);
+    
     getCategories(categoryDateFilter).then((categories) => {
       getSumExpense(categories).then((sumCategoryExpense) => {
         setSumCategoryExpenses(sumCategoryExpense);
@@ -172,7 +174,7 @@ export default function CategoryList({
             <Text style={GloblalStyles.titleSection}>Category</Text>
           </View>
           <View style={styles.iconFilterAddContainer}>
-            {isCategoryFiltered[0] || isCategoryFiltered[1] ? (
+            {isCategoryFiltered[0] ? (
               <TouchableOpacity
                 style={styles.iconFilter}
                 onPress={() => {
