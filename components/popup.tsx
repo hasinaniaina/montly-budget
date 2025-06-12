@@ -327,6 +327,8 @@ export default function Popup({
           <Text style={styles.popupButtonTitle}>{buttonTitle}</Text>
         </TouchableOpacity>
       </View>
+
+      
       <ErrorMessageModal
         modalShown={modalShown[0]}
         errorMessage={errorMessage}

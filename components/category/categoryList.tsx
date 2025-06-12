@@ -150,9 +150,7 @@ export default function CategoryList({
     return sumCategoryExpensesTmp;
   };
 
-  useEffect(() => {
-    console.log(isCategoryFiltered);
-    
+  useEffect(() => {    
     getCategories(categoryDateFilter).then((categories) => {
       getSumExpense(categories).then((sumCategoryExpense) => {
         setSumCategoryExpenses(sumCategoryExpense);
@@ -329,6 +327,7 @@ export default function CategoryList({
           </ScrollView>
         </View>
       </View>
+
       <ConfirmationMessageModal
         modalShown={showConfirmationModal}
         removeItem={removeItem}

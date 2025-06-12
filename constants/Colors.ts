@@ -9,3 +9,4 @@ export const greyMonth = "#F9F9F9";
 export const green = "#7DE05B";
 export const red = "#D96363";
 export const purple = "#838FCE";
+export const disabledColor = "#d1d1d1";

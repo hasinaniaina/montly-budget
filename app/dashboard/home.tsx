@@ -1,5 +1,11 @@
 import Popup from "@/components/popup";
-import { TextColor, TitleColor, green, red } from "@/constants/Colors";
+import {
+  TextColor,
+  TitleColor,
+  disabledColor,
+  green,
+  red,
+} from "@/constants/Colors";
 import { GloblalStyles } from "@/constants/GlobalStyles";
 import { useEffect, useLayoutEffect, useState } from "react";
 import RNPickerSelect, { Item } from "react-native-picker-select";
@@ -25,6 +31,7 @@ import {
   CreationCategory,
   ItemAddCategory,
   Product,
+  CreationProduct,
 } from "@/constants/interface";
 import {
   createExistingCategories,
@@ -34,6 +41,7 @@ import {
   retrieveCategoryAccordingToDate,
   retrieveCategoryById,
   retrieveCurrentUserCategory,
+  retrieveProduct,
   retrieveProductByCategory,
 } from "@/constants/Controller";
 import { router } from "expo-router";
@@ -41,7 +49,7 @@ import Loading from "@/components/loading";
 import Header from "@/components/category/header";
 import Resumes from "@/components/category/resume";
 import CategoryList from "@/components/category/categoryList";
-import { categoryDataInit } from "@/constants/utils";
+import { categoryDataInit, productDataInit } from "@/constants/utils";
 import PopupChooseAdd from "@/components/popupChooseAdd";
 import ColorPickerViewNew from "@/components/colorPickerNew";
 
@@ -83,10 +91,12 @@ export default function Home() {
     categoryDataInit
   );
 
-
   const [userCategory, setuserCategory] = useState<
     Category[] & CreationCategory[]
   >([categoryDataInit]);
+
+  const [userProductAddExistingCategory, setuserProductAddExistingCategory] =
+    useState<Product[] & CreationProduct[]>([productDataInit]);
 
   const [itemAddCategoryIndex, setItemAddCategoryIndex] = useState<
     ItemAddCategory[]
@@ -120,7 +130,6 @@ export default function Home() {
   let showActionButtonInit: ViewStyle[] = [];
   const [showActionButton, setShowActionButton] =
     useState<ViewStyle[]>(showActionButtonInit);
-
 
   const getCategory = async (
     categoryDateFilter: Date[]
@@ -186,7 +195,14 @@ export default function Home() {
       setItemAddCategoryIndex(itemIndexTmp);
 
       setuserCategory(categoryNotAdded);
+      // setuserCategory(userCategories);
     });
+  };
+
+  const getAllCurrentUserProductRelativeToProduct = async () => {
+    let userProducts: any = await retrieveProductByCategory();
+
+    setuserProductAddExistingCategory(userProducts);
   };
 
   const confirmAddExistingCategory = async () => {
@@ -270,6 +286,8 @@ export default function Home() {
       });
 
       setChange(false);
+
+      getAllCurrentUserProductRelativeToProduct();
     };
 
     init();
@@ -369,10 +387,13 @@ export default function Home() {
             renderItem={({ item, index }) => (
               <View style={styles.categoryItem}>
                 <Pressable
-                  style={styles.categoriesListContainer}
+                  style={[
+                    styles.categoriesProductsListContainer,
+                    { marginRight: 30 },
+                  ]}
                   onPress={() => {
                     let itemTmp = [...itemAddCategoryIndex];
-                    itemTmp[index].checked = !itemTmp[index].checked;
+                    itemTmp[index].checked = !itemTmp[index].checked;                    
                     setItemAddCategoryIndex(itemTmp);
                   }}
                 >
@@ -388,14 +409,65 @@ export default function Home() {
                   </View>
                   <View
                     style={[
-                      styles.colorCategory,
+                      styles.itemCategoryProductShape,
+                      // styles.categoryProductShape,
                       { backgroundColor: item.color },
                     ]}
                   ></View>
-                  <View style={styles.categoryName}>
+                  <View>
                     <Text style={styles.name}>{item.label}</Text>
                   </View>
                 </Pressable>
+                {/* <View style={{ flexDirection: "column" }}>
+                  {userProductAddExistingCategory.map((product: any, Productindex) => {
+                    if (product.idCreationCategory == item.idCreationCategory) {
+                      return (
+                        <Pressable
+                          key={Productindex}
+                          style={styles.categoriesProductsListContainer}
+                          disabled={true}
+                          onPress={() => {}}
+                        >
+                          <View
+                            style={[
+                              itemAddCategoryIndex[index]?.checked
+                                ? styles.checkboxCategory
+                                : styles.checkboxProductDisabled,
+                            ]}
+                          >
+                            <View
+                              style={[
+                                styles.checkboxProductChecked,
+                                !itemAddCategoryIndex[index]?.checked
+                                  ? { backgroundColor: TextColor }
+                                  : { backgroundColor: "transparent" },
+                              ]}
+                            ></View>
+                          </View>
+                          <View
+                            style={[
+                              styles.itemCategoryProductShape,
+                              !itemAddCategoryIndex[index]?.checked
+                                ? styles.productColorDisabled
+                                : { backgroundColor: product.color },
+                            ]}
+                          ></View>
+                          <View>
+                            <Text
+                              style={[
+                                !itemAddCategoryIndex[index]?.checked
+                                  ? styles.nameDisabled
+                                  : styles.name,
+                              ]}
+                            >
+                              {product.designation}
+                            </Text>
+                          </View>
+                        </Pressable>
+                      );
+                    }
+                  })}
+                </View> */}
               </View>
             )}
           />
@@ -425,7 +497,7 @@ export default function Home() {
           <Text style={GloblalStyles.appLabel}>Categories</Text>
           <View style={GloblalStyles.appInput}>
             <RNPickerSelect
-              onValueChange={(categorySelected) => {                
+              onValueChange={(categorySelected) => {
                 if (categorySelected?.idCreationCategory) {
                   setCategoryData(categorySelected);
                 }
@@ -503,7 +575,6 @@ export default function Home() {
                 categoryDateFilterTmp[1] = dateFormat;
               }
 
-
               setOpenDatePicker([false, false]);
               setCategoryDateFilter(categoryDateFilterTmp);
             }}
@@ -551,10 +622,11 @@ const styles = StyleSheet.create({
   date: {
     fontFamily: "k2d-regular",
   },
-  categoryItem: {},
-  categoriesListContainer: {
+  categoryItem: {
+    flexDirection: "row",
+  },
+  categoriesProductsListContainer: {
     alignItems: "center",
-    justifyContent: "center",
     flexDirection: "row",
     marginBottom: 10,
   },
@@ -565,26 +637,55 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     width: 15,
     height: 15,
-    marginRight: 30,
+    marginRight: 10,
     alignItems: "center",
     justifyContent: "center",
   },
+
+  checkboxProductDisabled: {
+    marginRight: 10,
+    borderRadius: 5,
+    width: 13,
+    height: 13,
+    borderWidth: 1,
+    borderColor: disabledColor,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
   checkboxCategoryChecked: {
     width: 8,
     height: 8,
   },
-  colorCategory: {
+
+  checkboxProductChecked: {
+    borderRadius: 2,
+    width: 6,
+    height: 6,
+    backgroundColor: TextColor,
+  },
+
+  itemCategoryProductShape: {
     width: 10,
     height: 10,
     borderRadius: 20,
-    marginRight: 15,
+    marginRight: 5,
   },
-  categoryName: {},
+
+  productColorDisabled: {
+    backgroundColor: disabledColor,
+  },
 
   name: {
     fontFamily: "k2d-bold",
     color: TitleColor,
   },
+
+  nameDisabled: {
+    fontFamily: "k2d-bold",
+    color: disabledColor,
+  },
+
   noListContainer: {
     height: "80%",
     justifyContent: "center",

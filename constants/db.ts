@@ -226,7 +226,8 @@ export const getProductsNew = async () => {
       await db
     ).getAllAsync(
       `SELECT * 
-      FROM Product as prod INNER JOIN CreationProduct as creatProd ON prod.idProduct = creatProd.idProduct`
+      FROM Product as prod INNER JOIN CreationProduct as creatProd
+       ON prod.idProduct = creatProd.idProduct`
     );
 
     return product ? product : ([] as Product[] & CreationProduct[]);
@@ -418,13 +419,15 @@ export const insertExistingCategories = async (
   user: User
 ) => {
   try {
-    let insertCreationCategory: any = "";
+    let insertCreationCategory: any = "";   
 
     for (let item of items) {
+      const uuidCreationCategory = crypto.randomUUID();
       insertCreationCategory = await (
         await db
       ).runAsync(
-        "INSERT INTO CreationCategory (idCategory, idUser, categoryIncome) VALUES (?, ?, ?)",
+        "INSERT INTO CreationCategory (idCreationCategory, idCategory, idUser) VALUES (?, ?, ?)",
+        uuidCreationCategory,
         item.idCategory,
         user.id,
         0
@@ -547,9 +550,8 @@ export const deleteCategory = async (
               idCreationCategory +
               "'"
           );
-
         }, 1000);
-        
+
         return deleteCreationCategory;
       }
     }

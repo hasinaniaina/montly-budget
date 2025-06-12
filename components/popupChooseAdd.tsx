@@ -11,7 +11,7 @@ import {
   Pressable,
 } from "react-native";
 
-export default function PopupChooseAdd({
+export default function  PopupChooseAdd({
   modalShown,
   setOpenCloseModalChooseAdd,
   openPopupAddNewCategoryVisible,
@@ -46,6 +46,7 @@ export default function PopupChooseAdd({
               />
             </TouchableOpacity>
           </View>
+          
           <View style={styles.listChooseContent}>
             <Pressable
               style={styles.listItemChoose}

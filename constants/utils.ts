@@ -80,3 +80,13 @@ export const categoryDataInit = {
   idUser: "",
 };
 
+export const productDataInit = {
+  idProduct: "",
+  designation: "",
+  color: "#000",
+  idCreationProduct: "",
+  productAmount: 0,
+  productCoefficient: 1,
+  idCreationCategory: ""
+}
+

@@ -30,6 +30,7 @@ import {
   settingsPassword,
 } from "./interface";
 import { SQLiteRunResult } from "expo-sqlite";
+import { createAnimatedPropAdapter } from "react-native-reanimated";
 
 export const saveUser = async ({
   email,
@@ -191,7 +192,7 @@ export const retrieveProductByCategory = async () => {
 export const retrieveProduct = async (
   category: Category & CreationCategory
 ) => {
-  const products = await getProducts(category);
+  const products = await getProducts(category);  
   return products as Product[] & CreationProduct[];
 };
 
@@ -226,8 +227,6 @@ export const createCategory = async ({
 }): Promise<boolean | number> => {
   let error = false;
   const user: any = await AsyncStorage.getItem("userCredentials");
-
-  console.log('ldskfjsdlkfjsdklfj');
   
   if (datas?.label == "") {
     error = true;
@@ -269,9 +268,11 @@ export const removeCategory = async (idCreationCategory: string) => {
     idCreationCategory
   );  
 
+  const categoryShowed = await getCategoryById(idCreationCategory);
+
   let result: any = "";
 
-  if (creationProduct.length > 0) {
+  if (creationProduct.length > 0 || categoryShowed) {
     result = await deleteCategory(idCreationCategory, false);
   } else {
     result = await deleteCategory(idCreationCategory, true);
