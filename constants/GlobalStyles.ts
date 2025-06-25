@@ -1,5 +1,5 @@
 import { Dimensions, StyleSheet } from "react-native";
-import { TextColor, TitleColor, green, red } from "./Colors";
+import { TextColor, TitleColor, green, orange, red } from "./Colors";
 
 export const GloblalStyles = StyleSheet.create({
   container: {
@@ -148,5 +148,36 @@ export const GloblalStyles = StyleSheet.create({
     width: Dimensions.get("screen").width,
     alignItems: "center",
     justifyContent: "center",
+  },
+
+
+  exportImportContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    flex: 1,
+    paddingHorizontal: 10,
+  },
+
+  exportImportTitle: {
+    fontSize: 20,
+    fontFamily: "k2d-bold",
+    marginBottom: 20,
+  },
+
+  exportImportText: {
+    color: TextColor,
+    fontFamily: "k2d-regular",
+    marginBottom: 20,
+  },
+
+  buttonExportImport: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    backgroundColor: orange,
+    borderRadius: 10,
+  },
+  buttonTitle: {
+    fontFamily: "k2d-bold",
+    color: "white",
   },
 });

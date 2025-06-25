@@ -25,6 +25,7 @@ import {
   Category,
   CreationCategory,
   CreationProduct,
+  ExportProductDatas,
   ItemAddCategory,
   Product,
   settingsPassword,
@@ -405,3 +406,34 @@ export const changePassword = async ({
 
   return false;
 };
+
+
+export const getDatabaseDatas = async () => {
+  let user: any = await AsyncStorage.getItem("userCredentials");
+  user = JSON.parse(user);
+  let productDatas = [];
+  let categoryObject = [];
+
+  const categoryDatas: Category[] = await getUserCategory(user);
+  let countCategory = 0;
+
+  for (let category of categoryDatas) {
+
+    categoryObject.push({"label": category.label, "color": category.color, "products": [] as Array<ExportProductDatas> }); 
+
+    const productDatas =  await getProducts(category); 
+
+    for (let product of productDatas) {
+      categoryObject[countCategory]["products"].push({
+        designation: product.designation,
+        color: product.color,
+        productAmount: product.productAmount,
+        productCoefficient: product.productCoefficient,
+        createdDate: product.createdDate
+      });
+    }
+    countCategory ++;
+  }
+
+  return categoryObject;  
+}

@@ -42,3 +42,26 @@ export interface settingsPassword {
   newPassword: string;
   confirmNewPassword: string;
 }
+
+export interface ExportProductDatas {
+  designation: string;
+  color: string;
+  productAmount: number;
+  productCoefficient: number;
+  createdDate: string;
+}
+
+export interface ExportDatas {
+  label: string;
+  color: string;
+  products: Array<ExportProductDatas>;
+}
+
+export interface CsvDatas {
+  categoryDatas: CsvDataType[], 
+  productDatas: CsvDataType[][] 
+}
+
+export type CsvDataType = {
+  [key: string]: string
+}

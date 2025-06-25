@@ -3,8 +3,6 @@ import {
   TextColor,
   TitleColor,
   disabledColor,
-  green,
-  red,
 } from "@/constants/Colors";
 import { GloblalStyles } from "@/constants/GlobalStyles";
 import { useEffect, useLayoutEffect, useState } from "react";
@@ -12,7 +10,6 @@ import RNPickerSelect, { Item } from "react-native-picker-select";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 
 import {
-  Dimensions,
   Image,
   StyleSheet,
   Text,
@@ -24,7 +21,6 @@ import {
   Pressable,
   BackHandler,
   FlatList,
-  SafeAreaView,
 } from "react-native";
 import {
   Category,
@@ -35,13 +31,8 @@ import {
 } from "@/constants/interface";
 import {
   createExistingCategories,
-  getUserEmail,
-  logout,
-  removeCategory,
   retrieveCategoryAccordingToDate,
-  retrieveCategoryById,
   retrieveCurrentUserCategory,
-  retrieveProduct,
   retrieveProductByCategory,
 } from "@/constants/Controller";
 import { router } from "expo-router";
@@ -176,7 +167,7 @@ export default function Home() {
         let categoryIsListed = false;
 
         for (let category of categories) {
-          if (userCategory.idCategory == category.idCategory) {
+          if (category.idCategory == userCategory.idCategory ) {
             categoryIsListed = true;
             break;
           }

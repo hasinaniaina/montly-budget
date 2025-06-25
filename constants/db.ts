@@ -3,6 +3,7 @@ import {
   Category,
   CreationCategory,
   CreationProduct,
+  CsvDataType,
   ItemAddCategory,
   Product,
   User,
@@ -100,8 +101,6 @@ export const createUser = async (data: { email: string; password: string }) => {
       );
 
       if (userCreated.changes) {
-        console.log(uuid);
-
         try {
           const user: any = await (
             await db
@@ -385,9 +384,9 @@ export const insertCategory = async (
   const uuidCategory = crypto.randomUUID();
 
   try {
-    let insertCategory = await (
-      await db
-    ).runAsync(
+    const dbInstance = await db
+
+    let insertCategory = await dbInstance.runAsync(
       "INSERT INTO Category (idCategory, label, color) VALUES (?, ?, ?)",
       uuidCategory,
       datas.label!,
@@ -397,9 +396,7 @@ export const insertCategory = async (
     if (insertCategory.changes) {
       const uuidCreationCategory = crypto.randomUUID();
 
-      const insertCreationCategory = await (
-        await db
-      ).runAsync(
+      const insertCreationCategory = await dbInstance.runAsync(
         "INSERT INTO CreationCategory (idCreationCategory, idCategory, idUser) VALUES (?, ?, ?)",
         uuidCreationCategory,
         uuidCategory,
@@ -419,7 +416,7 @@ export const insertExistingCategories = async (
   user: User
 ) => {
   try {
-    let insertCreationCategory: any = "";   
+    let insertCreationCategory: any = "";
 
     for (let item of items) {
       const uuidCreationCategory = crypto.randomUUID();
@@ -582,7 +579,7 @@ export const updateCategory = async (datas: Category | CreationCategory) => {
 export const getCategoryFilter = async (
   datas: Category[] & CreationCategory[],
   date: Date[]
-) => {
+): Promise<string | undefined>  => {
   try {
     let category: any = [];
 
@@ -625,6 +622,91 @@ export const getCategoryFilter = async (
     return category;
   } catch (error) {
     console.log("fitler by category and date error =>", error);
-    return false;
+    return undefined;
   }
 };
+
+export const insertCSVIntoCategoryDatabase = async (
+  datas: CsvDataType,
+  user: User
+) => {
+  const uuidCategory = crypto.randomUUID();
+  const uuidCreationCategory = crypto.randomUUID();
+  
+  try {
+    const dbInstance = await db;    
+
+    let insertCategory = await dbInstance.runAsync(
+      "INSERT INTO Category (idCategory, label, color) VALUES (?, ?, ?)",
+      uuidCategory,
+      datas.category.trim(),
+      datas.categoryColor.trim()
+    );
+    
+    
+    if (insertCategory.changes) {
+      const insertCreationCategory = await dbInstance.runAsync(
+        "INSERT INTO CreationCategory (idCreationCategory, idCategory, idUser) VALUES (?, ?, ?)",
+        uuidCreationCategory,
+        uuidCategory,
+        user.id
+      );     
+      
+    }
+
+    return uuidCreationCategory;
+  } catch (error) {
+    console.log("Category insertion Category error =>", error);
+    return undefined
+  }
+};
+
+export const insertCSVIntoProductDatabase = async (
+  datas: CsvDataType,
+  idCreationCategory: any
+) => {
+  const uuidProduct = crypto.randomUUID();
+
+  try {
+    let insertProduct = await (
+      await db
+    ).runAsync(
+      `INSERT INTO Product 
+    (idProduct, designation, color) 
+    VALUES (?, ?, ?)`,
+      uuidProduct,
+      datas.product.trim(),
+      datas.productColor.trim()
+    );
+
+    if (insertProduct.changes) {
+      const uuidCreationProduct = crypto.randomUUID();
+
+      let insertCreationProduct = await (
+        await db
+      ).runAsync(
+        `INSERT INTO CreationProduct 
+      (idCreationProduct, productAmount, productCoefficient, idCreationCategory, idProduct) 
+      VALUES (?, ?, ? , ?, ?)`,
+        uuidCreationProduct,
+        datas.productAmount.trim(),
+        datas.productCoefficient.trim(),
+        idCreationCategory,
+        uuidProduct
+      );
+      return insertCreationProduct.changes;
+    }
+
+    return 0;
+  } catch (error) {
+    console.log("Product insertion Product error => ", error);
+  }
+};
+
+// export const getCatagoriesDatas = async (user: any) => {
+
+// }
+
+// export const getProductDatas = (user: any) => {
+
+// }

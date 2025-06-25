@@ -16,6 +16,18 @@ export default function CustomDrawerContent() {
           router.push("/settings/accountSetting");
         }}
       />
+      <DrawerItem
+        label={"Export Database"}
+        onPress={() => {
+          router.push("/settings/exportDatabase");
+        }}
+      />
+       <DrawerItem
+        label={"Import Database"}
+        onPress={() => {
+          router.push("/settings/importDatabase");
+        }}
+      />
     </DrawerContentScrollView>
   );
 }
