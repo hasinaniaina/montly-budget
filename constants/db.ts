@@ -384,7 +384,7 @@ export const insertCategory = async (
   const uuidCategory = crypto.randomUUID();
 
   try {
-    const dbInstance = await db
+    const dbInstance = await db;
 
     let insertCategory = await dbInstance.runAsync(
       "INSERT INTO Category (idCategory, label, color) VALUES (?, ?, ?)",
@@ -579,7 +579,7 @@ export const updateCategory = async (datas: Category | CreationCategory) => {
 export const getCategoryFilter = async (
   datas: Category[] & CreationCategory[],
   date: Date[]
-): Promise<string | undefined>  => {
+): Promise<string | undefined> => {
   try {
     let category: any = [];
 
@@ -632,32 +632,30 @@ export const insertCSVIntoCategoryDatabase = async (
 ) => {
   const uuidCategory = crypto.randomUUID();
   const uuidCreationCategory = crypto.randomUUID();
-  
-  try {
-    const dbInstance = await db;    
 
+  try {
+    const dbInstance = await db;
     let insertCategory = await dbInstance.runAsync(
       "INSERT INTO Category (idCategory, label, color) VALUES (?, ?, ?)",
       uuidCategory,
       datas.category.trim(),
       datas.categoryColor.trim()
     );
-    
-    
+
     if (insertCategory.changes) {
       const insertCreationCategory = await dbInstance.runAsync(
-        "INSERT INTO CreationCategory (idCreationCategory, idCategory, idUser) VALUES (?, ?, ?)",
+        "INSERT INTO CreationCategory (idCreationCategory, idCategory, idUser, createdDate) VALUES (?, ?, ?, ?)",
         uuidCreationCategory,
         uuidCategory,
-        user.id
-      );     
-      
+        user.id,
+        datas.createdDate.trim()
+      );
     }
 
     return uuidCreationCategory;
   } catch (error) {
-    console.log("Category insertion Category error =>", error);
-    return undefined
+    console.log("Category insertion error =>", error);
+    return undefined;
   }
 };
 
@@ -686,20 +684,21 @@ export const insertCSVIntoProductDatabase = async (
         await db
       ).runAsync(
         `INSERT INTO CreationProduct 
-      (idCreationProduct, productAmount, productCoefficient, idCreationCategory, idProduct) 
-      VALUES (?, ?, ? , ?, ?)`,
+      (idCreationProduct, productAmount, productCoefficient, idCreationCategory, idProduct, createdDate) 
+      VALUES (?, ?, ?, ?, ?, ?)`,
         uuidCreationProduct,
         datas.productAmount.trim(),
         datas.productCoefficient.trim(),
         idCreationCategory,
-        uuidProduct
+        uuidProduct,
+        datas.productCreatedDate.trim()
       );
       return insertCreationProduct.changes;
     }
 
     return 0;
   } catch (error) {
-    console.log("Product insertion Product error => ", error);
+    console.log("Product insertion error => ", error);
   }
 };
 

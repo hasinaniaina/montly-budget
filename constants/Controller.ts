@@ -193,7 +193,7 @@ export const retrieveProductByCategory = async () => {
 export const retrieveProduct = async (
   category: Category & CreationCategory
 ) => {
-  const products = await getProducts(category);  
+  const products = await getProducts(category);
   return products as Product[] & CreationProduct[];
 };
 
@@ -228,7 +228,7 @@ export const createCategory = async ({
 }): Promise<boolean | number> => {
   let error = false;
   const user: any = await AsyncStorage.getItem("userCredentials");
-  
+
   if (datas?.label == "") {
     error = true;
   }
@@ -237,11 +237,10 @@ export const createCategory = async ({
     error = true;
   }
 
-
   if (error) {
     setErrorMessage(["All Fields should not be empty!"]);
     setModalShown([true]);
-  } else {    
+  } else {
     const CategoryCreated = await insertCategory(datas!, JSON.parse(user));
 
     return (CategoryCreated as SQLiteRunResult).changes;
@@ -263,11 +262,10 @@ export const retrieveCategoryAccordingToDate = async (
   return await getCategory(JSON.parse(user), categoryDateFilter);
 };
 
-export const removeCategory = async (idCreationCategory: string) => { 
-   
+export const removeCategory = async (idCreationCategory: string) => {
   const creationProduct = await getProductByIdCreationCategory(
     idCreationCategory
-  );  
+  );
 
   const categoryShowed = await getCategoryById(idCreationCategory);
 
@@ -278,11 +276,11 @@ export const removeCategory = async (idCreationCategory: string) => {
   } else {
     result = await deleteCategory(idCreationCategory, true);
   }
-  
+
   if (result.changes) {
     return true;
   }
-  
+
   return false;
 };
 
@@ -390,12 +388,12 @@ export const changePassword = async ({
     const user: any = await AsyncStorage.getItem("userCredentials");
     const userTmp = JSON.parse(user);
     const stockedCurrentPassword = await getUserByEmail(userTmp.email);
-    
-    if (stockedCurrentPassword && stockedCurrentPassword.password == passwords.currentPassword) {
-      const result = await updateUserPasssword(
-        passwords.newPassword,
-        userTmp
-      );
+
+    if (
+      stockedCurrentPassword &&
+      stockedCurrentPassword.password == passwords.currentPassword
+    ) {
+      const result = await updateUserPasssword(passwords.newPassword, userTmp);
 
       return true;
     } else {
@@ -407,21 +405,26 @@ export const changePassword = async ({
   return false;
 };
 
-
 export const getDatabaseDatas = async () => {
   let user: any = await AsyncStorage.getItem("userCredentials");
   user = JSON.parse(user);
-  let productDatas = [];
+
   let categoryObject = [];
 
-  const categoryDatas: Category[] = await getUserCategory(user);
+  const categoryDatas: Category[] & CreationCategory[] = await getUserCategory(
+    user
+  );
   let countCategory = 0;
 
   for (let category of categoryDatas) {
+    categoryObject.push({
+      label: category.label,
+      color: category.color,
+      createdDate: category.createdDate!,
+      products: [] as Array<ExportProductDatas>,
+    });
 
-    categoryObject.push({"label": category.label, "color": category.color, "products": [] as Array<ExportProductDatas> }); 
-
-    const productDatas =  await getProducts(category); 
+    const productDatas = await getProducts(category);
 
     for (let product of productDatas) {
       categoryObject[countCategory]["products"].push({
@@ -429,11 +432,11 @@ export const getDatabaseDatas = async () => {
         color: product.color,
         productAmount: product.productAmount,
         productCoefficient: product.productCoefficient,
-        createdDate: product.createdDate
+        createdDate: product.createdDate,
       });
     }
-    countCategory ++;
+    countCategory++;
   }
 
-  return categoryObject;  
-}
+  return categoryObject;
+};

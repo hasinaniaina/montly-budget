@@ -54,6 +54,7 @@ export interface ExportProductDatas {
 export interface ExportDatas {
   label: string;
   color: string;
+  createdDate: Date;
   products: Array<ExportProductDatas>;
 }
 

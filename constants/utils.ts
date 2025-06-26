@@ -17,7 +17,7 @@ import {
   insertCSVIntoProductDatabase,
 } from "./db";
 
-const header = `Category,Category color,Product, Product color, Product amount,Product coefficient, Product created date `;
+const header = `Category,Category color,created date, Product, Product color, Product amount,Product coefficient, Product created date `;
 
 export const checkIfCategorylabelAlreadyStored = async (datas: Category) => {
   const userCategories = await retrieveUserCategory();
@@ -102,18 +102,20 @@ export const productDataInit = {
 };
 
 // Convertir les données en format CSV
-export const generateCSV = (datas: Array<ExportDatas>) => {
+export const generateCSV = (datas: ExportDatas[]) => {
   let rows = "";
 
   datas.map((itemCategory) => {
-    rows += `${itemCategory.label}, ${itemCategory.color},`;
+    rows += `${itemCategory.label}, ${itemCategory.color}, ${itemCategory.createdDate},`;
     let count = 0;
     itemCategory.products.map((itemProduct) => {
-      if (count >= 1) rows += `${""}, ${""},`;
+      if (count >= 1) rows += `${""}, ${""}, ${""},`;
 
-      rows += ` ${itemProduct.designation}, ${itemProduct.color}, ${
-        itemProduct.productAmount
-      }, ${itemProduct.productCoefficient}, ${itemProduct.createdDate}${"\n"}`;
+      rows += ` ${itemProduct.designation.replace(",", "/")}, ${
+        itemProduct.color
+      }, ${itemProduct.productAmount}, ${itemProduct.productCoefficient}, ${
+        itemProduct.createdDate
+      }${"\n"}`;
 
       count++;
     });
@@ -202,7 +204,6 @@ const formatCSVForDatabase = (lines: string[]): CsvDatas => {
   const productDatas = [] as Array<Array<CsvDataType>>;
 
   let findCategoryLine = true;
-  let refindCategoryLine = false;
   let count2 = 0;
   const headerIndex = header.split(",");
 
@@ -216,28 +217,27 @@ const formatCSVForDatabase = (lines: string[]): CsvDatas => {
       let indexOfArray = toCamelCase(headerIndex[countItem]);
 
       if (lineSplited.length != 0 && lineSplited != " ") {
-        if (countItem > 1) {
+        if (countItem > 2) {
           if (!productDatasTmp[indexOfArray]) {
             productDatasTmp[indexOfArray] = "";
           }
 
           productDatasTmp[indexOfArray] = lineSplited;
+          findCategoryLine = true;
         } else {
           if (!categoryDatasTmp[indexOfArray]) {
             categoryDatasTmp[indexOfArray] = "";
           }
 
           categoryDatasTmp[indexOfArray] = lineSplited;
-          findCategoryLine = true;
-        }
 
-        if (findCategoryLine && !refindCategoryLine) {
-          count2++;
-          refindCategoryLine = true;
+          if (findCategoryLine) {
+            count2++;
+            findCategoryLine = false;
+          }
         }
       } else {
         findCategoryLine = false;
-        refindCategoryLine = false;
       }
 
       countItem++;
@@ -266,8 +266,6 @@ const insertCSVIntoDatabase = async (datas: CsvDatas) => {
   const user: any = await AsyncStorage.getItem("userCredentials");
   const categories = datas.categoryDatas;
   const products = datas.productDatas;
-  
-  
 
   categories.map(async (category, index) => {
     const idCreationCategory = await insertCSVIntoCategoryDatabase(
@@ -275,9 +273,9 @@ const insertCSVIntoDatabase = async (datas: CsvDatas) => {
       JSON.parse(user)
     );
 
-      products[index].map(async (product) => {   
-        await insertCSVIntoProductDatabase(product, idCreationCategory);
-      });
+    products[index].map(async (product) => {
+      await insertCSVIntoProductDatabase(product, idCreationCategory);
+    });
   });
 };
 
