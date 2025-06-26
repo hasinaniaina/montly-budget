@@ -111,7 +111,7 @@ export const generateCSV = (datas: ExportDatas[]) => {
     itemCategory.products.map((itemProduct) => {
       if (count >= 1) rows += `${""}, ${""}, ${""},`;
 
-      rows += ` ${itemProduct.designation.replace(",", "/")}, ${
+      rows += ` ${itemProduct.designation.replaceAll(",", "/")}, ${
         itemProduct.color
       }, ${itemProduct.productAmount}, ${itemProduct.productCoefficient}, ${
         itemProduct.createdDate
