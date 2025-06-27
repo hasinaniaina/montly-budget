@@ -1,9 +1,5 @@
 import Popup from "@/components/popup";
-import {
-  TextColor,
-  TitleColor,
-  disabledColor,
-} from "@/constants/Colors";
+import { TextColor, TitleColor, disabledColor } from "@/constants/Colors";
 import { GloblalStyles } from "@/constants/GlobalStyles";
 import { useEffect, useLayoutEffect, useState } from "react";
 import RNPickerSelect, { Item } from "react-native-picker-select";
@@ -167,7 +163,10 @@ export default function Home() {
         let categoryIsListed = false;
 
         for (let category of categories) {
-          if (category.idCategory == userCategory.idCategory ) {
+          if (
+            category.idCategory == userCategory.idCategory ||
+            category.label == userCategory.label
+          ) {
             categoryIsListed = true;
             break;
           }
@@ -384,7 +383,7 @@ export default function Home() {
                   ]}
                   onPress={() => {
                     let itemTmp = [...itemAddCategoryIndex];
-                    itemTmp[index].checked = !itemTmp[index].checked;                    
+                    itemTmp[index].checked = !itemTmp[index].checked;
                     setItemAddCategoryIndex(itemTmp);
                   }}
                 >

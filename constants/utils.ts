@@ -23,32 +23,17 @@ export const checkIfCategorylabelAlreadyStored = async (datas: Category) => {
   const userCategories = await retrieveUserCategory();
 
   let isCategoryLabelNotExist = true;
-
   const label = datas.label;
-
   let dateCreated = new Date().toISOString().split("T")[0].split("-");
-
   const dateCreatedFormated = dateCreated[1] + "-" + dateCreated[0];
 
   //  Check if category exist on database
   userCategories.forEach((userCategory: Category | CreationCategory) => {
-    let dateCategoryStoredCreated = new Date(
-      (userCategory as CreationCategory).createdDate!
-    )
-      .toISOString()
-      .split("T")[0]
-      .split("-");
-
-    let dateCategoryStoredCreatedFormated =
-      dateCategoryStoredCreated[1] + "-" + dateCategoryStoredCreated[0];
-
     if (
       (userCategory as Category).label?.toLocaleLowerCase() ===
       label?.toLocaleLowerCase()
     ) {
-      if (dateCategoryStoredCreatedFormated === dateCreatedFormated) {
         isCategoryLabelNotExist = false;
-      }
     }
   });
 
