@@ -95,7 +95,7 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   confirmationMessageHeader: {
-    backgroundColor: "#FFD056",
+    backgroundColor: "#dc2626",
     justifyContent: "center",
     alignItems: "center",
     padding: 20,
@@ -123,6 +123,6 @@ const styles = StyleSheet.create({
   },
 
   ModalButtonYes: {
-    backgroundColor: "#FFD056",
+    backgroundColor: "#dc2626",
   },
 });

@@ -416,7 +416,7 @@ export const insertExistingCategories = async (
   user: User
 ) => {
   try {
-    let insertCreationCategory: any = "";
+    let insertCreationCategory: any = "";    
 
     for (let item of items) {
       const uuidCreationCategory = crypto.randomUUID();
@@ -432,6 +432,7 @@ export const insertExistingCategories = async (
     }
 
     return insertCreationCategory;
+
   } catch (error) {
     console.log("Categories insertion error =>", error);
     return false;

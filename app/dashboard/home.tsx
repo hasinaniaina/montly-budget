@@ -1,7 +1,7 @@
 import Popup from "@/components/popup";
 import { TextColor, TitleColor, disabledColor } from "@/constants/Colors";
 import { GloblalStyles } from "@/constants/GlobalStyles";
-import { useEffect, useLayoutEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import RNPickerSelect, { Item } from "react-native-picker-select";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 
@@ -154,7 +154,7 @@ export default function Home() {
   const getAllCurrentUserCategory = async () => {
     let userCategories = await retrieveCurrentUserCategory();
 
-    let itemIndexTmp = [...itemAddCategoryIndex];
+    let itemIndexTmp:ItemAddCategory[] = [];
 
     getCategory(categoryDateFilter).then((categories) => {
       let categoryNotAdded = [];
@@ -181,11 +181,10 @@ export default function Home() {
           categoryNotAdded.push(userCategory);
         }
       }
+      
+      setItemAddCategoryIndex(itemIndexTmp);      
 
-      setItemAddCategoryIndex(itemIndexTmp);
-
-      setuserCategory(categoryNotAdded);
-      // setuserCategory(userCategories);
+      setuserCategory(categoryNotAdded);      
     });
   };
 
@@ -209,12 +208,8 @@ export default function Home() {
         const result = await createExistingCategories(itemTmp);
 
         if (result.changes) {
-          setChange(true);
           setPopupChooseAddExistingCategoryVisible({ display: "none" });
-
-          setTimeout(() => {
-            setShowLoading({ display: "none" });
-          }, 2000);
+          setChange(true);
         }
       }
     }
@@ -268,7 +263,7 @@ export default function Home() {
 
         getCategoriesForFitler(categories);
 
-        getAllCurrentUserCategory();
+        getAllCurrentUserCategory();        
 
         setTimeout(() => {
           setShowLoading({ display: "none" });
@@ -578,7 +573,7 @@ export default function Home() {
       {/* Loading view */}
       <Loading showLoading={showLoading} />
 
-      {/* Choose add view */}
+      {/* Choose add category view */}
       <PopupChooseAdd
         modalShown={popupChooseAddCategory}
         setOpenCloseModalChooseAdd={modalOpenCloseAddListChoose}

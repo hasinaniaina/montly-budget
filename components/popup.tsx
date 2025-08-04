@@ -98,7 +98,6 @@ export default function Popup({
       if (await result) {
         setData(categoryDataInit);
         setVisible({ display: "none" });
-        setshowLoading({ display: "none" });
         setChange(true);
       }
     } else {
@@ -116,7 +115,6 @@ export default function Popup({
         result.then((success) => {
           if (success) {
             setData(categoryDataInit);
-            setshowLoading({ display: "none" });
             setChange(true);
           }
         });
@@ -144,7 +142,6 @@ export default function Popup({
       setThereIsFilter!(isFiltered);
 
       setChange(true);
-      setshowLoading({ display: "none" });
     }
   };
 
@@ -165,7 +162,6 @@ export default function Popup({
     setThereIsFilter!(isFiltered);
 
     setChange(true);
-    setshowLoading({ display: "none" });
   };
 
   const expenses = async () => {
@@ -190,10 +186,6 @@ export default function Popup({
       if (insertProduct) {
         setData(productDataInit);
         setChange(true);
-
-        setTimeout(() => {
-          setshowLoading({ display: "none" });
-        }, 2000);
       }
     } else {
       let oldAmount = 0;
@@ -219,10 +211,6 @@ export default function Popup({
         setData(productDataInit);
         setChange(true);
         setVisible({ display: "none" });
-
-        setTimeout(() => {
-          setshowLoading({ display: "none" });
-        }, 2000);
       }
     }
   };
@@ -235,9 +223,6 @@ export default function Popup({
     setVisible({ display: "none" });
     setChange(true);
 
-    setTimeout(() => {
-      setshowLoading({ display: "none" });
-    }, 2000);
   };
 
   useEffect(() => {
@@ -278,7 +263,7 @@ export default function Popup({
               if (viewType == "category") {
                 setData(categoryDataInit);
               }
-
+              
               setVisible({ display: "none" });
             }}
           >
@@ -301,7 +286,6 @@ export default function Popup({
         <TouchableOpacity
           style={[styles.popupButton, hidePopupAddButton]}
           onPress={async () => {
-            setshowLoading({ display: "flex" });
             switch (viewType) {
               case "category":
                 addCategory();

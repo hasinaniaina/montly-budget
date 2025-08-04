@@ -1,6 +1,6 @@
 import { TextColor, TitleColor, green } from "@/constants/Colors";
 import { GloblalStyles } from "@/constants/GlobalStyles";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -11,12 +11,12 @@ import {
   Pressable,
 } from "react-native";
 
-export default function  PopupChooseAdd({
+export default function PopupChooseAdd({
   modalShown,
   setOpenCloseModalChooseAdd,
   openPopupAddNewCategoryVisible,
   openPopupAddExistingCategoryVisible,
-  getAllCurrentUserCategory
+  getAllCurrentUserCategory,
 }: {
   modalShown: boolean;
   setOpenCloseModalChooseAdd: (val: boolean) => void;
@@ -25,6 +25,11 @@ export default function  PopupChooseAdd({
   getAllCurrentUserCategory: () => void;
 }) {
   const [addChooseFirst, setAddChooseFirst] = useState<boolean>(true);
+
+  const intializeChoice = () => {
+    setAddChooseFirst(true);
+  };
+
   return (
     <Modal animationType="fade" transparent={true} visible={modalShown}>
       {/* Black transparent background */}
@@ -38,7 +43,10 @@ export default function  PopupChooseAdd({
             </Text>
             <TouchableOpacity
               style={styles.closeImageCountainer}
-              onPress={() => {setOpenCloseModalChooseAdd(false)}}
+              onPress={() => {
+                setOpenCloseModalChooseAdd(false);
+                intializeChoice();
+              }}
             >
               <Image
                 style={GloblalStyles.icon}
@@ -46,7 +54,7 @@ export default function  PopupChooseAdd({
               />
             </TouchableOpacity>
           </View>
-          
+
           <View style={styles.listChooseContent}>
             <Pressable
               style={styles.listItemChoose}
@@ -93,8 +101,9 @@ export default function  PopupChooseAdd({
                     openPopupAddNewCategoryVisible();
                   } else {
                     openPopupAddExistingCategoryVisible();
-                    // getAllCurrentUserCategory();
                   }
+
+                  intializeChoice();
                 }}
               >
                 <Text
