@@ -21,8 +21,11 @@ type ShowActionButtonStore = {
 }
 
 type ChangeProp = {
-    changed: boolean;
-    setChanged: (changed: boolean) => void;
+    changeHome: boolean;
+    setChangeHome: (changeHome: boolean) => void;
+
+    changeCategoryProduct: boolean,
+    setChangeCategoryProduct: (changeCategoryProduct: boolean) => void;
 } 
 
 export const useLogoutShowStore = create<logoutShowStore>((set) => ({
@@ -39,8 +42,11 @@ export const useCategoriesStore = create<categoriesStore>((set) => ({
 }))
 
 export const useChangedStore = create<ChangeProp>((set) =>({
-    changed: false,
-    setChanged:(changed) => set(() => ({changed: changed})),
+    changeHome: false,
+    setChangeHome:(changeHome) => set(() => ({changeHome: changeHome})),
+
+    changeCategoryProduct: false,
+    setChangeCategoryProduct: (changeCategoryProduct) => set(() => ({changeCategoryProduct: changeCategoryProduct})),
 }));
 
 export const useShowActionButtonStore = create<ShowActionButtonStore>((set) => ({

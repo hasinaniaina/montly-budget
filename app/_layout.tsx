@@ -27,7 +27,7 @@ export default function RootLayout() {
   }
   return (
     <Suspense fallback={<FallBack />}>
-      <SQLiteProvider databaseName="monthlyBudget" onInit={init} useSuspense>
+      <SQLiteProvider databaseName="monthlyBudget" onInit={init} >
         <Stack
           screenOptions={{
             headerShown: false,

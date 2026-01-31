@@ -64,7 +64,11 @@ export default function Popup({
   confirmAddExistingCategory?: () => void;
   children: ReactNode;
 }) {
-  const setChange = useChangedStore((state) => state.setChanged);
+  const setChangeHome = useChangedStore((state) => state.setChangeHome);
+  const setChangeCategoryProduct = useChangedStore(
+    (state) => state.setChangeCategoryProduct,
+  );
+
   // Get product for edit
   const productDataInit: Product & CreationProduct = {
     idProduct: "",
@@ -93,7 +97,7 @@ export default function Popup({
       });
 
       if (result) {
-        setChange(true);
+        setChangeHome(true);
         setData(categoryDataInit);
         setVisible({ display: "none" });
       }
@@ -109,7 +113,7 @@ export default function Popup({
         });
 
         if (result) {
-          setChange(true);
+          setChangeHome(true);
           setData(categoryDataInit);
         }
       } else {
@@ -134,7 +138,7 @@ export default function Popup({
 
         setThereIsFilter!(isFiltered);
 
-        setChange(true);
+        setChangeHome(true);
         setVisible({ display: "none" });
       }
     }
@@ -151,7 +155,7 @@ export default function Popup({
     );
 
     setData(datasAfterFilter);
-    setChange(true);
+    setChangeHome(true);
     setVisible({ display: "none" });
 
     const isFiltered = isFilteredActivate(thereIsFilter!, 1, true);
@@ -178,7 +182,7 @@ export default function Popup({
 
       if (insertProduct) {
         setData(productDataInit);
-        setChange(true);
+        setChangeCategoryProduct(true);
       }
     } else {
       let oldAmount = 0;
@@ -202,7 +206,7 @@ export default function Popup({
 
       if (updateProduct) {
         setData(productDataInit);
-        setChange(true);        
+        setChangeCategoryProduct(true);
         setVisible({ display: "none" });
       }
     }
@@ -215,29 +219,33 @@ export default function Popup({
       setThereIsFilter([true]);
       setData(productsFiltered);
       setVisible({ display: "none" });
-      setChange(true);
+      setChangeCategoryProduct(true);
     }
   };
 
   useEffect(() => {
-    const keyboardDidShowListener = Keyboard.addListener(
-      "keyboardDidShow",
-      () => {
-        setHidePopupAddButton({ display: "none" });
-      },
-    );
-    const keyboardDidHideListener = Keyboard.addListener(
-      "keyboardDidHide",
-      () => {
-        setHidePopupAddButton({ display: "flex" });
-      },
-    );
+    (() => {
+      console.log("popup");
+      
+      const keyboardDidShowListener = Keyboard.addListener(
+        "keyboardDidShow",
+        () => {
+          setHidePopupAddButton({ display: "none" });
+        },
+      );
+      const keyboardDidHideListener = Keyboard.addListener(
+        "keyboardDidHide",
+        () => {
+          setHidePopupAddButton({ display: "flex" });
+        },
+      );
 
-    return () => {
-      keyboardDidHideListener.remove();
-      keyboardDidShowListener.remove();
-    };
-  }, []);
+      return () => {
+        keyboardDidHideListener.remove();
+        keyboardDidShowListener.remove();
+      };
+    })();
+  }, [visible]);
 
   return (
     <View style={[styles.popupContainer, visible]}>

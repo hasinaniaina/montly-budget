@@ -84,8 +84,8 @@ export default function Home() {
   ]);
 
   // if new event
-  const change = useChangedStore((state) => state.changed);
-  const setChange = useChangedStore((state) => state.setChanged);
+  const change = useChangedStore((state) => state.changeHome);
+  const setChange = useChangedStore((state) => state.setChangeHome);
   const setCategories = useCategoriesStore((state) => state.setCategories);
   const categories = useCategoriesStore((state) => state.categories);
 
@@ -227,10 +227,9 @@ export default function Home() {
     }
   };
 
-  useEffect(() => {
-    console.log('home aloha');
-    
+  useEffect(() => {    
     (async () => {
+      console.log("Home.tsx");
       const productByCategory = await retrieveProductByCategory();
       setProductByCategory(productByCategory);
 
@@ -252,6 +251,7 @@ export default function Home() {
       // Back button on click event
       const backAction = () => {
         router.push("/dashboard/home");
+        setChange(true)
         return true;
       };
 

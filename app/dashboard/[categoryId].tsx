@@ -108,14 +108,16 @@ export default function Products() {
   const [productTotalAmount, setProductTotalAmount] = useState<number>(0);
 
   // if new category
-  const change = useChangedStore((state) => state.changed);
-  const setChange = useChangedStore((state) => state.setChanged);
+  const change = useChangedStore((state) => state.changeCategoryProduct);
+  const setChange = useChangedStore((state) => state.setChangeCategoryProduct);
   const categories = useCategoriesStore((state) => state.categories);
 
   // Error handler
   let [errorMessage, setErrorMessage] = useState<Array<string>>([]);
 
   let [modalShown, setModalShown] = useState<Array<boolean>>([false]);
+
+  let count = 0;
 
   const getProduct = async () => {
     let products: Product[] & CreationProduct[] = [];
@@ -127,9 +129,8 @@ export default function Products() {
     } else {
       products = await retrieveProduct(category);
     }
-
-    console.log("Product avy eo");    
-
+  
+    
     setProductData(products);
     setProductDataWithoutFilter(productForDonutChart);
 
@@ -145,7 +146,7 @@ export default function Products() {
       productsCount += 1;
     }
 
-    setShowActionButton(buttonActionDiplay);
+    setShowActionButton(buttonActionDiplay);    
   };
 
   // Initialize number of day (1 to 31)
@@ -192,13 +193,15 @@ export default function Products() {
     setProductItemFilter(productTmp);
   };
 
-  useEffect(() => {
+  useEffect(() => {  
     (async () => {
+      console.log("[categoryid].tsx");
+
       await getProduct();
       getListDayNumber();
       setChange(false);
     })();
-  }, [categories]);
+  }, [change]);
 
   return (
     <KeyboardAvoidingView style={[GloblalStyles.container]}>
@@ -283,10 +286,6 @@ export default function Products() {
                     setShowLoading({ display: "flex" });
                     setProductDataTmp(productDataInit);
                     setChange(true);
-
-                    setTimeout(() => {
-                      setShowLoading({ display: "none" });
-                    }, 2000);
                   }}
                 >
                   <Image
@@ -307,7 +306,6 @@ export default function Products() {
               setShowAddListField={setShowAddListField}
               setSelectProductForEdit={setProductDataTmp}
               productData={productData}
-              setShowLoading={setShowLoading}
               productDataWithoutFilter={productDataWithoutFilter}
             />
           </View>

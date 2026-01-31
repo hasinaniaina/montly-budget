@@ -77,6 +77,8 @@ export default function Resumes({
 
   useEffect(() => {
     (() => {
+      console.log("resume.tsx");
+
       const sumExpenseResumeTmp = getSumExpenseForResume(
         categories,
         productByCategory,

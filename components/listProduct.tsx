@@ -11,7 +11,7 @@ import {
 import { TextColor, green, red } from "@/constants/Colors";
 import { CreationProduct, Product } from "@/constants/interface";
 import { removeProduct } from "@/constants/Controller";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ConfirmationMessageModal from "./message/confirmationMessageModal";
 import { GloblalStyles } from "@/constants/GlobalStyles";
 import { useChangedStore } from "@/constants/store";
@@ -24,7 +24,6 @@ export default function ListProduct({
   setShowAddListField,
   setSelectProductForEdit,
   productData,
-  setShowLoading,
   productDataWithoutFilter,
 }: {
   showActionButton: ViewStyle[];
@@ -34,7 +33,6 @@ export default function ListProduct({
   setShowAddListField: (val: ViewStyle) => void;
   setSelectProductForEdit: (val: Product) => void;
   productData: Product[] & CreationProduct[];
-  setShowLoading: (val: ViewStyle) => void;
   productDataWithoutFilter: Product[] | CreationProduct[];
 }) {
   let options: Intl.DateTimeFormatOptions = {
@@ -43,35 +41,53 @@ export default function ListProduct({
     day: "numeric",
   };
 
-  let totalAmountTmp = 0;
-  let price: string[] = [];
-  let coefficient: string[] = [];
 
-  productDataWithoutFilter?.forEach((data) => {
-    totalAmountTmp +=
-      (data as CreationProduct).productAmount *
-      (data as CreationProduct).productCoefficient;
-  });
+  const [price, setPrice] = useState<string[]>();
+  const [coefficient, setCoefficient] = useState<string[]>();
 
-  if (productData) {
-    for (let data of productData) {
-      const priceTmp = data.productAmount * data.productCoefficient;
-      price.push(priceTmp.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "."));
+  const change = useChangedStore((state) => state.changeCategoryProduct);
 
-      const coefficientTmp = (priceTmp * 100) / totalAmountTmp;
-      coefficient.push(coefficientTmp.toString());
-    }
-  }
+  const calculPriceForEachProduct = () => {
+    let totalAmountTmp = 0;
+    let price: string[] = [];
+    let coefficient: string[] = [];
+
+    productDataWithoutFilter?.forEach((data) => {
+      totalAmountTmp +=
+        (data as CreationProduct).productAmount *
+        (data as CreationProduct).productCoefficient;
+    });
+
+    if (productData) {
+      for (let data of productData) {
+        const priceTmp = data.productAmount * data.productCoefficient;
+        price.push(priceTmp.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "."));
+        
+        const coefficientTmp = (priceTmp * 100) / totalAmountTmp;
+        coefficient.push(coefficientTmp.toString());
+      }
+    }  
+    
+    
+    setPrice(price);
+    setCoefficient(coefficient);
+  };
 
   // Confirmation delete confirmation modal
   const [showConfirmationModal, setShowConfirmationModal] =
     useState<boolean>(false);
 
-
   const removeItem = async () => {
     const result = await removeProduct(indexOfActionButtonShowed);
     return result;
   };
+
+  useEffect(() => {
+    (() => {
+      calculPriceForEachProduct();  
+       
+    })();
+  },[productDataWithoutFilter])
 
   return (
     <>
@@ -139,9 +155,9 @@ export default function ListProduct({
                   },
                 ]}
               >
-                <Text style={styles.price}>{price[index]} Ar- </Text>
+                <Text style={styles.price}>{price ? price[index] : ""} Ar- </Text>
                 <Text style={styles.percentage}>
-                  {Number(coefficient[index]).toFixed(2)}%
+                  {Number(coefficient ? coefficient[index] : "").toFixed(2)}%
                 </Text>
               </View>
 
@@ -180,7 +196,6 @@ export default function ListProduct({
         modalShown={showConfirmationModal}
         removeItem={removeItem}
         setModalShown={setShowConfirmationModal}
-        setShowLoading={setShowLoading}
       />
     </>
   );

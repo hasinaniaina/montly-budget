@@ -24,6 +24,8 @@ export default function Header({ change }: { change: boolean }) {
 
   useEffect(() => {
     const init = async () => {
+      console.log("Header.tsx");
+      
       fetchUserEmail().then((user) => {
         setUserEmail(JSON.parse(user)?.email);
       });

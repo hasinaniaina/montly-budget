@@ -315,7 +315,7 @@ export const updateProduct = async (datas: Product | CreationProduct) => {
       );
 
       if (updateCreationProduct.changes) {
-        return true
+        return true;
       }
     }
 
@@ -450,7 +450,8 @@ export const getCategory = async (user: User, categoryDateFilter: string[]) => {
   if (user && categoryDateFilter) {
     try {
       const dateFrom = categoryDateFilter[0].split("T")[0] + " 01:00:00";
-      const dateTo = categoryDateFilter[1].split("T")[0] + " 12:00:00";
+      const dateTo = categoryDateFilter[1].split("T")[0] + " 24:00:00";
+      
 
       let query = `SELECT *
                 FROM Category as cat INNER JOIN CreationCategory as creatCat 
@@ -547,13 +548,11 @@ export const deleteCategory = async (
       );
 
       if (deleteCreationCategory.changes) {
-        setTimeout(() => {
           const deleteProduct: any = dbtmp.runAsync(
             "DELETE FROM CreationProduct WHERE idCreationCategory='" +
               idCreationCategory +
               "'",
           );
-        }, 1000);
 
         return deleteCreationCategory;
       }
@@ -591,6 +590,9 @@ export const getCategoryFilter = async (
 
     const dateFrom = date[0].split("T")[0] + " 01:00:00";
     const dateTo = date[1].split("T")[0] + " 24:00:00";
+
+    console.log(dateFrom);
+    
 
     if (datas.length > 0) {
       let query = `SELECT * 

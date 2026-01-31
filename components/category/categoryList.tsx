@@ -6,6 +6,8 @@ import {
   StyleSheet,
   ViewStyle,
   TouchableOpacity,
+  Pressable,
+  InteractionManager,
 } from "react-native";
 import React, { useEffect, useState } from "react";
 import { GloblalStyles } from "@/constants/GlobalStyles";
@@ -43,8 +45,9 @@ export default function CategoryList({
   setCategoryData: (val: Category & CreationCategory) => void;
   setCategoryDateFilter: (val: string[]) => void;
 }) {
-  const setChange = useChangedStore((state) => state.setChanged);
+  const setChange = useChangedStore((state) => state.setChangeHome);
   const categories = useCategoriesStore((state) => state.categories);
+
   const showActionButton = useShowActionButtonStore(
     (state) => state.showActionButton,
   );
@@ -60,8 +63,9 @@ export default function CategoryList({
 
   // Retrieve Category date filter
   var date = new Date();
-  var firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
-  var lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+  
+  var firstDay = new Date(date.getUTCFullYear(), date.getUTCMonth(), 1);
+  var lastDay = new Date(date.getUTCFullYear(), date.getUTCMonth() + 1, 0, 12);
 
   // Display category action button
   let showActionButtonInit: ViewStyle[] = [];
@@ -163,6 +167,8 @@ export default function CategoryList({
 
   useEffect(() => {
     (async () => {
+      console.log("categoryList.tsx");
+
       const categoriesTransactionNumberTmp =
         await getCategoryTransactionNumber();
       setCategoriesTransactionNumber(categoriesTransactionNumberTmp);
@@ -197,7 +203,10 @@ export default function CategoryList({
                 onPress={() => {
                   setIsCategoryFilterSelected([false, false]);
                   setCategoryData(categoryDataInit);
-                  setCategoryDateFilter([firstDay.toISOString(), lastDay.toISOString()]);
+                  setCategoryDateFilter([
+                    firstDay.toISOString(),
+                    lastDay.toISOString(),
+                  ]);
                   setChange(true);
                 }}
               >
@@ -255,11 +264,13 @@ export default function CategoryList({
                         );
                       }}
                       onPress={() => {
-                        setShowActionButton(showActionButtonInit);
-                        setIndexOfActionButtonShowed("");
-                        router.navigate({
-                          pathname: "/dashboard/[categoryId]",
-                          params: { categoryId: JSON.stringify(category) },
+                        InteractionManager.runAfterInteractions(() => {
+                          setShowActionButton(showActionButtonInit);
+                          setIndexOfActionButtonShowed("");
+                          router.navigate({
+                            pathname: "/dashboard/[categoryId]",
+                            params: { categoryId: JSON.stringify(category) },
+                          });
                         });
                       }}
                     >
