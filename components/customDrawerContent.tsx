@@ -13,19 +13,19 @@ export default function CustomDrawerContent() {
       <DrawerItem
         label={"Account setting"}
         onPress={() => {
-          router.push("/settings/accountSetting");
+          router.navigate("/settings/accountSetting");
         }}
       />
       <DrawerItem
         label={"Export Database"}
         onPress={() => {
-          router.push("/settings/exportDatabase");
+          router.navigate("/settings/exportDatabase");
         }}
       />
        <DrawerItem
         label={"Import Database"}
         onPress={() => {
-          router.push("/settings/importDatabase");
+          router.navigate("/settings/importDatabase");
         }}
       />
     </DrawerContentScrollView>

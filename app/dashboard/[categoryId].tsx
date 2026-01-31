@@ -30,11 +30,12 @@ import Popup from "@/components/popup";
 import ErrorMessageModal from "@/components/message/errorMessageModal";
 import Loading from "@/components/loading";
 import ColorPickerViewNew from "@/components/colorPickerNew";
+import { useCategoriesStore, useChangedStore } from "@/constants/store";
 
 export default function Products() {
   const { categoryId } = useLocalSearchParams();
   const category: Category & CreationCategory = JSON.parse(
-    categoryId! as string
+    categoryId! as string,
   );
 
   // Show button edit, delete
@@ -56,7 +57,7 @@ export default function Products() {
 
   // Store product data
   const [productData, setProductData] = useState<Product[] & CreationProduct[]>(
-    []
+    [],
   );
 
   // Store product data
@@ -77,7 +78,7 @@ export default function Products() {
     idCreationCategory: (category as CreationCategory).idCreationCategory!,
     productCoefficient: 1,
   };
-  
+
   const [productDataTmp, setProductDataTmp] = useState<
     Product | CreationProduct
   >(productDataInit);
@@ -96,109 +97,108 @@ export default function Products() {
 
   //   Stock Total amount in add expenses view
   const [amount, setAmount] = useState<number>(
-    (productDataTmp as CreationProduct).productCoefficient
+    (productDataTmp as CreationProduct).productCoefficient,
   );
 
   const [coefficient, setCoefficient] = useState<number>(
-    (productDataTmp as CreationProduct).productCoefficient
+    (productDataTmp as CreationProduct).productCoefficient,
   );
 
   // Product total amount
   const [productTotalAmount, setProductTotalAmount] = useState<number>(0);
 
   // if new category
-  const [change, setChange] = useState<boolean>(false);
+  const change = useChangedStore((state) => state.changed);
+  const setChange = useChangedStore((state) => state.setChanged);
+  const categories = useCategoriesStore((state) => state.categories);
 
   // Error handler
   let [errorMessage, setErrorMessage] = useState<Array<string>>([]);
 
   let [modalShown, setModalShown] = useState<Array<boolean>>([false]);
 
-  useEffect(() => {
-    setShowLoading({ display: "flex" });
+  const getProduct = async () => {
+    let products: Product[] & CreationProduct[] = [];
+    const productForDonutChart = await retrieveProduct(category);
+    const dataFromFilter: any = productDataTmp;
 
-    const getProduct = async () => {
-      let products: Product[] & CreationProduct[] = [];
-      const productForDonutChart = await retrieveProduct(category);
-      const dataFromFilter: any = productDataTmp;
+    if (isProductFilterSelected[0]) {
+      products = dataFromFilter;
+    } else {
+      products = await retrieveProduct(category);
+    }
 
-      if (isProductFilterSelected[0]) {
-        products = dataFromFilter;
-      } else {
-        products = await retrieveProduct(category);
-      }
+    console.log("Product avy eo");    
 
-      setProductData(products);
-      setProductDataWithoutFilter(productForDonutChart);
-      getTotalAmountRemainingProduct(products);
-      getCategoriesForFitler(products);
+    setProductData(products);
+    setProductDataWithoutFilter(productForDonutChart);
 
-      // Initialize button action (edit, delete) of each product
-      let productsCount = 0;
-      let buttonActionDiplay: ViewStyle[] = [];
+    getTotalAmountRemainingProduct(products);
+    getCategoriesForFitler(products);
 
-      while (productsCount < products?.length) {
-        buttonActionDiplay.push({ display: "none" });
-        productsCount += 1;
-      }
+    // Initialize button action (edit, delete) of each product
+    let productsCount = 0;
+    let buttonActionDiplay: ViewStyle[] = [];
 
-      setShowActionButton(buttonActionDiplay);
-    };
+    while (productsCount < products?.length) {
+      buttonActionDiplay.push({ display: "none" });
+      productsCount += 1;
+    }
 
-    // Initialize number of day (1 to 31)
-    const getListDayNumber = () => {
-      let dayNumberTmp: Item[] = [];
+    setShowActionButton(buttonActionDiplay);
+  };
 
-      for (let i = 1; i < 32; i++) {
-        dayNumberTmp?.push({
-          label: i.toString(),
-          value: i,
-        });
-      }
+  // Initialize number of day (1 to 31)
+  const getListDayNumber = () => {
+    let dayNumberTmp: Item[] = [];
 
-      setDayNumber(dayNumberTmp);
-    };
+    for (let i = 1; i < 32; i++) {
+      dayNumberTmp?.push({
+        label: i.toString(),
+        value: i,
+      });
+    }
 
-    const getTotalAmountRemainingProduct = (
-      products: Product[] | CreationProduct[]
-    ) => {
-      let productAmountTmp = 0;
+    setDayNumber(dayNumberTmp);
+  };
 
-      products?.forEach((product) => {
-        productAmountTmp +=
-          (product as CreationProduct).productAmount *
-          (product as CreationProduct).productCoefficient;
+  const getTotalAmountRemainingProduct = (
+    products: Product[] | CreationProduct[],
+  ) => {
+    let productAmountTmp = 0;
+
+    products?.forEach((product) => {
+      productAmountTmp +=
+        (product as CreationProduct).productAmount *
+        (product as CreationProduct).productCoefficient;
+    });
+
+    setProductTotalAmount(productAmountTmp);
+  };
+
+  const getCategoriesForFitler = (products: Product[] & CreationProduct[]) => {
+    let productCount = 0;
+    let productTmp: Item[] = [];
+
+    while (productCount < products?.length) {
+      productTmp?.push({
+        label: products[productCount].designation!,
+        value: products[productCount]!,
       });
 
-      setProductTotalAmount(productAmountTmp);
-    };
+      productCount += 1;
+    }
 
-    const getCategoriesForFitler = (
-      products: Product[] & CreationProduct[]
-    ) => {
-      let productCount = 0;
-      let productTmp: Item[] = [];
+    setProductItemFilter(productTmp);
+  };
 
-      while (productCount < products?.length) {
-        productTmp?.push({
-          label: products[productCount].designation!,
-          value: products[productCount]!,
-        });
-
-        productCount += 1;
-      }
-
-      setProductItemFilter(productTmp);
-    };
-
-    getProduct();
-    getListDayNumber();
-    setChange(false);
-
-    setTimeout(() => {
-      setShowLoading({ display: "none" });
-    }, 2000);
-  }, [change]);
+  useEffect(() => {
+    (async () => {
+      await getProduct();
+      getListDayNumber();
+      setChange(false);
+    })();
+  }, [categories]);
 
   return (
     <KeyboardAvoidingView style={[GloblalStyles.container]}>
@@ -213,7 +213,11 @@ export default function Products() {
               productTotalAmount < 0 ? { color: red } : { color: TitleColor },
             ]}
           >
-            Total expenses: {productTotalAmount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")} Ar
+            Total expenses:{" "}
+            {productTotalAmount
+              .toString()
+              .replace(/\B(?=(\d{3})+(?!\d))/g, ".")}{" "}
+            Ar
           </Text>
         </View>
       </View>
@@ -300,7 +304,6 @@ export default function Products() {
               setShowActionButton={setShowActionButton}
               indexOfActionButtonShowed={indexOfActionButtonShowed}
               setIndexOfActionButtonShowed={setIndexOfActionButtonShowed}
-              setChange={setChange}
               setShowAddListField={setShowAddListField}
               setSelectProductForEdit={setProductDataTmp}
               productData={productData}
@@ -320,8 +323,6 @@ export default function Products() {
         viewType="expenses"
         datas={productDataTmp}
         setData={setProductDataTmp}
-        setChange={setChange}
-        setshowLoading={setShowLoading}
         category={category}
         setThereIsFilter={setIsProductFilterSelected}
       >
@@ -338,11 +339,8 @@ export default function Products() {
                   placeholder="Exemple"
                   value={(productDataTmp as Product)?.designation}
                   onChangeText={(designation) => {
-
                     let productTmp = { ...productDataTmp };
                     (productTmp as Product).designation = designation;
-                    console.log(designation);
-                    
                     setProductDataTmp(productTmp);
                   }}
                 />
@@ -358,15 +356,17 @@ export default function Products() {
                     keyboardType="numeric"
                     value={
                       (productDataTmp as CreationProduct)?.productAmount != 0
-                        ? (productDataTmp as CreationProduct)?.productAmount?.toString()
+                        ? (
+                            productDataTmp as CreationProduct
+                          )?.productAmount?.toString()
                         : ""
                     }
                     onChangeText={(amountFieldValue) => {
                       setAmount(parseFloat(amountFieldValue));
 
                       let productTmp = { ...productDataTmp };
-                      (productTmp as CreationProduct).productAmount = 
-                       (amountFieldValue) ? parseFloat(amountFieldValue) :  0;
+                      (productTmp as CreationProduct).productAmount =
+                        amountFieldValue ? parseFloat(amountFieldValue) : 0;
                       setProductDataTmp(productTmp);
                     }}
                   />
@@ -427,8 +427,6 @@ export default function Products() {
         viewType="filterProduct"
         datas={productDataTmp}
         setData={setProductDataTmp}
-        setChange={setChange}
-        setshowLoading={setShowLoading}
         setThereIsFilter={setIsProductFilterSelected}
       >
         <View style={styles.popupLabelInput}>
@@ -438,9 +436,8 @@ export default function Products() {
               placeholder="Exemple"
               value={(productDataTmp as Product).designation}
               onChangeText={(productFiltered) => {
-
                 let productTmp = { ...productDataTmp };
-                (productTmp as Product).designation = productFiltered;                
+                (productTmp as Product).designation = productFiltered;
                 setProductDataTmp(productTmp);
               }}
             />

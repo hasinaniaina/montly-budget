@@ -187,14 +187,14 @@ export const editProduct = async (
 
 export const retrieveProductByCategory = async () => {
   const products = await getProductsNew();
-  return products as Product[] & CreationProduct[];
+  return products as (Product & CreationProduct)[];
 };
 
 export const retrieveProduct = async (
   category: Category & CreationCategory
 ) => {
   const products = await getProducts(category);
-  return products as Product[] & CreationProduct[];
+  return products as (Product & CreationProduct)[];
 };
 
 export const filterProduct = async (datas: Product): Promise<Product[]> => {
@@ -225,7 +225,8 @@ export const createCategory = async ({
   datas?: Category & CreationCategory;
   setErrorMessage: (val: string[]) => void;
   setModalShown: (val: boolean[]) => void;
-}): Promise<boolean | number> => {
+}): Promise<boolean> => {
+
   let error = false;
   const user: any = await AsyncStorage.getItem("userCredentials");
 
@@ -241,9 +242,11 @@ export const createCategory = async ({
     setErrorMessage(["All Fields should not be empty!"]);
     setModalShown([true]);
   } else {
-    const CategoryCreated = await insertCategory(datas!, JSON.parse(user));
+    const categoryCreated = await insertCategory(datas!, JSON.parse(user));
 
-    return (CategoryCreated as SQLiteRunResult).changes;
+    if (categoryCreated) {
+      return true;
+    }
   }
 
   return false;
@@ -255,7 +258,7 @@ export const retrieveUserCategory = async (): Promise<Category[]> => {
 };
 
 export const retrieveCategoryAccordingToDate = async (
-  categoryDateFilter: Date[]
+  categoryDateFilter: string[]
 ) => {
   const user: any = await AsyncStorage.getItem("userCredentials");
 
@@ -297,7 +300,7 @@ export const upgradeCategory = async ({
   datas?: Category & CreationCategory;
   setErrorMessage: (val: string[]) => void;
   setModalShown: (val: boolean[]) => void;
-}) => {
+}): Promise<boolean> => {
   let error = false;
 
   if (datas?.label == "") {
@@ -318,11 +321,13 @@ export const upgradeCategory = async ({
       return true;
     }
   }
+
+  return false;
 };
 
 export const filterCategory = async (
   datas: Category[] & CreationCategory[],
-  date: Date[]
+  date: string[]
 ) => {
   const user: any = await AsyncStorage.getItem("userCredentials");
 

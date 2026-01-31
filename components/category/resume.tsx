@@ -1,7 +1,13 @@
 import { TextColor, TitleColor, orange } from "@/constants/Colors";
 import { retrieveProductByCategory } from "@/constants/Controller";
 import { GloblalStyles } from "@/constants/GlobalStyles";
-import { Category, CreationCategory } from "@/constants/interface";
+import {
+  Category,
+  CreationCategory,
+  CreationProduct,
+  Product,
+} from "@/constants/interface";
+import { useCategoriesStore, useChangedStore } from "@/constants/store";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import {
@@ -16,16 +22,16 @@ import {
 } from "react-native";
 
 export default function Resumes({
-  change,
-  getCategories,
+  productByCategory,
   categoryDateFilter,
   setPopupFilterByDateVisible,
 }: {
-  change: boolean;
-  getCategories: (val: Date[]) => Promise<Category[]>;
-  categoryDateFilter: Date[];
+  productByCategory: (Product & CreationProduct)[];
+  categoryDateFilter: string[];
   setPopupFilterByDateVisible: (val: ViewStyle) => void;
 }) {
+  const categories = useCategoriesStore((state) => state.categories);
+
   let options: Intl.DateTimeFormatOptions = {
     year: "numeric",
     month: "short",
@@ -33,61 +39,51 @@ export default function Resumes({
   };
 
   // Sum of all expenses, income, saving
-  type Resume = {
-    expense: number;
-  };
+  const [sumExpenseResume, setSumExpenseResume] = useState<number>(0);
 
-  const [sum, setSum] = useState<Resume>({
-    expense: 0,
-  });
-
-  const getProduct = async () => {
-    let product = await retrieveProductByCategory();
-    return product;
-  };
-
-  const getSumExpense = async (
-    category: Category[] & CreationCategory[]
-  ): Promise<number> => {
-    const product = await getProduct();
+  const getSumExpenseForResume = (
+    categories: (Category & CreationCategory)[],
+    productByCategory: (Product & CreationProduct)[],
+  ): number => {
     let categoryCount = 0;
     let sumExpensiveTmp = 0;
+    
+    if (categories) {
+      while (categoryCount < categories.length) {
+        let transactionNumber = 0;
+        let productCount = 0;
 
-    while (categoryCount < category.length) {
-      let transactionNumber = 0;
-      let productCount = 0;
-
-      while (productCount < product.length) {
-        if (
-          product[productCount].idCreationCategory ==
-          category[categoryCount].idCreationCategory
-        ) {
-          sumExpensiveTmp +=
-            product[productCount].productAmount *
-            product[productCount].productCoefficient;
-          transactionNumber += 1;
+        if (productByCategory) {
+          while (productCount < productByCategory.length) {
+            if (
+              productByCategory[productCount].idCreationCategory ==
+              categories[categoryCount].idCreationCategory
+            ) {
+              sumExpensiveTmp +=
+                productByCategory[productCount].productAmount *
+                productByCategory[productCount].productCoefficient;
+              transactionNumber += 1;
+            }
+            productCount++;
+          }
         }
-        productCount++;
+        categoryCount++;
       }
-      categoryCount++;
     }
 
-    return sumExpensiveTmp;
+    const result = sumExpensiveTmp;
+    return result;
   };
 
   useEffect(() => {
-    getCategories(categoryDateFilter).then((categories) => {
-      getSumExpense(categories as Category[] & CreationCategory[]).then(
-        (sumExpense) => {
-          const sumTmp: Resume = {
-            expense: sumExpense,
-          };
-
-          setSum(sumTmp);
-        }
+    (() => {
+      const sumExpenseResumeTmp = getSumExpenseForResume(
+        categories,
+        productByCategory,
       );
-    });
-  }, [change]);
+      setSumExpenseResume(sumExpenseResumeTmp);
+    })();
+  }, [categories]);
 
   return (
     <>
@@ -104,9 +100,9 @@ export default function Resumes({
               style={GloblalStyles.icon}
             />
             <Text style={GloblalStyles.titleSection}>
-              {categoryDateFilter[0].toLocaleDateString("en-US", options) +
+              {new Date(categoryDateFilter[0]).toLocaleDateString("en-US", options) +
                 " - " +
-                categoryDateFilter[1].toLocaleDateString("en-US", options)}
+                new Date(categoryDateFilter[1]).toLocaleDateString("en-US", options)}
             </Text>
           </View>
           <TouchableOpacity
@@ -123,12 +119,7 @@ export default function Resumes({
         </View>
         <View style={styles.numberTitleContainer}>
           <View style={styles.incomeSavingExpenses}>
-            <Text style={styles.number}>
-              {sum.expense
-                ? sum.expense.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")
-                : 0}{" "}
-              Ar
-            </Text>
+            <Text style={styles.number}>{sumExpenseResume}&nbsp;Ar</Text>
             <Text style={styles.title}>Expenses</Text>
           </View>
         </View>

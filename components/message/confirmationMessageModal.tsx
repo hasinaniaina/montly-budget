@@ -1,3 +1,4 @@
+import { useChangedStore } from "@/constants/store";
 import {
   View,
   Text,
@@ -12,16 +13,16 @@ function ConfirmationMessageModal({
   modalShown,
   removeItem,
   setModalShown,
-  setShowLoading,
-  setChange
 }: {
   modalShown: boolean;
   removeItem: () => Promise<boolean>;
   setModalShown: (val: boolean) => void;
-  setShowLoading: (val: ViewStyle) => void;
-  setChange: (val: boolean) => void;
 
 }) {
+
+
+  const setChange = useChangedStore((state) => state.setChanged);
+
   return (
     <Modal animationType="fade" transparent={true} visible={modalShown}>
       <View style={styles.backgroundBlackTransparent}></View>
@@ -36,16 +37,12 @@ function ConfirmationMessageModal({
               <TouchableOpacity
                 style={[styles.ModalButtonYes, styles.modalButton]}
                 onPress={async () => {
-                  setShowLoading({ display: "flex" });
                   setModalShown(false);
 
                   const result = await removeItem();
 
                   if (result) {
                     setChange(true);
-                    setTimeout(() => {
-                      setShowLoading({ display: "none" });
-                    }, 2000);
                   }
                 }}
               >

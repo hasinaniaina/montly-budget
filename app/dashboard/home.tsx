@@ -24,6 +24,7 @@ import {
   ItemAddCategory,
   Product,
   CreationProduct,
+  Resume,
 } from "@/constants/interface";
 import {
   createExistingCategories,
@@ -36,9 +37,18 @@ import Loading from "@/components/loading";
 import Header from "@/components/category/header";
 import Resumes from "@/components/category/resume";
 import CategoryList from "@/components/category/categoryList";
-import { categoryDataInit, productDataInit } from "@/constants/utils";
+import {
+  categoryDataInit,
+  getCategoriesForFitler,
+  productDataInit,
+} from "@/constants/utils";
 import PopupChooseAdd from "@/components/popupChooseAdd";
 import ColorPickerViewNew from "@/components/colorPickerNew";
+import {
+  useCategoriesStore,
+  useChangedStore,
+  useShowActionButtonStore,
+} from "@/constants/store";
 
 export default function Home() {
   let options: Intl.DateTimeFormatOptions = {
@@ -46,6 +56,9 @@ export default function Home() {
     month: "short",
     day: "numeric",
   };
+
+  const [productByCategory, setProductByCategory] =
+    useState<(Product & CreationProduct)[]>();
 
   const [popupAddCategoryVisible, setPopupAddCategoryVisible] =
     useState<ViewStyle>({ display: "none" });
@@ -71,11 +84,14 @@ export default function Home() {
   ]);
 
   // if new event
-  const [change, setChange] = useState<boolean>(false);
+  const change = useChangedStore((state) => state.changed);
+  const setChange = useChangedStore((state) => state.setChanged);
+  const setCategories = useCategoriesStore((state) => state.setCategories);
+  const categories = useCategoriesStore((state) => state.categories);
 
   // data storage
   const [categoryData, setCategoryData] = useState<Category & CreationCategory>(
-    categoryDataInit
+    categoryDataInit,
   );
 
   const [userCategory, setuserCategory] = useState<
@@ -83,7 +99,7 @@ export default function Home() {
   >([categoryDataInit]);
 
   const [userProductAddExistingCategory, setuserProductAddExistingCategory] =
-    useState<Product[] & CreationProduct[]>([productDataInit]);
+    useState<(Product & CreationProduct)[]>([productDataInit]);
 
   const [itemAddCategoryIndex, setItemAddCategoryIndex] = useState<
     ItemAddCategory[]
@@ -100,12 +116,13 @@ export default function Home() {
 
   // Retrieve Category date filter
   var date = new Date();
-  var firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
-  var lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0);
 
-  const [categoryDateFilter, setCategoryDateFilter] = useState<Date[]>([
-    firstDay,
-    lastDay,
+  var firstDay = new Date(date.getUTCFullYear(), date.getUTCMonth(), 1);
+  var lastDay = new Date(date.getUTCFullYear(), date.getUTCMonth() + 1, 0, 12);
+
+  const [categoryDateFilter, setCategoryDateFilter] = useState<string[]>([
+    firstDay.toISOString(),
+    lastDay.toISOString(),
   ]);
 
   // Show loading when add category or product
@@ -115,13 +132,14 @@ export default function Home() {
 
   // Display category action button
   let showActionButtonInit: ViewStyle[] = [];
-  const [showActionButton, setShowActionButton] =
-    useState<ViewStyle[]>(showActionButtonInit);
 
-  const getCategory = async (
-    categoryDateFilter: Date[]
-  ): Promise<Category[] & CreationCategory[]> => {
+  const setShowActionButton = useShowActionButtonStore(
+    (state) => state.setShowActionButton,
+  );
+
+  const getCategory = async (): Promise<(Category & CreationCategory)[]> => {
     let category = await retrieveCategoryAccordingToDate(categoryDateFilter);
+
     let categories: any = null;
 
     if (!isCategoryFiltered[0]) {
@@ -129,7 +147,6 @@ export default function Home() {
     } else {
       categories = categoryData;
     }
-
     return categories;
   };
 
@@ -154,14 +171,14 @@ export default function Home() {
   const getAllCurrentUserCategory = async () => {
     let userCategories = await retrieveCurrentUserCategory();
 
-    let itemIndexTmp:ItemAddCategory[] = [];
+    let itemIndexTmp: ItemAddCategory[] = [];
 
-    getCategory(categoryDateFilter).then((categories) => {
-      let categoryNotAdded = [];
+    let categoryNotAdded = [];
 
-      for (let userCategory of userCategories) {
-        let categoryIsListed = false;
+    for (let userCategory of userCategories) {
+      let categoryIsListed = false;
 
+      if (categories) {
         for (let category of categories) {
           if (
             category.idCategory == userCategory.idCategory ||
@@ -171,27 +188,22 @@ export default function Home() {
             break;
           }
         }
-
-        if (!categoryIsListed) {
-          itemIndexTmp.push({
-            checked: false,
-            idCategory: userCategory.idCategory,
-          });
-
-          categoryNotAdded.push(userCategory);
-        }
       }
-      
-      setItemAddCategoryIndex(itemIndexTmp);      
 
-      setuserCategory(categoryNotAdded);      
-    });
-  };
+      if (!categoryIsListed) {
+        itemIndexTmp.push({
+          checked: false,
+          idCategory: userCategory.idCategory,
+        });
 
-  const getAllCurrentUserProductRelativeToProduct = async () => {
-    let userProducts: any = await retrieveProductByCategory();
+        categoryNotAdded.push(userCategory);
+      }
+    }
 
-    setuserProductAddExistingCategory(userProducts);
+    return {
+      itemIndexTmp: itemIndexTmp,
+      categoryNotAdded: categoryNotAdded,
+    };
   };
 
   const confirmAddExistingCategory = async () => {
@@ -216,66 +228,42 @@ export default function Home() {
   };
 
   useEffect(() => {
-    // Count Category
-    const getCountOfCategory = (category: Category[]) => {
-      let categoryCount = 0;
+    console.log('home aloha');
+    
+    (async () => {
+      const productByCategory = await retrieveProductByCategory();
+      setProductByCategory(productByCategory);
 
-      while (categoryCount < category.length) {
-        showActionButtonInit.push({ display: "none" });
-        categoryCount += 1;
-      }
+      const categoriesTmp = await getCategory();
+      setCategories(categoriesTmp);
 
-      setShowActionButton(showActionButtonInit);
-    };
+      const categoryTmp = getCategoriesForFitler(categoriesTmp);
 
-    const getCategoriesForFitler = (category: Category[]) => {
-      let categoryCount = 0;
-      let categoryTmp: Item[] = [];
-
-      while (categoryCount < category.length) {
-        categoryTmp.push({
-          label: category[categoryCount].label!,
-          value: category[categoryCount]!,
-        });
-
-        categoryCount += 1;
-      }
+      const allCurrentUserCategory = await getAllCurrentUserCategory();
+      setItemAddCategoryIndex(allCurrentUserCategory.itemIndexTmp);
+      setuserCategory(allCurrentUserCategory.categoryNotAdded);
 
       setCategoriesFilter(categoryTmp);
-    };
 
-    // Back button on click event
-    const backAction = () => {
-      router.push("/");
-      return true;
-    };
+      setuserProductAddExistingCategory(productByCategory);
 
-    const backHandler = BackHandler.addEventListener(
-      "hardwareBackPress",
-      backAction
-    );
+      setProductByCategory(productByCategory);
 
-    const init = () => {
-      setShowLoading({ display: "flex" });
+      // Back button on click event
+      const backAction = () => {
+        router.push("/dashboard/home");
+        return true;
+      };
 
-      getCategory(categoryDateFilter).then((categories) => {
-        getCountOfCategory(categories);
+      const backHandler = BackHandler.addEventListener(
+        "hardwareBackPress",
+        backAction,
+      );
 
-        getCategoriesForFitler(categories);
+      return () => backHandler.remove();
+    })();
 
-        getAllCurrentUserCategory();        
-
-        setTimeout(() => {
-          setShowLoading({ display: "none" });
-        }, 2000);
-      });
-
-      setChange(false);
-
-      getAllCurrentUserProductRelativeToProduct();
-    };
-
-    init();
+    setChange(false);
   }, [change]);
 
   return (
@@ -292,26 +280,19 @@ export default function Home() {
         <View style={styles.content}>
           {/* Resume */}
           <Resumes
-            change={change}
-            getCategories={getCategory}
+            productByCategory={productByCategory!}
             categoryDateFilter={categoryDateFilter}
             setPopupFilterByDateVisible={setPopupFilterByDateVisible}
           />
           {/* Category */}
           <CategoryList
-            getCategories={getCategory}
-            categoryDateFilter={categoryDateFilter}
+            productByCategory={productByCategory!}
             setPopupFilterByCategoryVisible={setPopupFilterByCategoryVisible}
             isCategoryFiltered={isCategoryFiltered}
             setIsCategoryFilterSelected={setIsCategoryFilterSelected}
             setOpenCloseModalChooseAdd={modalOpenCloseAddListChoose}
             setCategoryData={setCategoryData}
-            showActionButton={showActionButton}
-            setShowActionButton={setShowActionButton}
             setCategoryDateFilter={setCategoryDateFilter}
-            setShowLoading={setShowLoading}
-            change={change}
-            setChange={setChange}
           />
         </View>
       </>
@@ -326,8 +307,6 @@ export default function Home() {
         datas={categoryData}
         setData={setCategoryData}
         setThereIsFilter={setIsCategoryFilterSelected}
-        setChange={setChange}
-        setshowLoading={setShowLoading}
       >
         {/* popup colorPicker */}
         <ScrollView>
@@ -361,8 +340,6 @@ export default function Home() {
         datas={categoryData}
         setData={setCategoryData}
         setThereIsFilter={setIsCategoryFilterSelected}
-        setChange={setChange}
-        setshowLoading={setShowLoading}
         confirmAddExistingCategory={confirmAddExistingCategory}
       >
         {userCategory.length > 0 ? (
@@ -472,11 +449,9 @@ export default function Home() {
         viewType="filterByCategory"
         datas={categoryData}
         setData={setCategoryData}
-        setChange={setChange}
         thereIsFilter={isCategoryFiltered}
         setThereIsFilter={setIsCategoryFilterSelected}
         categoryDateFilter={categoryDateFilter}
-        setshowLoading={setShowLoading}
       >
         <View style={GloblalStyles.popupLabelInput}>
           <Text style={GloblalStyles.appLabel}>Categories</Text>
@@ -502,11 +477,9 @@ export default function Home() {
         viewType="filterByDate"
         datas={categoryData}
         setData={setCategoryData}
-        setChange={setChange}
         thereIsFilter={isCategoryFiltered}
         setThereIsFilter={setIsCategoryFilterSelected}
         categoryDateFilter={categoryDateFilter}
-        setshowLoading={setShowLoading}
       >
         <View style={styles.popupDatecontainer}>
           {/* Date From */}
@@ -520,7 +493,10 @@ export default function Home() {
             <View style={styles.labelText}>
               <Text style={GloblalStyles.appLabel}>From</Text>
               <Text style={[GloblalStyles.appLabel, styles.date]}>
-                {categoryDateFilter[0].toLocaleDateString("en-US", options)}
+                {new Date(categoryDateFilter[0]).toLocaleDateString(
+                  "en-US",
+                  options,
+                )}
               </Text>
             </View>
           </TouchableOpacity>
@@ -536,7 +512,10 @@ export default function Home() {
             <View style={styles.labelText}>
               <Text style={GloblalStyles.appLabel}>To</Text>
               <Text style={[GloblalStyles.appLabel, styles.date]}>
-                {categoryDateFilter[1].toLocaleDateString("en-US", options)}
+                {new Date(categoryDateFilter[1]).toLocaleDateString(
+                  "en-US",
+                  options,
+                )}
               </Text>
             </View>
           </TouchableOpacity>
@@ -546,13 +525,15 @@ export default function Home() {
             isVisible={openDatePicker[0] || openDatePicker[1]}
             mode="date"
             date={
-              openDatePicker[0] ? categoryDateFilter[0] : categoryDateFilter[1]
+              openDatePicker[0]
+                ? new Date(categoryDateFilter[0])
+                : new Date(categoryDateFilter[1])
             }
             onConfirm={(date) => {
-              const categoryDateFilterTmp: Date[] = [...categoryDateFilter];
+              const categoryDateFilterTmp: string[] = [...categoryDateFilter];
               const dateFormat = new Date(
-                `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`
-              );
+                `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`,
+              ).toISOString();
 
               if (openDatePicker[0]) {
                 categoryDateFilterTmp[0] = dateFormat;

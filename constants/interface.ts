@@ -66,3 +66,7 @@ export interface CsvDatas {
 export type CsvDataType = {
   [key: string]: string
 }
+
+export type Resume = {
+  expense: number;
+};

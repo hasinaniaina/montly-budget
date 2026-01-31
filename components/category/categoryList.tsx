@@ -10,45 +10,48 @@ import {
 import React, { useEffect, useState } from "react";
 import { GloblalStyles } from "@/constants/GlobalStyles";
 import { TextColor, TitleColor } from "@/constants/Colors";
-import { Category, CreationCategory, Product } from "@/constants/interface";
-import { router } from "expo-router";
 import {
-  removeCategory,
-  retrieveCategoryById,
-  retrieveProductByCategory,
-} from "@/constants/Controller";
+  Category,
+  CreationCategory,
+  CreationProduct,
+  Product,
+} from "@/constants/interface";
+import { router } from "expo-router";
+import { removeCategory, retrieveCategoryById } from "@/constants/Controller";
 import ConfirmationMessageModal from "../message/confirmationMessageModal";
 import { categoryDataInit } from "@/constants/utils";
+import {
+  useCategoriesStore,
+  useChangedStore,
+  useShowActionButtonStore,
+} from "@/constants/store";
 
 export default function CategoryList({
-  getCategories,
-  categoryDateFilter,
+  productByCategory,
   setPopupFilterByCategoryVisible,
   isCategoryFiltered,
   setIsCategoryFilterSelected,
   setOpenCloseModalChooseAdd,
   setCategoryData,
-  showActionButton,
-  setShowActionButton,
   setCategoryDateFilter,
-  setShowLoading,
-  change,
-  setChange,
 }: {
-  getCategories: (val: Date[]) => Promise<Category[] & CreationCategory[]>;
-  categoryDateFilter: Date[];
+  productByCategory: (Product & CreationProduct)[];
   setPopupFilterByCategoryVisible: (val: ViewStyle) => void;
   isCategoryFiltered: boolean[];
   setIsCategoryFilterSelected: (val: boolean[]) => void;
   setOpenCloseModalChooseAdd: (val: boolean) => void;
   setCategoryData: (val: Category & CreationCategory) => void;
-  showActionButton: ViewStyle[];
-  setShowActionButton: (val: ViewStyle[]) => void;
-  setCategoryDateFilter: (val: Date[]) => void;
-  setShowLoading: (val: ViewStyle) => void;
-  change: boolean;
-  setChange: (val: boolean) => void;
+  setCategoryDateFilter: (val: string[]) => void;
 }) {
+  const setChange = useChangedStore((state) => state.setChanged);
+  const categories = useCategoriesStore((state) => state.categories);
+  const showActionButton = useShowActionButtonStore(
+    (state) => state.showActionButton,
+  );
+  const setShowActionButton = useShowActionButtonStore(
+    (state) => state.setShowActionButton,
+  );
+
   let options: Intl.DateTimeFormatOptions = {
     year: "numeric",
     month: "short",
@@ -71,45 +74,86 @@ export default function CategoryList({
   const [categoriesTransactionNumber, setCategoriesTransactionNumber] =
     useState<number[]>([]);
 
-  const getCategoryTransactionNumber = async (
-    category: Category[] & CreationCategory[]
-  ) => {
-    const product = await retrieveProductByCategory();
+  // Sum expenses each categories
+  const [sumExpenseCategory, setSumExpenseCategory] = useState<number[]>();
+
+  const getSumExpenseForCategoryList = (
+    categories: (Category & CreationCategory)[],
+    productByCategory: (Product & CreationProduct)[],
+  ): number[] => {
+    let categoryCount = 0;
+    let sumCategoryExpensesTmp = [];
+
+    while (categoryCount < categories.length) {
+      let transactionNumber = 0;
+      let productCount = 0;
+      let sumExpensiveTmp = 0;
+      if (productByCategory) {
+        while (productCount < productByCategory.length) {
+          if (
+            productByCategory[productCount].idCreationCategory ==
+            categories[categoryCount].idCreationCategory
+          ) {
+            sumExpensiveTmp +=
+              productByCategory[productCount].productAmount *
+              productByCategory[productCount].productCoefficient;
+            transactionNumber += 1;
+          }
+          productCount++;
+        }
+      }
+
+      sumCategoryExpensesTmp.push(sumExpensiveTmp);
+
+      categoryCount++;
+    }
+
+    return sumCategoryExpensesTmp;
+  };
+
+  const getCategoryTransactionNumber = async () => {
     let categoryCount = 0;
     let sumExpensiveTmp = 0;
     let transactionNumberCategoriesTmp = [];
 
-    while (categoryCount < category.length) {
-      let transactionNumber = 0;
-      let productCount = 0;
+    if (categories) {
+      while (categoryCount < categories.length) {
+        let transactionNumber = 0;
+        let productCount = 0;
 
-      while (productCount < product.length) {
-        if (
-          product[productCount].idCreationCategory ==
-          category[categoryCount].idCreationCategory
-        ) {
-          sumExpensiveTmp += transactionNumber += 1;
+        if (productByCategory) {
+          while (productCount < productByCategory.length) {
+            if (
+              productByCategory[productCount].idCreationCategory ==
+              categories[categoryCount].idCreationCategory
+            ) {
+              sumExpensiveTmp += transactionNumber += 1;
+            }
+            productCount++;
+          }
         }
-        productCount++;
+        transactionNumberCategoriesTmp.push(transactionNumber);
+        categoryCount++;
       }
-      transactionNumberCategoriesTmp.push(transactionNumber);
-      categoryCount++;
     }
-
-    setCategoriesTransactionNumber(transactionNumberCategoriesTmp);
+    return transactionNumberCategoriesTmp;
   };
 
-  // Retrieve Categories
-  const [categories, setCategories] = useState<Category[] | CreationCategory[]>(
-    []
-  );
+  // Count Category
+  const getCountOfCategory = () => {
+    let categoryCount = 0;
+
+    while (categoryCount < categories.length) {
+      showActionButtonInit.push({ display: "none" });
+      categoryCount += 1;
+    }
+
+    return showActionButtonInit;
+  };
 
   // Confirmation delete confirmation modal
   const [showConfirmationModal, setShowConfirmationModal] =
     useState<boolean>(false);
-
-  // Sum expenses each categories
-  const [sumCategoryExpenses, setSumCategoryExpenses] = useState<number[]>();
 
   const removeItem = async () => {
     const result = await removeCategory(indexOfActionButtonShowed);
@@ -117,48 +161,23 @@ export default function CategoryList({
     return result;
   };
 
-  const getSumExpense = async (
-    category: Category[] & CreationCategory[]
-  ): Promise<number[]> => {
-    let product = await retrieveProductByCategory();
-    let categoryCount = 0;
-    let sumCategoryExpensesTmp = [];
+  useEffect(() => {
+    (async () => {
+      const categoriesTransactionNumberTmp =
+        await getCategoryTransactionNumber();
+      setCategoriesTransactionNumber(categoriesTransactionNumberTmp);
 
-    while (categoryCount < category.length) {
-      let transactionNumber = 0;
-      let productCount = 0;
-      let sumExpensiveTmp = 0;
+      const sumExpenseCategoryListTmp = await getSumExpenseForCategoryList(
+        categories,
+        productByCategory,
+      );
 
-      while (productCount < product.length) {
-        if (
-          product[productCount].idCreationCategory ==
-          category[categoryCount].idCreationCategory
-        ) {
-          sumExpensiveTmp +=
-            product[productCount].productAmount *
-            product[productCount].productCoefficient;
-          transactionNumber += 1;
-        }
-        productCount++;
-      }
+      setSumExpenseCategory(sumExpenseCategoryListTmp);
 
-      sumCategoryExpensesTmp.push(sumExpensiveTmp);
-      
-      categoryCount++;
-    }
-
-    return sumCategoryExpensesTmp;
-  };
-
-  useEffect(() => {    
-    getCategories(categoryDateFilter).then((categories) => {
-      getSumExpense(categories).then((sumCategoryExpense) => {
-        setSumCategoryExpenses(sumCategoryExpense);
-        setCategories(categories);
-        getCategoryTransactionNumber(categories);
-      });
-    });
-  }, [change]);
+      const showActionButtonInit = getCountOfCategory();
+      setShowActionButton(showActionButtonInit);
+    })();
+  }, [categories]);
 
   return (
     <>
@@ -178,13 +197,8 @@ export default function CategoryList({
                 onPress={() => {
                   setIsCategoryFilterSelected([false, false]);
                   setCategoryData(categoryDataInit);
-                  setCategoryDateFilter([firstDay, lastDay]);
-                  setShowLoading({ display: "flex" });
-
+                  setCategoryDateFilter([firstDay.toISOString(), lastDay.toISOString()]);
                   setChange(true);
-                  setTimeout(() => {
-                    setShowLoading({ display: "none" });
-                  }, 2000);
                 }}
               >
                 <Image
@@ -235,15 +249,15 @@ export default function CategoryList({
                         let showActionButtonTmp = [...showActionButton];
                         showActionButtonTmp[index] = { display: "flex" };
                         setShowActionButton(showActionButtonTmp);
-                        
+
                         setIndexOfActionButtonShowed(
-                          (category as CreationCategory).idCreationCategory!
+                          (category as CreationCategory).idCreationCategory!,
                         );
                       }}
                       onPress={() => {
                         setShowActionButton(showActionButtonInit);
                         setIndexOfActionButtonShowed("");
-                        router.push({
+                        router.navigate({
                           pathname: "/dashboard/[categoryId]",
                           params: { categoryId: JSON.stringify(category) },
                         });
@@ -265,7 +279,7 @@ export default function CategoryList({
                           </Text>
                           <Text style={GloblalStyles.CreatedDate}>
                             {new Date(
-                              (category as CreationCategory).createdDate!
+                              (category as CreationCategory).createdDate!,
                             ).toLocaleDateString("en-US", options)}
                           </Text>
                         </View>
@@ -273,8 +287,8 @@ export default function CategoryList({
 
                       <View>
                         <Text style={styles.categoryIncome}>
-                          {sumCategoryExpenses && sumCategoryExpenses[index]
-                            ? sumCategoryExpenses[index]
+                          {sumExpenseCategory && sumExpenseCategory[index]
+                            ? sumExpenseCategory[index]
                                 .toString()
                                 .replace(/\B(?=(\d{3})+(?!\d))/g, ".")
                             : 0}{" "}
@@ -289,7 +303,7 @@ export default function CategoryList({
                         <TouchableOpacity
                           onPress={async () => {
                             const category = await retrieveCategoryById(
-                              indexOfActionButtonShowed
+                              indexOfActionButtonShowed,
                             );
                             setCategoryData(category);
                             setOpenCloseModalChooseAdd(true);
@@ -332,8 +346,6 @@ export default function CategoryList({
         modalShown={showConfirmationModal}
         removeItem={removeItem}
         setModalShown={setShowConfirmationModal}
-        setShowLoading={setShowLoading}
-        setChange={setChange}
       />
     </>
   );

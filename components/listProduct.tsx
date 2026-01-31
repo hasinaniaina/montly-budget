@@ -14,13 +14,13 @@ import { removeProduct } from "@/constants/Controller";
 import { useState } from "react";
 import ConfirmationMessageModal from "./message/confirmationMessageModal";
 import { GloblalStyles } from "@/constants/GlobalStyles";
+import { useChangedStore } from "@/constants/store";
 
 export default function ListProduct({
   showActionButton,
   setShowActionButton,
   indexOfActionButtonShowed,
   setIndexOfActionButtonShowed,
-  setChange,
   setShowAddListField,
   setSelectProductForEdit,
   productData,
@@ -31,7 +31,6 @@ export default function ListProduct({
   setShowActionButton: (val: ViewStyle[]) => void;
   indexOfActionButtonShowed: string;
   setIndexOfActionButtonShowed: (val: string) => void;
-  setChange: (val: boolean) => void;
   setShowAddListField: (val: ViewStyle) => void;
   setSelectProductForEdit: (val: Product) => void;
   productData: Product[] & CreationProduct[];
@@ -68,6 +67,7 @@ export default function ListProduct({
   const [showConfirmationModal, setShowConfirmationModal] =
     useState<boolean>(false);
 
+
   const removeItem = async () => {
     const result = await removeProduct(indexOfActionButtonShowed);
     return result;
@@ -86,7 +86,7 @@ export default function ListProduct({
               setShowActionButton(showActionButtonTmp);
 
               setIndexOfActionButtonShowed(
-                (item as CreationProduct).idCreationProduct
+                (item as CreationProduct).idCreationProduct,
               );
             }}
             onPressIn={() => {
@@ -125,7 +125,7 @@ export default function ListProduct({
                   </Text>
                   <Text style={GloblalStyles.CreatedDate}>
                     {new Date(
-                      (item as CreationProduct).createdDate!
+                      (item as CreationProduct).createdDate!,
                     ).toLocaleDateString("en-US", options)}
                   </Text>
                 </View>
@@ -181,7 +181,6 @@ export default function ListProduct({
         removeItem={removeItem}
         setModalShown={setShowConfirmationModal}
         setShowLoading={setShowLoading}
-        setChange={setChange}
       />
     </>
   );

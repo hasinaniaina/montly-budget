@@ -4,6 +4,9 @@ import {
   CsvDatas,
   ExportDatas,
   CsvDataType,
+  Product,
+  CreationProduct,
+  Resume,
 } from "./interface";
 import { retrieveUserCategory, getDatabaseDatas } from "./Controller";
 
@@ -16,6 +19,7 @@ import {
   insertCSVIntoCategoryDatabase,
   insertCSVIntoProductDatabase,
 } from "./db";
+import { Item } from "react-native-picker-select";
 
 const header = `Category,Category color,created date, Product, Product color, Product amount,Product coefficient, Product created date `;
 
@@ -33,7 +37,7 @@ export const checkIfCategorylabelAlreadyStored = async (datas: Category) => {
       (userCategory as Category).label?.toLocaleLowerCase() ===
       label?.toLocaleLowerCase()
     ) {
-        isCategoryLabelNotExist = false;
+      isCategoryLabelNotExist = false;
     }
   });
 
@@ -60,7 +64,7 @@ export const checkIfCategorylabelAlreadyStored = async (datas: Category) => {
 export const isFilteredActivate = (
   isCategoryFiltered: boolean[],
   index: number,
-  value: boolean
+  value: boolean,
 ) => {
   let isFiltered = [...isCategoryFiltered!];
   isFiltered[index] = true;
@@ -128,7 +132,7 @@ export const exportCSV = async () => {
   const fileUri = await FileSystem.StorageAccessFramework.createFileAsync(
     directoryUri,
     fileName,
-    "csv"
+    "csv",
   );
 
   try {
@@ -255,7 +259,7 @@ const insertCSVIntoDatabase = async (datas: CsvDatas) => {
   categories.map(async (category, index) => {
     const idCreationCategory = await insertCSVIntoCategoryDatabase(
       category,
-      JSON.parse(user)
+      JSON.parse(user),
     );
 
     products[index].map(async (product) => {
@@ -274,4 +278,52 @@ const toCamelCase = (str: string): string => {
       return lower.charAt(0).toUpperCase() + lower.slice(1); // suivant : majuscule 1ère lettre
     })
     .join("");
+};
+
+export const getCategoriesForFitler = (category: Category[]) => {
+  let categoryCount = 0;
+  let categoryTmp: Item[] = [];
+
+  while (categoryCount < category.length) {
+    categoryTmp.push({
+      label: category[categoryCount].label!,
+      value: category[categoryCount]!,
+    });
+
+    categoryCount += 1;
+  }
+
+  return categoryTmp;
+};
+
+
+
+
+
+export const getCategoryTransactionNumber = async (
+  categories: (Category & CreationCategory)[],
+  productByCategory: (Product & CreationProduct)[],
+) => {
+  let categoryCount = 0;
+  let sumExpensiveTmp = 0;
+  let transactionNumberCategoriesTmp = [];
+
+  while (categoryCount < categories.length) {
+    let transactionNumber = 0;
+    let productCount = 0;
+
+    while (productCount < productByCategory.length) {
+      if (
+        productByCategory[productCount].idCreationCategory ==
+        categories[categoryCount].idCreationCategory
+      ) {
+        sumExpensiveTmp += transactionNumber += 1;
+      }
+      productCount++;
+    }
+    transactionNumberCategoriesTmp.push(transactionNumber);
+    categoryCount++;
+  }
+
+  return transactionNumberCategoriesTmp;
 };

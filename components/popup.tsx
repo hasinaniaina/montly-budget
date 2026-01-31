@@ -33,6 +33,7 @@ import {
   checkIfCategorylabelAlreadyStored,
   isFilteredActivate,
 } from "@/constants/utils";
+import { useChangedStore } from "@/constants/store";
 
 export default function Popup({
   title,
@@ -42,11 +43,9 @@ export default function Popup({
   viewType,
   datas,
   setData,
-  setChange,
   thereIsFilter,
   setThereIsFilter,
   categoryDateFilter,
-  setshowLoading,
   category,
   confirmAddExistingCategory,
   children,
@@ -58,16 +57,14 @@ export default function Popup({
   viewType: string;
   datas?: any;
   setData: (val: any) => void;
-  setChange: (val: boolean) => void;
   thereIsFilter?: boolean[];
   setThereIsFilter: (val: boolean[]) => void;
-  categoryDateFilter?: Date[];
-  setshowLoading: (val: ViewStyle) => void;
+  categoryDateFilter?: string[];
   category?: Category & CreationCategory;
   confirmAddExistingCategory?: () => void;
   children: ReactNode;
 }) {
-
+  const setChange = useChangedStore((state) => state.setChanged);
   // Get product for edit
   const productDataInit: Product & CreationProduct = {
     idProduct: "",
@@ -87,41 +84,37 @@ export default function Popup({
     display: "flex",
   });
 
-  const addCategory = async () => {    
+  const addCategory = async () => {
     if (datas?.idCategory! != "") {
-      const result = upgradeCategory({
+      const result = await upgradeCategory({
         datas,
         setErrorMessage,
         setModalShown,
       });
 
-      if (await result) {
+      if (result) {
+        setChange(true);
         setData(categoryDataInit);
         setVisible({ display: "none" });
-        setChange(true);
       }
     } else {
-      const isCategoryLabelNotExist = await checkIfCategorylabelAlreadyStored(
-        datas
-      );
+      const isCategoryLabelNotExist =
+        await checkIfCategorylabelAlreadyStored(datas);
 
       if (isCategoryLabelNotExist) {
-        const result = createCategory({
+        const result = await createCategory({
           datas,
           setErrorMessage,
           setModalShown,
         });
 
-        result.then((success) => {
-          if (success) {
-            setData(categoryDataInit);
-            setChange(true);
-          }
-        });
+        if (result) {
+          setChange(true);
+          setData(categoryDataInit);
+        }
       } else {
         setErrorMessage([datas.label + " category already exist!"]);
         setModalShown([true]);
-        setshowLoading({ display: "none" });
       }
     }
   };
@@ -132,16 +125,18 @@ export default function Popup({
 
       const datasAfterFilter = await filterCategory(
         datasTmp,
-        categoryDateFilter!
+        categoryDateFilter!,
       );
 
-      setData(datasAfterFilter);
-      setVisible({ display: "none" });
+      if (datasAfterFilter) {
+        setData(datasAfterFilter);
+        const isFiltered = isFilteredActivate(thereIsFilter!, 0, true);
 
-      const isFiltered = isFilteredActivate(thereIsFilter!, 0, true);
-      setThereIsFilter!(isFiltered);
+        setThereIsFilter!(isFiltered);
 
-      setChange(true);
+        setChange(true);
+        setVisible({ display: "none" });
+      }
     }
   };
 
@@ -152,16 +147,15 @@ export default function Popup({
 
     const datasAfterFilter = await filterCategory(
       datasTmp,
-      categoryDateFilter!
+      categoryDateFilter!,
     );
 
     setData(datasAfterFilter);
+    setChange(true);
     setVisible({ display: "none" });
 
     const isFiltered = isFilteredActivate(thereIsFilter!, 1, true);
-    setThereIsFilter!(isFiltered);
-
-    setChange(true);
+    setThereIsFilter(isFiltered);
   };
 
   const expenses = async () => {
@@ -175,12 +169,11 @@ export default function Popup({
         (product as CreationProduct).productCoefficient;
     }
 
-
     if (datas.idCreationProduct == "") {
       const insertProduct = await saveProduct(
         datas,
         setErrorMessage,
-        setModalShown
+        setModalShown,
       );
 
       if (insertProduct) {
@@ -204,12 +197,12 @@ export default function Popup({
       const updateProduct = await editProduct(
         datas,
         setErrorMessage,
-        setModalShown
+        setModalShown,
       );
 
       if (updateProduct) {
         setData(productDataInit);
-        setChange(true);
+        setChange(true);        
         setVisible({ display: "none" });
       }
     }
@@ -218,11 +211,12 @@ export default function Popup({
   const filterProducts = async () => {
     const productsFiltered = await filterProduct(datas);
 
-    setThereIsFilter([true]);
-    setData(productsFiltered);
-    setVisible({ display: "none" });
-    setChange(true);
-
+    if (productsFiltered) {
+      setThereIsFilter([true]);
+      setData(productsFiltered);
+      setVisible({ display: "none" });
+      setChange(true);
+    }
   };
 
   useEffect(() => {
@@ -230,13 +224,13 @@ export default function Popup({
       "keyboardDidShow",
       () => {
         setHidePopupAddButton({ display: "none" });
-      }
+      },
     );
     const keyboardDidHideListener = Keyboard.addListener(
       "keyboardDidHide",
       () => {
         setHidePopupAddButton({ display: "flex" });
-      }
+      },
     );
 
     return () => {
@@ -263,7 +257,7 @@ export default function Popup({
               if (viewType == "category") {
                 setData(categoryDataInit);
               }
-              
+
               setVisible({ display: "none" });
             }}
           >
@@ -312,13 +306,11 @@ export default function Popup({
         </TouchableOpacity>
       </View>
 
-      
       <ErrorMessageModal
         modalShown={modalShown[0]}
         errorMessage={errorMessage}
         setErrorMessage={setErrorMessage}
         setModalShown={setModalShown}
-        setShowLoading={setshowLoading}
       />
     </View>
   );

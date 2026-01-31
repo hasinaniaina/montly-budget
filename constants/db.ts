@@ -97,7 +97,7 @@ export const createUser = async (data: { email: string; password: string }) => {
         "INSERT INTO User (id, email, password) VALUES (?, ?, ?)",
         uuid,
         data.email,
-        data.password
+        data.password,
       );
 
       if (userCreated.changes) {
@@ -152,7 +152,7 @@ export const updateUserPasssword = async (newPassword: string, user: User) => {
     ).runAsync(
       `UPDATE User SET password = ? WHERE id = ?`,
       newPassword,
-      user.id
+      user.id,
     );
 
     return updateUser;
@@ -162,8 +162,8 @@ export const updateUserPasssword = async (newPassword: string, user: User) => {
 };
 
 export const insertProduct = async (
-  datas: Product | CreationProduct
-): Promise<number | undefined> => {
+  datas: Product | CreationProduct,
+): Promise<boolean> => {
   const uuidProduct = crypto.randomUUID();
 
   try {
@@ -175,7 +175,7 @@ export const insertProduct = async (
     VALUES (?, ?, ?)`,
       uuidProduct,
       (datas as Product).designation,
-      (datas as Product).color
+      (datas as Product).color,
     );
 
     if (insertProduct.changes) {
@@ -191,15 +191,18 @@ export const insertProduct = async (
         (datas as CreationProduct).productAmount,
         (datas as CreationProduct).productCoefficient,
         (datas as CreationProduct).idCreationCategory,
-        uuidProduct
+        uuidProduct,
       );
 
-      return insertCreationProduct.changes;
+      if (insertCreationProduct.changes) {
+        return true;
+      }
     }
 
-    return 0;
+    return false;
   } catch (error) {
     console.log("Product insertion error => ", error);
+    return false;
   }
 };
 
@@ -226,7 +229,7 @@ export const getProductsNew = async () => {
     ).getAllAsync(
       `SELECT * 
       FROM Product as prod INNER JOIN CreationProduct as creatProd
-       ON prod.idProduct = creatProd.idProduct`
+       ON prod.idProduct = creatProd.idProduct`,
     );
 
     return product ? product : ([] as Product[] & CreationProduct[]);
@@ -236,7 +239,7 @@ export const getProductsNew = async () => {
 };
 
 export const getProductByIdCreationCategory = async (
-  idCreationCategory: string
+  idCreationCategory: string,
 ) => {
   try {
     const product: any = await (
@@ -245,20 +248,20 @@ export const getProductByIdCreationCategory = async (
       `SELECT * 
       FROM Product as prod INNER JOIN CreationProduct as creatProd 
       ON prod.idProduct = creatProd.idProduct 
-      WHERE creatProd.idCreationCategory='${idCreationCategory}'`
+      WHERE creatProd.idCreationCategory='${idCreationCategory}'`,
     );
 
     return product ? product : ([] as Product[] & CreationProduct[]);
   } catch (error) {
     console.log(
       "Retrieve products By id Creation Category new error => ",
-      error
+      error,
     );
   }
 };
 
 export const getProductByIdCreationProduct = async (
-  idCreationProduct: string
+  idCreationProduct: string,
 ) => {
   try {
     const product: any = await (
@@ -267,7 +270,7 @@ export const getProductByIdCreationProduct = async (
       `SELECT prod.idProduct
       FROM Product as prod INNER JOIN CreationProduct as creatProd 
       ON prod.idProduct = creatProd.idProduct 
-      WHERE creatProd.idCreationProduct='${idCreationProduct}'`
+      WHERE creatProd.idCreationProduct='${idCreationProduct}'`,
     );
 
     if (product.changes) {
@@ -275,7 +278,7 @@ export const getProductByIdCreationProduct = async (
         await db
       ).getFirstAsync(
         `SELECT *  FROM CreationProduct 
-        WHERE idProduct=${product.idProduct}`
+        WHERE idProduct=${product.idProduct}`,
       );
 
       return productCreationProduct;
@@ -285,7 +288,7 @@ export const getProductByIdCreationProduct = async (
   } catch (error) {
     console.log(
       "Retrieve products By id Creation Category new error => ",
-      error
+      error,
     );
   }
 };
@@ -298,7 +301,7 @@ export const updateProduct = async (datas: Product | CreationProduct) => {
       `UPDATE Product SET designation = ?, color = ? WHERE idProduct = ?`,
       (datas as Product).designation,
       (datas as Product).color,
-      (datas as Product).idProduct
+      (datas as Product).idProduct,
     );
 
     if (updateProduct.changes) {
@@ -308,15 +311,18 @@ export const updateProduct = async (datas: Product | CreationProduct) => {
         `UPDATE CreationProduct SET productAmount = ?, productCoefficient = ? WHERE idCreationProduct = ?`,
         (datas as CreationProduct).productAmount,
         (datas as CreationProduct).productCoefficient,
-        (datas as CreationProduct).idCreationProduct
+        (datas as CreationProduct).idCreationProduct,
       );
 
-      return updateCreationProduct.changes;
+      if (updateCreationProduct.changes) {
+        return true
+      }
     }
 
-    return 0;
+    return false;
   } catch (error) {
     console.log("Product Update error => ", error);
+    return false;
   }
 };
 
@@ -348,7 +354,7 @@ export const getProductFilter = async (datas: Product | CreationProduct) => {
 
 export const deleteProduct = async (
   idCreationProduct: string,
-  removeProductTable: boolean
+  removeProductTable: boolean,
 ) => {
   try {
     let deleteProduct: any = null;
@@ -368,7 +374,7 @@ export const deleteProduct = async (
     ).runAsync(
       "DELETE FROM CreationProduct WHERE idCreationProduct='" +
         idCreationProduct +
-        "'"
+        "'",
     );
 
     return deleteCreationCategory.changes;
@@ -379,7 +385,7 @@ export const deleteProduct = async (
 
 export const insertCategory = async (
   datas: Category & CreationCategory,
-  user: User
+  user: User,
 ) => {
   const uuidCategory = crypto.randomUUID();
 
@@ -390,7 +396,7 @@ export const insertCategory = async (
       "INSERT INTO Category (idCategory, label, color) VALUES (?, ?, ?)",
       uuidCategory,
       datas.label!,
-      datas.color!
+      datas.color!,
     );
 
     if (insertCategory.changes) {
@@ -400,10 +406,12 @@ export const insertCategory = async (
         "INSERT INTO CreationCategory (idCreationCategory, idCategory, idUser) VALUES (?, ?, ?)",
         uuidCreationCategory,
         uuidCategory,
-        user.id
+        user.id,
       );
 
-      return insertCreationCategory;
+      if (insertCreationCategory.changes) {
+        return true;
+      }
     }
   } catch (error) {
     console.log("Category insertion error =>", error);
@@ -413,10 +421,10 @@ export const insertCategory = async (
 
 export const insertExistingCategories = async (
   items: ItemAddCategory[],
-  user: User
+  user: User,
 ) => {
   try {
-    let insertCreationCategory: any = "";    
+    let insertCreationCategory: any = "";
 
     for (let item of items) {
       const uuidCreationCategory = crypto.randomUUID();
@@ -427,25 +435,22 @@ export const insertExistingCategories = async (
         uuidCreationCategory,
         item.idCategory,
         user.id,
-        0
+        0,
       );
     }
 
     return insertCreationCategory;
-
   } catch (error) {
     console.log("Categories insertion error =>", error);
     return false;
   }
 };
 
-export const getCategory = async (user: User, categoryDateFilter: Date[]) => {
+export const getCategory = async (user: User, categoryDateFilter: string[]) => {
   if (user && categoryDateFilter) {
     try {
-      const dateFrom =
-        categoryDateFilter[0].toISOString().split("T")[0] + " 01:00:00";
-      const dateTo =
-        categoryDateFilter[1].toISOString().split("T")[0] + " 24:00:00";
+      const dateFrom = categoryDateFilter[0].split("T")[0] + " 01:00:00";
+      const dateTo = categoryDateFilter[1].split("T")[0] + " 12:00:00";
 
       let query = `SELECT *
                 FROM Category as cat INNER JOIN CreationCategory as creatCat 
@@ -505,7 +510,7 @@ export const getCategoryById = async (idCreationCategory: string) => {
 
 export const deleteCategory = async (
   idCreationCategory: string,
-  removeCategory: boolean
+  removeCategory: boolean,
 ) => {
   const dbtmp = await db;
 
@@ -514,21 +519,21 @@ export const deleteCategory = async (
       const selectCreationCategory: any = await dbtmp.getFirstAsync(
         "SELECT idCategory FROM CreationCategory WHERE idCreationCategory='" +
           idCreationCategory +
-          "'"
+          "'",
       );
 
       if (selectCreationCategory) {
         const deleteCategory: any = await dbtmp.runAsync(
           "DELETE FROM Category WHERE idCategory='" +
             selectCreationCategory.idCategory +
-            "'"
+            "'",
         );
 
         if (deleteCategory.changes) {
           const deleteCreationCategory = await dbtmp.runAsync(
             "DELETE FROM CreationCategory WHERE idCreationCategory='" +
               idCreationCategory +
-              "'"
+              "'",
           );
 
           return deleteCreationCategory;
@@ -538,7 +543,7 @@ export const deleteCategory = async (
       const deleteCreationCategory = await dbtmp.runAsync(
         "DELETE FROM CreationCategory WHERE idCreationCategory='" +
           idCreationCategory +
-          "'"
+          "'",
       );
 
       if (deleteCreationCategory.changes) {
@@ -546,7 +551,7 @@ export const deleteCategory = async (
           const deleteProduct: any = dbtmp.runAsync(
             "DELETE FROM CreationProduct WHERE idCreationCategory='" +
               idCreationCategory +
-              "'"
+              "'",
           );
         }, 1000);
 
@@ -567,7 +572,7 @@ export const updateCategory = async (datas: Category | CreationCategory) => {
       "UPDATE Category SET label = ? , color = ? WHERE idCategory = ? ",
       (datas as Category).label!,
       (datas as Category).color!,
-      datas.idCategory!
+      datas.idCategory!,
     );
 
     return updateCategory;
@@ -579,13 +584,13 @@ export const updateCategory = async (datas: Category | CreationCategory) => {
 
 export const getCategoryFilter = async (
   datas: Category[] & CreationCategory[],
-  date: Date[]
+  date: string[],
 ): Promise<string | undefined> => {
   try {
     let category: any = [];
 
-    const dateFrom = date[0].toISOString().split("T")[0] + " 01:00:00";
-    const dateTo = date[1].toISOString().split("T")[0] + " 24:00:00";
+    const dateFrom = date[0].split("T")[0] + " 01:00:00";
+    const dateTo = date[1].split("T")[0] + " 24:00:00";
 
     if (datas.length > 0) {
       let query = `SELECT * 
@@ -629,7 +634,7 @@ export const getCategoryFilter = async (
 
 export const insertCSVIntoCategoryDatabase = async (
   datas: CsvDataType,
-  user: User
+  user: User,
 ) => {
   const uuidCategory = crypto.randomUUID();
   const uuidCreationCategory = crypto.randomUUID();
@@ -640,7 +645,7 @@ export const insertCSVIntoCategoryDatabase = async (
       "INSERT INTO Category (idCategory, label, color) VALUES (?, ?, ?)",
       uuidCategory,
       datas.category.trim(),
-      datas.categoryColor.trim()
+      datas.categoryColor.trim(),
     );
 
     if (insertCategory.changes) {
@@ -649,7 +654,7 @@ export const insertCSVIntoCategoryDatabase = async (
         uuidCreationCategory,
         uuidCategory,
         user.id,
-        datas.createdDate.trim()
+        datas.createdDate.trim(),
       );
     }
 
@@ -662,7 +667,7 @@ export const insertCSVIntoCategoryDatabase = async (
 
 export const insertCSVIntoProductDatabase = async (
   datas: CsvDataType,
-  idCreationCategory: any
+  idCreationCategory: any,
 ) => {
   const uuidProduct = crypto.randomUUID();
 
@@ -675,7 +680,7 @@ export const insertCSVIntoProductDatabase = async (
     VALUES (?, ?, ?)`,
       uuidProduct,
       datas.product.trim(),
-      datas.productColor.trim()
+      datas.productColor.trim(),
     );
 
     if (insertProduct.changes) {
@@ -692,7 +697,7 @@ export const insertCSVIntoProductDatabase = async (
         datas.productCoefficient.trim(),
         idCreationCategory,
         uuidProduct,
-        datas.productCreatedDate.trim()
+        datas.productCreatedDate.trim(),
       );
       return insertCreationProduct.changes;
     }

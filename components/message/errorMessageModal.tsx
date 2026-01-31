@@ -38,7 +38,6 @@ function ErrorMessageModal({
               onPress={() => {
                 setErrorMessage([]);
                 setModalShown([false, false]);
-                setShowLoading!({ display: "none" });
               }}
             >
               <Text
