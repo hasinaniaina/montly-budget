@@ -8,10 +8,8 @@ import {
   Product,
 } from "@/constants/interface";
 import { useCategoriesStore, useChangedStore } from "@/constants/store";
-import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import {
-  BackHandler,
   Dimensions,
   Image,
   StyleSheet,
@@ -30,7 +28,9 @@ export default function Resumes({
   categoryDateFilter: string[];
   setPopupFilterByDateVisible: (val: ViewStyle) => void;
 }) {
-  const categories = useCategoriesStore((state) => state.categories);
+  const currentCategoryDatas = useCategoriesStore(
+    (state) => state.currentCategoryDatas,
+  );
 
   let options: Intl.DateTimeFormatOptions = {
     year: "numeric",
@@ -42,14 +42,13 @@ export default function Resumes({
   const [sumExpenseResume, setSumExpenseResume] = useState<number>(0);
 
   const getSumExpenseForResume = (
-    categories: (Category & CreationCategory)[],
     productByCategory: (Product & CreationProduct)[],
   ): number => {
     let categoryCount = 0;
     let sumExpensiveTmp = 0;
-    
-    if (categories) {
-      while (categoryCount < categories.length) {
+
+    if (currentCategoryDatas) {
+      while (categoryCount < currentCategoryDatas.length) {
         let transactionNumber = 0;
         let productCount = 0;
 
@@ -57,7 +56,7 @@ export default function Resumes({
           while (productCount < productByCategory.length) {
             if (
               productByCategory[productCount].idCreationCategory ==
-              categories[categoryCount].idCreationCategory
+              currentCategoryDatas[categoryCount].idCreationCategory
             ) {
               sumExpensiveTmp +=
                 productByCategory[productCount].productAmount *
@@ -79,13 +78,10 @@ export default function Resumes({
     (() => {
       console.log("resume.tsx");
 
-      const sumExpenseResumeTmp = getSumExpenseForResume(
-        categories,
-        productByCategory,
-      );
+      const sumExpenseResumeTmp = getSumExpenseForResume(productByCategory);
       setSumExpenseResume(sumExpenseResumeTmp);
     })();
-  }, [categories]);
+  }, [currentCategoryDatas]);
 
   return (
     <>
@@ -102,9 +98,15 @@ export default function Resumes({
               style={GloblalStyles.icon}
             />
             <Text style={GloblalStyles.titleSection}>
-              {new Date(categoryDateFilter[0]).toLocaleDateString("en-US", options) +
+              {new Date(categoryDateFilter[0]).toLocaleDateString(
+                "en-US",
+                options,
+              ) +
                 " - " +
-                new Date(categoryDateFilter[1]).toLocaleDateString("en-US", options)}
+                new Date(categoryDateFilter[1]).toLocaleDateString(
+                  "en-US",
+                  options,
+                )}
             </Text>
           </View>
           <TouchableOpacity

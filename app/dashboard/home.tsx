@@ -39,16 +39,24 @@ import Resumes from "@/components/category/resume";
 import CategoryList from "@/components/category/categoryList";
 import {
   categoryDataInit,
-  getCategoriesForFitler,
+  getCategorieDependToDate,
+  getCategoriesForRNPickerSelect,
+  prettyLog,
   productDataInit,
+  retrieveFirstAndLastDay,
 } from "@/constants/utils";
 import PopupChooseAdd from "@/components/popupChooseAdd";
 import ColorPickerViewNew from "@/components/colorPickerNew";
 import {
   useCategoriesStore,
   useChangedStore,
+  useDateFilterStore,
+  useLogoutShowStore,
+  useProductsStore,
   useShowActionButtonStore,
 } from "@/constants/store";
+import Chart from "@/components/category/chart";
+import Products from "./[categoryId]";
 
 export default function Home() {
   let options: Intl.DateTimeFormatOptions = {
@@ -56,9 +64,6 @@ export default function Home() {
     month: "short",
     day: "numeric",
   };
-
-  const [productByCategory, setProductByCategory] =
-    useState<(Product & CreationProduct)[]>();
 
   const [popupAddCategoryVisible, setPopupAddCategoryVisible] =
     useState<ViewStyle>({ display: "none" });
@@ -86,20 +91,33 @@ export default function Home() {
   // if new event
   const change = useChangedStore((state) => state.changeHome);
   const setChange = useChangedStore((state) => state.setChangeHome);
-  const setCategories = useCategoriesStore((state) => state.setCategories);
-  const categories = useCategoriesStore((state) => state.categories);
 
-  // data storage
-  const [categoryData, setCategoryData] = useState<Category & CreationCategory>(
-    categoryDataInit,
+  const categories = useCategoriesStore((state) => state.categories);
+  const setCategories = useCategoriesStore((state) => state.setCategories);
+
+  const categoryProducts = useProductsStore((state) => state.categoryProducts);
+  const setCategoryProducts = useProductsStore(
+    (state) => state.setCategoryProducts,
+  );
+
+  const setCurrentCategoryDatas = useCategoriesStore(
+    (state) => state.setCurrentCategoryDatas,
+  );
+  const currentCategoryDatas = useCategoriesStore(
+    (state) => state.currentCategoryDatas,
+  );
+
+  const setDateFilter = useDateFilterStore((state) => state.setDateFilter);
+  const dateFilter = useDateFilterStore((state) => state.dateFilter);
+
+  const dateInitialised = useDateFilterStore((state) => state.dateInitialised);
+  const setDateInitialised = useDateFilterStore(
+    (state) => state.setDateInitialised,
   );
 
   const [userCategory, setuserCategory] = useState<
     Category[] & CreationCategory[]
   >([categoryDataInit]);
-
-  const [userProductAddExistingCategory, setuserProductAddExistingCategory] =
-    useState<(Product & CreationProduct)[]>([productDataInit]);
 
   const [itemAddCategoryIndex, setItemAddCategoryIndex] = useState<
     ItemAddCategory[]
@@ -112,18 +130,8 @@ export default function Home() {
     useState<boolean[]>(isFilterActivateInit);
 
   // Retrieve Categories for filter
-  const [categoriesFitler, setCategoriesFilter] = useState<Item[]>();
-
-  // Retrieve Category date filter
-  var date = new Date();
-
-  var firstDay = new Date(date.getUTCFullYear(), date.getUTCMonth(), 1);
-  var lastDay = new Date(date.getUTCFullYear(), date.getUTCMonth() + 1, 0, 12);
-
-  const [categoryDateFilter, setCategoryDateFilter] = useState<string[]>([
-    firstDay.toISOString(),
-    lastDay.toISOString(),
-  ]);
+  const [categoriesForRNPickerSelect, setCategoriesForRNPickerSelect] =
+    useState<Item[]>();
 
   // Show loading when add category or product
   const [showLoading, setShowLoading] = useState<ViewStyle>({
@@ -136,18 +144,24 @@ export default function Home() {
   const setShowActionButton = useShowActionButtonStore(
     (state) => state.setShowActionButton,
   );
+  const setShowLogout = useLogoutShowStore((state) => state.setShowLogout);
+
+  const getAllCurrentUserCategories = async (): Promise<
+    (Category & CreationCategory)[]
+  > => {
+    const allCategories = await retrieveCurrentUserCategory();
+    return allCategories;
+  };
 
   const getCategory = async (): Promise<(Category & CreationCategory)[]> => {
-    let category = await retrieveCategoryAccordingToDate(categoryDateFilter);
-
-    let categories: any = null;
+    let categoriesTmp: any = null;
 
     if (!isCategoryFiltered[0]) {
-      categories = category;
+      categoriesTmp = getCategorieDependToDate(categories, dateFilter);
     } else {
-      categories = categoryData;
+      categoriesTmp = currentCategoryDatas;
     }
-    return categories;
+    return categoriesTmp;
   };
 
   const modalOpenCloseAddListChoose = (openAddFieldCategory: boolean) => {
@@ -178,8 +192,8 @@ export default function Home() {
     for (let userCategory of userCategories) {
       let categoryIsListed = false;
 
-      if (categories) {
-        for (let category of categories) {
+      if (currentCategoryDatas) {
+        for (let category of currentCategoryDatas) {
           if (
             category.idCategory == userCategory.idCategory ||
             category.label == userCategory.label
@@ -193,17 +207,19 @@ export default function Home() {
       if (!categoryIsListed) {
         itemIndexTmp.push({
           checked: false,
-          idCategory: userCategory.idCategory,
+          idCategory: Number(userCategory.idCategory),
         });
 
         categoryNotAdded.push(userCategory);
       }
     }
 
-    return {
+    const result = {
       itemIndexTmp: itemIndexTmp,
       categoryNotAdded: categoryNotAdded,
     };
+
+    return result;
   };
 
   const confirmAddExistingCategory = async () => {
@@ -227,31 +243,38 @@ export default function Home() {
     }
   };
 
-  useEffect(() => {    
+  useEffect(() => {
     (async () => {
       console.log("Home.tsx");
-      const productByCategory = await retrieveProductByCategory();
-      setProductByCategory(productByCategory);
-
       const categoriesTmp = await getCategory();
-      setCategories(categoriesTmp);
+      setCurrentCategoryDatas(categoriesTmp);
 
-      const categoryTmp = getCategoriesForFitler(categoriesTmp);
+      const allCurrentUserCategories = await getAllCurrentUserCategories();
+      setCategories(allCurrentUserCategories);
+
+      const productByCategory = await retrieveProductByCategory();
+      setCategoryProducts(productByCategory);
+
+      const categoriesForRNPickerSelectTmp =
+        getCategoriesForRNPickerSelect(currentCategoryDatas);
+
+      setCategoriesForRNPickerSelect(categoriesForRNPickerSelectTmp);
 
       const allCurrentUserCategory = await getAllCurrentUserCategory();
       setItemAddCategoryIndex(allCurrentUserCategory.itemIndexTmp);
       setuserCategory(allCurrentUserCategory.categoryNotAdded);
 
-      setCategoriesFilter(categoryTmp);
-
-      setuserProductAddExistingCategory(productByCategory);
-
-      setProductByCategory(productByCategory);
-
+      // Retrieve Category date filter
+      if (!dateInitialised) {
+        const date = new Date();
+        const { firstDay, lastDay } = retrieveFirstAndLastDay(date.toString());
+        setDateFilter([firstDay, lastDay]);
+        setDateInitialised(true);
+      }
       // Back button on click event
       const backAction = () => {
         router.push("/dashboard/home");
-        setChange(true)
+        setChange(true);
         return true;
       };
 
@@ -271,288 +294,35 @@ export default function Home() {
       style={GloblalStyles.container}
       onPressIn={() => {
         setShowActionButton(showActionButtonInit);
+        setShowLogout(false);
       }}
     >
       <>
         {/* header */}
         <Header change={change} />
         {/* Content */}
-        <View style={styles.content}>
+        <ScrollView
+          contentInsetAdjustmentBehavior="automatic"
+          style={styles.content}
+        >
+          {/* Chart */}
+          <Chart setThereIsFilter={setIsCategoryFilterSelected} />
+
           {/* Resume */}
-          <Resumes
+          {/* <Resumes
             productByCategory={productByCategory!}
             categoryDateFilter={categoryDateFilter}
             setPopupFilterByDateVisible={setPopupFilterByDateVisible}
-          />
+          /> */}
           {/* Category */}
           <CategoryList
-            productByCategory={productByCategory!}
             setPopupFilterByCategoryVisible={setPopupFilterByCategoryVisible}
             isCategoryFiltered={isCategoryFiltered}
             setIsCategoryFilterSelected={setIsCategoryFilterSelected}
             setOpenCloseModalChooseAdd={modalOpenCloseAddListChoose}
-            setCategoryData={setCategoryData}
-            setCategoryDateFilter={setCategoryDateFilter}
           />
-        </View>
-      </>
-
-      {/* popup add new category*/}
-      <Popup
-        title="Category"
-        buttonTitle={"Save"}
-        visible={popupAddCategoryVisible}
-        setVisible={setPopupAddCategoryVisible}
-        viewType="category"
-        datas={categoryData}
-        setData={setCategoryData}
-        setThereIsFilter={setIsCategoryFilterSelected}
-      >
-        {/* popup colorPicker */}
-        <ScrollView>
-          <View style={{ alignItems: "center", justifyContent: "center" }}>
-            <ColorPickerViewNew data={categoryData} setData={setCategoryData} />
-            <View style={GloblalStyles.popupLabelInput}>
-              <Text style={GloblalStyles.appLabel}>Label</Text>
-              <View style={GloblalStyles.appInput}>
-                <TextInput
-                  placeholder="Exemple"
-                  value={categoryData?.label}
-                  onChangeText={(val) => {
-                    let dataTmp = { ...categoryData };
-                    dataTmp.label = val;
-                    setCategoryData(dataTmp);
-                  }}
-                />
-              </View>
-            </View>
-          </View>
         </ScrollView>
-      </Popup>
-
-      {/* popup add existing category*/}
-      <Popup
-        title="Add Categories"
-        buttonTitle="Confirm"
-        visible={popupChooseAddExistingCategoryVisible}
-        setVisible={setPopupChooseAddExistingCategoryVisible}
-        viewType="categoryExisting"
-        datas={categoryData}
-        setData={setCategoryData}
-        setThereIsFilter={setIsCategoryFilterSelected}
-        confirmAddExistingCategory={confirmAddExistingCategory}
-      >
-        {userCategory.length > 0 ? (
-          <FlatList
-            style={{ flexGrow: 0 }}
-            data={userCategory}
-            renderItem={({ item, index }) => (
-              <View style={styles.categoryItem}>
-                <Pressable
-                  style={[
-                    styles.categoriesProductsListContainer,
-                    { marginRight: 30 },
-                  ]}
-                  onPress={() => {
-                    let itemTmp = [...itemAddCategoryIndex];
-                    itemTmp[index].checked = !itemTmp[index].checked;
-                    setItemAddCategoryIndex(itemTmp);
-                  }}
-                >
-                  <View style={styles.checkboxCategory}>
-                    <View
-                      style={[
-                        styles.checkboxCategoryChecked,
-                        itemAddCategoryIndex[index]?.checked
-                          ? { backgroundColor: TextColor }
-                          : { backgroundColor: "transparent" },
-                      ]}
-                    ></View>
-                  </View>
-                  <View
-                    style={[
-                      styles.itemCategoryProductShape,
-                      // styles.categoryProductShape,
-                      { backgroundColor: item.color },
-                    ]}
-                  ></View>
-                  <View>
-                    <Text style={styles.name}>{item.label}</Text>
-                  </View>
-                </Pressable>
-                {/* <View style={{ flexDirection: "column" }}>
-                  {userProductAddExistingCategory.map((product: any, Productindex) => {
-                    if (product.idCreationCategory == item.idCreationCategory) {
-                      return (
-                        <Pressable
-                          key={Productindex}
-                          style={styles.categoriesProductsListContainer}
-                          disabled={true}
-                          onPress={() => {}}
-                        >
-                          <View
-                            style={[
-                              itemAddCategoryIndex[index]?.checked
-                                ? styles.checkboxCategory
-                                : styles.checkboxProductDisabled,
-                            ]}
-                          >
-                            <View
-                              style={[
-                                styles.checkboxProductChecked,
-                                !itemAddCategoryIndex[index]?.checked
-                                  ? { backgroundColor: TextColor }
-                                  : { backgroundColor: "transparent" },
-                              ]}
-                            ></View>
-                          </View>
-                          <View
-                            style={[
-                              styles.itemCategoryProductShape,
-                              !itemAddCategoryIndex[index]?.checked
-                                ? styles.productColorDisabled
-                                : { backgroundColor: product.color },
-                            ]}
-                          ></View>
-                          <View>
-                            <Text
-                              style={[
-                                !itemAddCategoryIndex[index]?.checked
-                                  ? styles.nameDisabled
-                                  : styles.name,
-                              ]}
-                            >
-                              {product.designation}
-                            </Text>
-                          </View>
-                        </Pressable>
-                      );
-                    }
-                  })}
-                </View> */}
-              </View>
-            )}
-          />
-        ) : (
-          <View style={styles.noListContainer}>
-            <Text style={styles.noList}>No category</Text>
-          </View>
-        )}
-      </Popup>
-
-      {/* popup filter by category*/}
-      <Popup
-        title="Filter by category"
-        buttonTitle="Go"
-        visible={popupFilterByCategoryVisible}
-        setVisible={setPopupFilterByCategoryVisible}
-        viewType="filterByCategory"
-        datas={categoryData}
-        setData={setCategoryData}
-        thereIsFilter={isCategoryFiltered}
-        setThereIsFilter={setIsCategoryFilterSelected}
-        categoryDateFilter={categoryDateFilter}
-      >
-        <View style={GloblalStyles.popupLabelInput}>
-          <Text style={GloblalStyles.appLabel}>Categories</Text>
-          <View style={GloblalStyles.appInput}>
-            <RNPickerSelect
-              onValueChange={(categorySelected) => {
-                if (categorySelected?.idCreationCategory) {
-                  setCategoryData(categorySelected);
-                }
-              }}
-              items={categoriesFitler ? categoriesFitler : []}
-            ></RNPickerSelect>
-          </View>
-        </View>
-      </Popup>
-
-      {/* popup filter by date*/}
-      <Popup
-        title="Filter by date"
-        buttonTitle="Go"
-        visible={popupFilterByDateVisible}
-        setVisible={setPopupFilterByDateVisible}
-        viewType="filterByDate"
-        datas={categoryData}
-        setData={setCategoryData}
-        thereIsFilter={isCategoryFiltered}
-        setThereIsFilter={setIsCategoryFilterSelected}
-        categoryDateFilter={categoryDateFilter}
-      >
-        <View style={styles.popupDatecontainer}>
-          {/* Date From */}
-          <TouchableOpacity
-            style={styles.popupDate}
-            onPress={() => {
-              setOpenDatePicker([true, false]);
-            }}
-          >
-            <Image source={require("@/assets/images/annual.png")} />
-            <View style={styles.labelText}>
-              <Text style={GloblalStyles.appLabel}>From</Text>
-              <Text style={[GloblalStyles.appLabel, styles.date]}>
-                {new Date(categoryDateFilter[0]).toLocaleDateString(
-                  "en-US",
-                  options,
-                )}
-              </Text>
-            </View>
-          </TouchableOpacity>
-
-          {/* Date To */}
-          <TouchableOpacity
-            style={styles.popupDate}
-            onPress={() => {
-              setOpenDatePicker([false, true]);
-            }}
-          >
-            <Image source={require("@/assets/images/annual.png")} />
-            <View style={styles.labelText}>
-              <Text style={GloblalStyles.appLabel}>To</Text>
-              <Text style={[GloblalStyles.appLabel, styles.date]}>
-                {new Date(categoryDateFilter[1]).toLocaleDateString(
-                  "en-US",
-                  options,
-                )}
-              </Text>
-            </View>
-          </TouchableOpacity>
-
-          {/* Date Picker */}
-          <DateTimePickerModal
-            isVisible={openDatePicker[0] || openDatePicker[1]}
-            mode="date"
-            date={
-              openDatePicker[0]
-                ? new Date(categoryDateFilter[0])
-                : new Date(categoryDateFilter[1])
-            }
-            onConfirm={(date) => {
-              const categoryDateFilterTmp: string[] = [...categoryDateFilter];
-              const dateFormat = new Date(
-                `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`,
-              ).toISOString();
-
-              if (openDatePicker[0]) {
-                categoryDateFilterTmp[0] = dateFormat;
-              } else {
-                categoryDateFilterTmp[1] = dateFormat;
-              }
-
-              setOpenDatePicker([false, false]);
-              setCategoryDateFilter(categoryDateFilterTmp);
-            }}
-            onCancel={() => {
-              setOpenDatePicker([false, false]);
-            }}
-          />
-        </View>
-      </Popup>
-
-      {/* Loading view */}
-      <Loading showLoading={showLoading} />
+      </>
 
       {/* Choose add category view */}
       <PopupChooseAdd

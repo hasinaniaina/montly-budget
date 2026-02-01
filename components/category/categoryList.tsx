@@ -25,28 +25,24 @@ import { categoryDataInit } from "@/constants/utils";
 import {
   useCategoriesStore,
   useChangedStore,
+  useDateFilterStore,
+  useProductsStore,
   useShowActionButtonStore,
 } from "@/constants/store";
 
 export default function CategoryList({
-  productByCategory,
   setPopupFilterByCategoryVisible,
   isCategoryFiltered,
   setIsCategoryFilterSelected,
   setOpenCloseModalChooseAdd,
-  setCategoryData,
-  setCategoryDateFilter,
 }: {
-  productByCategory: (Product & CreationProduct)[];
   setPopupFilterByCategoryVisible: (val: ViewStyle) => void;
   isCategoryFiltered: boolean[];
   setIsCategoryFilterSelected: (val: boolean[]) => void;
   setOpenCloseModalChooseAdd: (val: boolean) => void;
-  setCategoryData: (val: Category & CreationCategory) => void;
-  setCategoryDateFilter: (val: string[]) => void;
 }) {
   const setChange = useChangedStore((state) => state.setChangeHome);
-  const categories = useCategoriesStore((state) => state.categories);
+  const products = useProductsStore((state) => state.categoryProducts);
 
   const showActionButton = useShowActionButtonStore(
     (state) => state.showActionButton,
@@ -54,6 +50,15 @@ export default function CategoryList({
   const setShowActionButton = useShowActionButtonStore(
     (state) => state.setShowActionButton,
   );
+
+  const currentCategoryDatas = useCategoriesStore(
+    (state) => state.currentCategoryDatas,
+  );
+  const setCurrentCategoryDatas = useCategoriesStore(
+    (state) => state.setCurrentCategoryDatas,
+  );
+
+  const setDateFilter = useDateFilterStore((state) => state.setDateFilter);
 
   let options: Intl.DateTimeFormatOptions = {
     year: "numeric",
@@ -63,7 +68,7 @@ export default function CategoryList({
 
   // Retrieve Category date filter
   var date = new Date();
-  
+
   var firstDay = new Date(date.getUTCFullYear(), date.getUTCMonth(), 1);
   var lastDay = new Date(date.getUTCFullYear(), date.getUTCMonth() + 1, 0, 12);
 
@@ -81,26 +86,23 @@ export default function CategoryList({
   // Sum expenses each categories
   const [sumExpenseCategory, setSumExpenseCategory] = useState<number[]>();
 
-  const getSumExpenseForCategoryList = (
-    categories: (Category & CreationCategory)[],
-    productByCategory: (Product & CreationProduct)[],
-  ): number[] => {
+  const getSumExpenseForCategoryList = (): number[] => {
     let categoryCount = 0;
     let sumCategoryExpensesTmp = [];
 
-    while (categoryCount < categories.length) {
+    while (categoryCount < currentCategoryDatas.length) {
       let transactionNumber = 0;
       let productCount = 0;
       let sumExpensiveTmp = 0;
-      if (productByCategory) {
-        while (productCount < productByCategory.length) {
+      if (products) {
+        while (productCount < products.length) {
           if (
-            productByCategory[productCount].idCreationCategory ==
-            categories[categoryCount].idCreationCategory
+            products[productCount].idCreationCategory ==
+            currentCategoryDatas[categoryCount].idCreationCategory
           ) {
             sumExpensiveTmp +=
-              productByCategory[productCount].productAmount *
-              productByCategory[productCount].productCoefficient;
+              products[productCount].productAmount *
+              products[productCount].productCoefficient;
             transactionNumber += 1;
           }
           productCount++;
@@ -120,16 +122,16 @@ export default function CategoryList({
     let sumExpensiveTmp = 0;
     let transactionNumberCategoriesTmp = [];
 
-    if (categories) {
-      while (categoryCount < categories.length) {
+    if (currentCategoryDatas) {
+      while (categoryCount < currentCategoryDatas.length) {
         let transactionNumber = 0;
         let productCount = 0;
 
-        if (productByCategory) {
-          while (productCount < productByCategory.length) {
+        if (products) {
+          while (productCount < products.length) {
             if (
-              productByCategory[productCount].idCreationCategory ==
-              categories[categoryCount].idCreationCategory
+              products[productCount].idCreationCategory ==
+              currentCategoryDatas[categoryCount].idCreationCategory
             ) {
               sumExpensiveTmp += transactionNumber += 1;
             }
@@ -147,7 +149,7 @@ export default function CategoryList({
   const getCountOfCategory = () => {
     let categoryCount = 0;
 
-    while (categoryCount < categories.length) {
+    while (categoryCount < currentCategoryDatas.length) {
       showActionButtonInit.push({ display: "none" });
       categoryCount += 1;
     }
@@ -173,17 +175,14 @@ export default function CategoryList({
         await getCategoryTransactionNumber();
       setCategoriesTransactionNumber(categoriesTransactionNumberTmp);
 
-      const sumExpenseCategoryListTmp = await getSumExpenseForCategoryList(
-        categories,
-        productByCategory,
-      );
+      const sumExpenseCategoryListTmp = getSumExpenseForCategoryList();
 
       setSumExpenseCategory(sumExpenseCategoryListTmp);
 
       const showActionButtonInit = getCountOfCategory();
       setShowActionButton(showActionButtonInit);
     })();
-  }, [categories]);
+  }, [currentCategoryDatas]);
 
   return (
     <>
@@ -202,8 +201,8 @@ export default function CategoryList({
                 style={styles.iconFilter}
                 onPress={() => {
                   setIsCategoryFilterSelected([false, false]);
-                  setCategoryData(categoryDataInit);
-                  setCategoryDateFilter([
+                  setCurrentCategoryDatas([]);
+                  setDateFilter([
                     firstDay.toISOString(),
                     lastDay.toISOString(),
                   ]);
@@ -248,8 +247,8 @@ export default function CategoryList({
         <View style={{ flex: 1 }}>
           <ScrollView>
             <View style={styles.categoryContent}>
-              {categories.length > 0 ? (
-                categories.map((category, index) => {
+              {currentCategoryDatas.length > 0 ? (
+                currentCategoryDatas.map((category, index) => {
                   return (
                     <TouchableOpacity
                       style={styles.item}
@@ -316,7 +315,7 @@ export default function CategoryList({
                             const category = await retrieveCategoryById(
                               indexOfActionButtonShowed,
                             );
-                            setCategoryData(category);
+                            setCurrentCategoryDatas(category);
                             setOpenCloseModalChooseAdd(true);
                           }}
                           style={GloblalStyles.editIconContainer}

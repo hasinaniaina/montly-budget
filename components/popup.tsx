@@ -31,9 +31,10 @@ import {
 import {
   categoryDataInit,
   checkIfCategorylabelAlreadyStored,
+  getCategorieDependToDate,
   isFilteredActivate,
 } from "@/constants/utils";
-import { useChangedStore } from "@/constants/store";
+import { useCategoriesStore, useChangedStore } from "@/constants/store";
 
 export default function Popup({
   title,
@@ -41,8 +42,6 @@ export default function Popup({
   visible,
   setVisible,
   viewType,
-  datas,
-  setData,
   thereIsFilter,
   setThereIsFilter,
   categoryDateFilter,
@@ -55,8 +54,6 @@ export default function Popup({
   visible: ViewStyle;
   setVisible: (val: ViewStyle) => void;
   viewType: string;
-  datas?: any;
-  setData: (val: any) => void;
   thereIsFilter?: boolean[];
   setThereIsFilter: (val: boolean[]) => void;
   categoryDateFilter?: string[];
@@ -67,6 +64,14 @@ export default function Popup({
   const setChangeHome = useChangedStore((state) => state.setChangeHome);
   const setChangeCategoryProduct = useChangedStore(
     (state) => state.setChangeCategoryProduct,
+  );
+  const categories = useCategoriesStore((state) => state.categories);
+
+  const currentCategoryDatas = useCategoriesStore(
+    (state) => state.currentCategoryDatas,
+  );
+  const setCurrentCategoryDatas = useCategoriesStore(
+    (state) => state.setCurrentCategoryDatas,
   );
 
   // Get product for edit
@@ -124,8 +129,8 @@ export default function Popup({
   };
 
   const filterByCategory = async () => {
-    if (datas) {
-      let datasTmp = Array.isArray(datas) ? datas : [datas];
+    if (currentCategoryDatas) {
+      let datasTmp = currentCategoryDatas;
 
       const datasAfterFilter = await filterCategory(
         datasTmp,
@@ -133,7 +138,7 @@ export default function Popup({
       );
 
       if (datasAfterFilter) {
-        setData(datasAfterFilter);
+        setCurrentCategoryDatas(datasAfterFilter);
         const isFiltered = isFilteredActivate(thereIsFilter!, 0, true);
 
         setThereIsFilter!(isFiltered);
@@ -145,16 +150,14 @@ export default function Popup({
   };
 
   const filterByDate = async () => {
-    let categories = await retrieveCategoryAccordingToDate(categoryDateFilter!);
-
-    let datasTmp = thereIsFilter![0] ? datas : categories;
-
-    const datasAfterFilter = await filterCategory(
-      datasTmp,
+    let categoriesTmp = getCategorieDependToDate(
+      categories,
       categoryDateFilter!,
     );
 
-    setData(datasAfterFilter);
+    let datasTmp = thereIsFilter![0] ? currentCategoryDatas : categoriesTmp;
+
+    setCurrentCategoryDatas(datasTmp);
     setChangeHome(true);
     setVisible({ display: "none" });
 
@@ -226,7 +229,7 @@ export default function Popup({
   useEffect(() => {
     (() => {
       console.log("popup");
-      
+
       const keyboardDidShowListener = Keyboard.addListener(
         "keyboardDidShow",
         () => {

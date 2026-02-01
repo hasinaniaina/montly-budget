@@ -477,7 +477,7 @@ export const getCategory = async (user: User, categoryDateFilter: string[]) => {
   }
 };
 
-export const getUserCategory = async (user: User) => {
+export const getUserCategory = async (user: User): Promise<(Category & CreationCategory)[]> => {
   try {
     const categories: any = await (
       await db
@@ -489,7 +489,7 @@ export const getUserCategory = async (user: User) => {
     return categories;
   } catch (error) {
     console.log("User category retrieve error =>", error);
-    return false;
+    return [];
   }
 };
 
@@ -590,14 +590,12 @@ export const getCategoryFilter = async (
 
     const dateFrom = date[0].split("T")[0] + " 01:00:00";
     const dateTo = date[1].split("T")[0] + " 24:00:00";
-
-    console.log(dateFrom);
     
-
     if (datas.length > 0) {
       let query = `SELECT * 
       FROM Category cat INNER JOIN CreationCategory creatCat ON cat.idCategory = creatCat.idCategory
         `;
+
 
       if (datas[0].idCategory != "") {
         query += " WHERE ";

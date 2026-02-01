@@ -8,7 +8,7 @@ import {
   CreationProduct,
   Resume,
 } from "./interface";
-import { retrieveUserCategory, getDatabaseDatas } from "./Controller";
+import { getDatabaseDatas, retrieveCurrentUserCategory } from "./Controller";
 
 import { Alert } from "react-native";
 
@@ -24,7 +24,7 @@ import { Item } from "react-native-picker-select";
 const header = `Category,Category color,created date, Product, Product color, Product amount,Product coefficient, Product created date `;
 
 export const checkIfCategorylabelAlreadyStored = async (datas: Category) => {
-  const userCategories = await retrieveUserCategory();
+  const userCategories = await retrieveCurrentUserCategory();
 
   let isCategoryLabelNotExist = true;
   const label = datas.label;
@@ -280,7 +280,7 @@ const toCamelCase = (str: string): string => {
     .join("");
 };
 
-export const getCategoriesForFitler = (category: Category[]) => {
+export const getCategoriesForRNPickerSelect = (category: Category[]) => {
   let categoryCount = 0;
   let categoryTmp: Item[] = [];
 
@@ -295,10 +295,6 @@ export const getCategoriesForFitler = (category: Category[]) => {
 
   return categoryTmp;
 };
-
-
-
-
 
 export const getCategoryTransactionNumber = async (
   categories: (Category & CreationCategory)[],
@@ -326,4 +322,156 @@ export const getCategoryTransactionNumber = async (
   }
 
   return transactionNumberCategoriesTmp;
+};
+
+export const numStr = (a: string, b: string) => {
+  a = "" + a;
+  b = b || " ";
+  var c = "",
+    d = 0;
+  while (a.match(/^0[0-9]/)) {
+    a = a.substr(1);
+  }
+  for (var i = a.length - 1; i >= 0; i--) {
+    c = d != 0 && d % 3 == 0 ? a[i] + b + c : a[i] + c;
+    d++;
+  }
+  return c;
+};
+
+export const retrieveFirstAndLastDay = (
+  currentDate: string,
+  optional?: boolean,
+) => {
+  // Retrieve Category date filter
+  const currentDateTmp = new Date(currentDate);
+
+  const options = {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  };
+
+  const firstDay = new Date(currentDate);
+  const lastDay = new Date(
+    currentDateTmp.getFullYear(),
+    currentDateTmp.getMonth() + 1,
+    0,
+  );
+
+  return {
+    firstDay: formatDate(firstDay),
+    lastDay: formatDate(lastDay),
+  };
+};
+
+const formatDate = (date: Date) => {
+  var d = new Date(date),
+    month = "" + (d.getMonth() + 1),
+    day = "" + d.getDate(),
+    year = d.getFullYear();
+
+  if (month.length < 2) month = "0" + month;
+  if (day.length < 2) day = "0" + day;
+
+  return [year, month, day].join("-");
+};
+
+export const formatNewDateIncrease = (date: string) => {
+  const newDate = new Date(date);
+  newDate.setMonth(new Date(date).getMonth() + 1);
+
+  return newDate;
+};
+
+export const formatNewDateDecrease = (date: string) => {
+  const newDate = new Date(date);
+  newDate.setMonth(new Date(date).getMonth() - 1);
+
+  return newDate;
+};
+
+export const getCategorieDependToDate = (
+  categories: (Category & CreationCategory)[],
+  dateFilter: string[],
+  categorySearch?: string,
+  searchInDateOrCategorySearch?: "date" | "categorySearch",
+): (Category & CreationCategory)[] => {
+  const firstDateFilter = new Date(dateFilter[0]);
+  const lastDateFilter = new Date(dateFilter[1]);
+  const newCategory: (Category & CreationCategory)[] = [];
+
+  let categoryDependToCategorySearch: (Category & CreationCategory)[] =
+    categories;
+
+  if (searchInDateOrCategorySearch == "date") {
+    categoryDependToCategorySearch =
+      categorySearch != ""
+        ? getCategorieDependToCategorieSearch(
+            categories,
+            categorySearch!,
+            dateFilter,
+            searchInDateOrCategorySearch,
+          )
+        : categories;
+  }
+
+  console.log("search date", categoryDependToCategorySearch);
+  console.log("date filter", dateFilter);
+  
+
+  categoryDependToCategorySearch.map((category, index) => {
+    const categoryDateStoreSplited = String(category.createdDate).split(" ")[0];
+    const newCategoryDateStore = new Date(categoryDateStoreSplited);
+    if (
+      newCategoryDateStore >= firstDateFilter &&
+      newCategoryDateStore <= lastDateFilter
+    ) {
+      newCategory.push(categories[index]);
+    }
+  });
+
+   console.log("new Category", newCategory);
+
+  return newCategory;
+};
+
+export const getCategorieDependToCategorieSearch = (
+  categories: (Category & CreationCategory)[],
+  categorySearch: string,
+  dateFilter: string[],
+  searchInDateOrCategorySearch: "date" | "categorySearch",
+): (Category & CreationCategory)[] => {
+  const newCategory: (Category & CreationCategory)[] = [];
+
+  let categorySearchTmp: (Category & CreationCategory)[] = categories;
+
+  if (searchInDateOrCategorySearch == "categorySearch") {
+     categorySearchTmp =
+      categorySearch != ""
+        ? getCategorieDependToDate(
+            categories,
+            dateFilter,
+            categorySearch,
+            searchInDateOrCategorySearch,
+          )
+        : categories;
+  }
+  
+
+  categorySearchTmp.map((category, index) => {
+    if (
+      category.label
+        .toLocaleLowerCase()
+        .startsWith(categorySearch.toLocaleLowerCase())
+    ) {
+      newCategory.push(categories[index]);
+    }
+  });
+
+  return newCategory;
+};
+
+export const prettyLog = (variable: any, caractere?: string) => {
+  console.log(caractere, JSON.stringify(variable, null, "\t"));
 };

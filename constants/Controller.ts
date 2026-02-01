@@ -252,10 +252,6 @@ export const createCategory = async ({
   return false;
 };
 
-export const retrieveUserCategory = async (): Promise<Category[]> => {
-  const user: any = await AsyncStorage.getItem("userCredentials");
-  return await getUserCategory(JSON.parse(user));
-};
 
 export const retrieveCategoryAccordingToDate = async (
   categoryDateFilter: string[]

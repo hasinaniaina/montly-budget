@@ -16,7 +16,10 @@ export const GloblalStyles = StyleSheet.create({
   avatarContainer: {
     alignItems: "center",
   },
-  avatar: {},
+  avatar: {
+    width: 35,
+    height: 35,
+  },
   email: {
     textAlign: "center",
     marginTop: 20,
@@ -149,7 +152,6 @@ export const GloblalStyles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-
 
   exportImportContainer: {
     alignItems: "center",
