@@ -20,28 +20,26 @@ import {
   insertCSVIntoProductDatabase,
 } from "./db";
 import { Item } from "react-native-picker-select";
+import { MONTH } from "./constant";
 
 const header = `Category,Category color,created date, Product, Product color, Product amount,Product coefficient, Product created date `;
 
-export const checkIfCategorylabelAlreadyStored = async (datas: Category) => {
-  const userCategories = await retrieveCurrentUserCategory();
+export const checkIfCategorylabelAlreadyStored = async (
+  datas: Category,
+  categories: (Category & CreationCategory)[],
+) => {
+  let isCategoryLabelExist = false;
 
-  let isCategoryLabelNotExist = true;
   const label = datas.label;
-  let dateCreated = new Date().toISOString().split("T")[0].split("-");
-  const dateCreatedFormated = dateCreated[1] + "-" + dateCreated[0];
 
   //  Check if category exist on database
-  userCategories.forEach((userCategory: Category | CreationCategory) => {
-    if (
-      (userCategory as Category).label?.toLocaleLowerCase() ===
-      label?.toLocaleLowerCase()
-    ) {
-      isCategoryLabelNotExist = false;
+  categories.forEach((category) => {
+    if (category.label?.toLocaleLowerCase() === label?.toLocaleLowerCase()) {
+      isCategoryLabelExist = true;
     }
   });
 
-  return isCategoryLabelNotExist;
+  return isCategoryLabelExist;
 };
 
 // export const checkIfProductCategoryExistAndAmountNotLessProduct = async (
@@ -346,13 +344,11 @@ export const retrieveFirstAndLastDay = (
   // Retrieve Category date filter
   const currentDateTmp = new Date(currentDate);
 
-  const options = {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  };
-
-  const firstDay = new Date(currentDate);
+  const firstDay = new Date(
+    currentDateTmp.getFullYear(),
+    currentDateTmp.getMonth(),
+    1,
+  );
   const lastDay = new Date(
     currentDateTmp.getFullYear(),
     currentDateTmp.getMonth() + 1,
@@ -416,13 +412,10 @@ export const getCategorieDependToDate = (
         : categories;
   }
 
-  console.log("search date", categoryDependToCategorySearch);
-  console.log("date filter", dateFilter);
-  
-
   categoryDependToCategorySearch.map((category, index) => {
     const categoryDateStoreSplited = String(category.createdDate).split(" ")[0];
     const newCategoryDateStore = new Date(categoryDateStoreSplited);
+
     if (
       newCategoryDateStore >= firstDateFilter &&
       newCategoryDateStore <= lastDateFilter
@@ -430,8 +423,6 @@ export const getCategorieDependToDate = (
       newCategory.push(categories[index]);
     }
   });
-
-   console.log("new Category", newCategory);
 
   return newCategory;
 };
@@ -446,18 +437,14 @@ export const getCategorieDependToCategorieSearch = (
 
   let categorySearchTmp: (Category & CreationCategory)[] = categories;
 
-  if (searchInDateOrCategorySearch == "categorySearch") {
-     categorySearchTmp =
-      categorySearch != ""
-        ? getCategorieDependToDate(
-            categories,
-            dateFilter,
-            categorySearch,
-            searchInDateOrCategorySearch,
-          )
-        : categories;
-  }
-  
+  // if (searchInDateOrCategorySearch == "categorySearch") {
+  //   categorySearchTmp = getCategorieDependToDate(
+  //     categories,
+  //     dateFilter,
+  //     categorySearch,
+  //     searchInDateOrCategorySearch,
+  //   );
+  // }
 
   categorySearchTmp.map((category, index) => {
     if (
@@ -465,13 +452,144 @@ export const getCategorieDependToCategorieSearch = (
         .toLocaleLowerCase()
         .startsWith(categorySearch.toLocaleLowerCase())
     ) {
-      newCategory.push(categories[index]);
+      newCategory.push(categorySearchTmp[index]);
     }
   });
 
-  return newCategory;
+  const newCategorySorted = sortedArray(newCategory);
+
+  return newCategorySorted;
+};
+
+// ========================================================
+
+export const getExpensesDependToDate = (
+  expenses: (Product & CreationProduct)[],
+  dateFilter: string[],
+  expensesSearch?: string,
+  searchInDateOrExpensesSearch?: "date" | "expensesSearch",
+): (Product & CreationProduct)[] => {
+  const firstDateFilter = new Date(dateFilter[0]);
+  const lastDateFilter = new Date(dateFilter[1]);
+  const newExpenses: (Product & CreationProduct)[] = [];
+
+  let expensesDependToExpensesSearch: (Product & CreationProduct)[] = expenses;
+
+  if (searchInDateOrExpensesSearch == "date") {
+    expensesDependToExpensesSearch =
+      expensesSearch != ""
+        ? getExpensesDependToExpensesSearch(
+            expenses,
+            expensesSearch!,
+            dateFilter,
+            searchInDateOrExpensesSearch,
+          )
+        : expenses;
+  }
+
+  expensesDependToExpensesSearch.map((expense, index) => {
+    const expenseDateStoreSplited = String(expense.createdDate).split(" ")[0];
+    const newExpenseDateStore = new Date(expenseDateStoreSplited);
+
+    if (
+      newExpenseDateStore >= firstDateFilter &&
+      newExpenseDateStore <= lastDateFilter
+    ) {
+      newExpenses.push(expenses[index]);
+    }
+  });
+
+  return newExpenses;
+};
+
+export const getExpensesDependToExpensesSearch = (
+  expenses: (Product & CreationProduct)[],
+  expensesSearch: string,
+  dateFilter: string[],
+  searchInDateOrExpensesSearch: "date" | "expensesSearch",
+): (Product & CreationProduct)[] => {
+  const newExpense: (Product & CreationProduct)[] = [];
+
+  let expensesSearchTmp: (Product & CreationProduct)[] = expenses;  
+
+  if (searchInDateOrExpensesSearch == "expensesSearch") {
+    expensesSearchTmp = getExpensesDependToDate(
+      expenses,
+      dateFilter,
+      expensesSearch,
+      searchInDateOrExpensesSearch,
+    );
+  }
+
+  expensesSearchTmp.map((expense, index) => {
+    if (
+      expense.designation
+        .toLocaleLowerCase()
+        .startsWith(expensesSearch.toLocaleLowerCase())
+    ) {
+      newExpense.push(expensesSearchTmp[index]);
+    }
+  });
+
+  const newExpensesSorted = sortedArrayExpenses(newExpense);
+
+  return newExpensesSorted;
+};
+
+export const sortedArray = (
+  value: (Category & CreationCategory)[]
+) => {
+  const valueSorted = [...value].sort(
+    (a, b) =>
+      new Date(b.createdDate!).getTime() - new Date(a.createdDate!).getTime(),
+  );
+
+  return valueSorted;
+};
+
+export const sortedArrayExpenses = (
+  value:(Product & CreationProduct)[]
+) => {
+  const valueSorted = [...value].sort(
+    (a, b) =>
+      new Date(b.createdDate!).getTime() - new Date(a.createdDate!).getTime(),
+  );
+
+  return valueSorted;
 };
 
 export const prettyLog = (variable: any, caractere?: string) => {
   console.log(caractere, JSON.stringify(variable, null, "\t"));
+};
+
+export const getValueForBarChart = (
+  categories: (Category & CreationCategory)[],
+  products: (Product & CreationProduct)[],
+) => {
+  let barChartValue: { value: number; label: string }[] | [] = [];
+
+  if (categories) {
+    MONTH.map((month, indexMonth) => {
+      let sumProductForEachCategory: number = 0;
+
+      categories.map((category) => {
+        const categoryMonthIndex = new Date(category.createdDate!).getMonth();
+
+        if (indexMonth == categoryMonthIndex) {
+          products.map((product) => {
+            if (product.idCreationCategory == category.idCreationCategory) {
+              sumProductForEachCategory += product.productAmount;
+            }
+          });
+        }
+      });
+
+      barChartValue[indexMonth] = {
+        ...barChartValue[indexMonth],
+        label: month,
+        value: sumProductForEachCategory,
+      };
+    });
+  }
+  return barChartValue;
 };

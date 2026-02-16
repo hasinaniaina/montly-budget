@@ -1,4 +1,4 @@
-import Home from '@/app/dashboard/home';
+import Home from '@/app/(dashboard)/home';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 
 const Drawer = createDrawerNavigator();

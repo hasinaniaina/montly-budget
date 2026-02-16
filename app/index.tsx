@@ -39,7 +39,7 @@ export default function Login() {
   }, []);
 
   if (isUserLogged) {
-    return <Redirect href={"/dashboard/home"} />;
+    return <Redirect href={"/expenses"} />;
   }
 
   return (

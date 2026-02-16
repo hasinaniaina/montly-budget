@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import React, { useEffect, useState } from "react";
 import { GloblalStyles } from "@/constants/GlobalStyles";
-import { TextColor, TitleColor } from "@/constants/Colors";
+import { green, orange, TextColor, TitleColor } from "@/constants/Colors";
 import {
   Category,
   CreationCategory,
@@ -21,44 +21,43 @@ import {
 import { router } from "expo-router";
 import { removeCategory, retrieveCategoryById } from "@/constants/Controller";
 import ConfirmationMessageModal from "../message/confirmationMessageModal";
-import { categoryDataInit } from "@/constants/utils";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   useCategoriesStore,
   useChangedStore,
   useDateFilterStore,
+  usePopupStore,
   useProductsStore,
   useShowActionButtonStore,
 } from "@/constants/store";
+import Ionicons from "@expo/vector-icons/Ionicons";
 
-export default function CategoryList({
-  setPopupFilterByCategoryVisible,
-  isCategoryFiltered,
-  setIsCategoryFilterSelected,
-  setOpenCloseModalChooseAdd,
-}: {
-  setPopupFilterByCategoryVisible: (val: ViewStyle) => void;
-  isCategoryFiltered: boolean[];
-  setIsCategoryFilterSelected: (val: boolean[]) => void;
-  setOpenCloseModalChooseAdd: (val: boolean) => void;
-}) {
+export default function CategoryList() {
   const setChange = useChangedStore((state) => state.setChangeHome);
   const products = useProductsStore((state) => state.categoryProducts);
+
+  const insets = useSafeAreaInsets();
 
   const showActionButton = useShowActionButtonStore(
     (state) => state.showActionButton,
   );
-  const setShowActionButton = useShowActionButtonStore(
-    (state) => state.setShowActionButton,
-  );
+
+  const categories = useCategoriesStore((state) => state.categories);
 
   const currentCategoryDatas = useCategoriesStore(
     (state) => state.currentCategoryDatas,
   );
-  const setCurrentCategoryDatas = useCategoriesStore(
-    (state) => state.setCurrentCategoryDatas,
+
+  const setSingleCategoryData = useCategoriesStore(
+    (state) => state.setSingleCategoryData,
   );
 
-  const setDateFilter = useDateFilterStore((state) => state.setDateFilter);
+  const currentDateExpenses = useProductsStore((state) => state.currentDateExpenses);
+
+  const setPopupTitle = usePopupStore((state) => state.setTitle);
+  const setPopupActionType = usePopupStore((state) => state.setActionType);
+
+  const setPopupVisible = usePopupStore((state) => state.setVisible);
 
   let options: Intl.DateTimeFormatOptions = {
     year: "numeric",
@@ -66,303 +65,133 @@ export default function CategoryList({
     day: "numeric",
   };
 
-  // Retrieve Category date filter
-  var date = new Date();
-
-  var firstDay = new Date(date.getUTCFullYear(), date.getUTCMonth(), 1);
-  var lastDay = new Date(date.getUTCFullYear(), date.getUTCMonth() + 1, 0, 12);
-
-  // Display category action button
-  let showActionButtonInit: ViewStyle[] = [];
-
-  // Index of the category list selected
-  const [indexOfActionButtonShowed, setIndexOfActionButtonShowed] =
-    useState<string>("");
-
-  //  Retrieve transactions for each categorie
-  const [categoriesTransactionNumber, setCategoriesTransactionNumber] =
-    useState<number[]>([]);
-
   // Sum expenses each categories
-  const [sumExpenseCategory, setSumExpenseCategory] = useState<number[]>();
+  const [sumExpenseCategory, setSumExpenseCategory] =
+    useState<Record<string, { amount: number }> | null>(null);
 
-  const getSumExpenseForCategoryList = (): number[] => {
-    let categoryCount = 0;
-    let sumCategoryExpensesTmp = [];
+  const sumAmountExpensesForEachCategories = () => {
+    let sumExpenseCategoryTmp: Record<string, { amount: number }> | null = null;
+    console.log(currentDateExpenses);
+    
 
-    while (categoryCount < currentCategoryDatas.length) {
-      let transactionNumber = 0;
-      let productCount = 0;
-      let sumExpensiveTmp = 0;
-      if (products) {
-        while (productCount < products.length) {
-          if (
-            products[productCount].idCreationCategory ==
-            currentCategoryDatas[categoryCount].idCreationCategory
-          ) {
-            sumExpensiveTmp +=
-              products[productCount].productAmount *
-              products[productCount].productCoefficient;
-            transactionNumber += 1;
-          }
-          productCount++;
+    currentCategoryDatas.map((category) => {
+      let amount = 0;
+      currentDateExpenses.map((expense) => {
+        if (category.idCreationCategory == expense.idCreationCategory) {
+          amount += (expense.productAmount * expense.productCoefficient);
         }
+      });
+
+      sumExpenseCategoryTmp = {
+        ...sumExpenseCategoryTmp,
+        [category.idCategory]: { amount: amount }
       }
+    });
 
-      sumCategoryExpensesTmp.push(sumExpensiveTmp);
-
-      categoryCount++;
-    }
-
-    return sumCategoryExpensesTmp;
-  };
-
-  const getCategoryTransactionNumber = async () => {
-    let categoryCount = 0;
-    let sumExpensiveTmp = 0;
-    let transactionNumberCategoriesTmp = [];
-
-    if (currentCategoryDatas) {
-      while (categoryCount < currentCategoryDatas.length) {
-        let transactionNumber = 0;
-        let productCount = 0;
-
-        if (products) {
-          while (productCount < products.length) {
-            if (
-              products[productCount].idCreationCategory ==
-              currentCategoryDatas[categoryCount].idCreationCategory
-            ) {
-              sumExpensiveTmp += transactionNumber += 1;
-            }
-            productCount++;
-          }
-        }
-        transactionNumberCategoriesTmp.push(transactionNumber);
-        categoryCount++;
-      }
-    }
-    return transactionNumberCategoriesTmp;
-  };
-
-  // Count Category
-  const getCountOfCategory = () => {
-    let categoryCount = 0;
-
-    while (categoryCount < currentCategoryDatas.length) {
-      showActionButtonInit.push({ display: "none" });
-      categoryCount += 1;
-    }
-
-    return showActionButtonInit;
-  };
-
-  // Confirmation delete confirmation modal
-  const [showConfirmationModal, setShowConfirmationModal] =
-    useState<boolean>(false);
-
-  const removeItem = async () => {
-    const result = await removeCategory(indexOfActionButtonShowed);
-
-    return result;
+    setSumExpenseCategory(sumExpenseCategoryTmp);
   };
 
   useEffect(() => {
-    (async () => {
-      console.log("categoryList.tsx");
-
-      const categoriesTransactionNumberTmp =
-        await getCategoryTransactionNumber();
-      setCategoriesTransactionNumber(categoriesTransactionNumberTmp);
-
-      const sumExpenseCategoryListTmp = getSumExpenseForCategoryList();
-
-      setSumExpenseCategory(sumExpenseCategoryListTmp);
-
-      const showActionButtonInit = getCountOfCategory();
-      setShowActionButton(showActionButtonInit);
-    })();
-  }, [currentCategoryDatas]);
+    console.log("categories list");
+    sumAmountExpensesForEachCategories();
+  }, [currentCategoryDatas, currentDateExpenses]);
 
   return (
     <>
       <View style={styles.categoryContainer}>
         <View style={styles.categoryTitleFilterContainer}>
           <View style={GloblalStyles.titleFlexAlignement}>
-            <Image
-              source={require("@/assets/images/annual.png")}
-              style={GloblalStyles.icon}
-            />
             <Text style={GloblalStyles.titleSection}>Category</Text>
-          </View>
-          <View style={styles.iconFilterAddContainer}>
-            {isCategoryFiltered[0] ? (
-              <TouchableOpacity
-                style={styles.iconFilter}
-                onPress={() => {
-                  setIsCategoryFilterSelected([false, false]);
-                  setCurrentCategoryDatas([]);
-                  setDateFilter([
-                    firstDay.toISOString(),
-                    lastDay.toISOString(),
-                  ]);
-                  setChange(true);
-                }}
-              >
-                <Image
-                  source={require("@/assets/images/refresh.png")}
-                  style={GloblalStyles.icon}
-                />
-              </TouchableOpacity>
-            ) : (
-              <>
-                <TouchableOpacity
-                  style={styles.iconFilter}
-                  onPress={() => {
-                    setPopupFilterByCategoryVisible({ display: "flex" });
-                  }}
-                >
-                  <Image
-                    source={require("@/assets/images/filter.png")}
-                    style={GloblalStyles.icon}
-                  />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.iconAdd}
-                  onPress={() => {
-                    setOpenCloseModalChooseAdd(false);
-                  }}
-                >
-                  <Image
-                    source={require("@/assets/images/plus.png")}
-                    style={GloblalStyles.icon}
-                  />
-                </TouchableOpacity>
-              </>
-            )}
           </View>
         </View>
 
         {/* Category Content */}
-        <View style={{ flex: 1 }}>
-          <ScrollView>
-            <View style={styles.categoryContent}>
-              {currentCategoryDatas.length > 0 ? (
-                currentCategoryDatas.map((category, index) => {
-                  return (
-                    <TouchableOpacity
-                      style={styles.item}
-                      key={index}
-                      onLongPress={() => {
-                        let showActionButtonTmp = [...showActionButton];
-                        showActionButtonTmp[index] = { display: "flex" };
-                        setShowActionButton(showActionButtonTmp);
+        <ScrollView>
+          <View style={styles.categoryContent}>
+            {currentCategoryDatas.length > 0 ? (
+              currentCategoryDatas.map((category, index) => {
+                return (
+                  <TouchableOpacity
+                    style={styles.item}
+                    key={index}
+                    onPress={() => {
+                      let showActionButtonTmp = [...showActionButton];
+                      showActionButtonTmp[index] = { display: "flex" };
 
-                        setIndexOfActionButtonShowed(
-                          (category as CreationCategory).idCreationCategory!,
-                        );
-                      }}
-                      onPress={() => {
-                        InteractionManager.runAfterInteractions(() => {
-                          setShowActionButton(showActionButtonInit);
-                          setIndexOfActionButtonShowed("");
-                          router.navigate({
-                            pathname: "/dashboard/[categoryId]",
-                            params: { categoryId: JSON.stringify(category) },
-                          });
-                        });
-                      }}
-                    >
-                      <View style={styles.colorNamecontainer}>
-                        <View
-                          style={[
-                            styles.colorCategory,
-                            { backgroundColor: (category as Category).color },
-                          ]}
-                        ></View>
-                        <View style={styles.categoryName}>
-                          <Text style={styles.name}>
-                            {(category as Category).label}
-                          </Text>
-                          <Text style={styles.transaction}>
-                            {categoriesTransactionNumber[index]} expense(s)
-                          </Text>
-                          <Text style={GloblalStyles.CreatedDate}>
-                            {new Date(
-                              (category as CreationCategory).createdDate!,
-                            ).toLocaleDateString("en-US", options)}
-                          </Text>
-                        </View>
-                      </View>
-
-                      <View>
-                        <Text style={styles.categoryIncome}>
-                          {sumExpenseCategory && sumExpenseCategory[index]
-                            ? sumExpenseCategory[index]
-                                .toString()
-                                .replace(/\B(?=(\d{3})+(?!\d))/g, ".")
-                            : 0}{" "}
-                          Ar
+                      setSingleCategoryData(category);
+                      setPopupTitle("category");
+                      setPopupActionType("update");
+                      setPopupVisible(true);
+                    }}
+                  >
+                    <View style={styles.colorNamecontainer}>
+                      <View
+                        style={[
+                          styles.colorCategory,
+                          { backgroundColor: (category as Category).color },
+                        ]}
+                      ></View>
+                      <View style={styles.categoryName}>
+                        <Text style={styles.name}>
+                          {(category as Category).label}
+                        </Text>
+                        <Text style={GloblalStyles.CreatedDate}>
+                          {new Date(
+                            (category as CreationCategory).createdDate!,
+                          ).toLocaleDateString("en-US", options)}
                         </Text>
                       </View>
+                    </View>
 
-                      {/* Catégorie action */}
-                      <View
-                        style={[GloblalStyles.action, showActionButton[index]]}
-                      >
-                        <TouchableOpacity
-                          onPress={async () => {
-                            const category = await retrieveCategoryById(
-                              indexOfActionButtonShowed,
-                            );
-                            setCurrentCategoryDatas(category);
-                            setOpenCloseModalChooseAdd(true);
-                          }}
-                          style={GloblalStyles.editIconContainer}
-                        >
-                          <Image
-                            style={GloblalStyles.editIcon}
-                            source={require("@/assets/images/pencil.png")}
-                          />
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          style={GloblalStyles.deleteIconContainer}
-                          onPress={() => {
-                            setShowConfirmationModal(true);
-                          }}
-                        >
-                          <Image
-                            style={GloblalStyles.deleteIcon}
-                            source={require("@/assets/images/close.png")}
-                          />
-                        </TouchableOpacity>
-                      </View>
-                    </TouchableOpacity>
-                  );
-                })
-              ) : (
-                <View style={styles.noCategory}>
-                  <Text style={{ fontFamily: "k2d-bold", color: "red" }}>
-                    No Category
-                  </Text>
-                </View>
-              )}
-            </View>
-          </ScrollView>
-        </View>
+                    <View>
+                      <Text style={styles.categoryIncome}>
+                        {sumExpenseCategory &&
+                        sumExpenseCategory[category.idCategory]
+                          ? sumExpenseCategory[category.idCategory].amount
+                          : 0}
+                        &nbsp;Ariary
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })
+            ) : (
+              <View style={GloblalStyles.noList}>
+                <Text style={GloblalStyles.textNoList}>
+                  No Category
+                </Text>
+              </View>
+            )}
+          </View>
+        </ScrollView>
+
+        <TouchableOpacity
+          style={[styles.iconAdd, { marginBottom: insets.bottom }]}
+          onPress={() => {
+            setPopupVisible(true);
+            setPopupTitle("category");
+            setPopupActionType("insert");
+          }}
+        >
+          <Ionicons
+            name="add-circle"
+            size={60}
+            color={orange}
+            style={{
+              shadowOffset: { width: 10, height: 20 },
+              shadowOpacity: 1,
+              elevation: 10,
+            }}
+          />
+        </TouchableOpacity>
       </View>
-
-      <ConfirmationMessageModal
-        modalShown={showConfirmationModal}
-        removeItem={removeItem}
-        setModalShown={setShowConfirmationModal}
-      />
     </>
   );
 }
 
 const styles = StyleSheet.create({
   categoryContainer: {
+    flex: 1,
     paddingHorizontal: 20,
     marginTop: 20,
   },
@@ -378,7 +207,11 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   iconAdd: {
-    marginLeft: 10,
+    position: "absolute",
+    alignItems: "center",
+    bottom: 0,
+    right: 10,
+    zIndex: 10,
   },
   categoryContent: {
     marginTop: 10,
@@ -413,10 +246,5 @@ const styles = StyleSheet.create({
   categoryIncome: {
     fontFamily: "k2d-bold",
     color: TextColor,
-  },
-  noCategory: {
-    justifyContent: "center",
-    alignItems: "center",
-    height: 200,
   },
 });

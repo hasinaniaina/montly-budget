@@ -4,10 +4,8 @@ import { TextColor, TitleColor, green, orange, red } from "./Colors";
 export const GloblalStyles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
     backgroundColor: "#FFF",
-    position: "relative",
+    paddingVertical: 40,
   },
 
   avatarEmailContainer: {
@@ -84,9 +82,9 @@ export const GloblalStyles = StyleSheet.create({
     marginRight: 5,
   },
   titleSection: {
-    fontFamily: "k2d-bold",
+    fontFamily: "k2d-regular",
     color: TitleColor,
-    fontSize: 16,
+    fontSize: 20,
   },
   titleFlexAlignement: {
     flexDirection: "row",
@@ -103,9 +101,10 @@ export const GloblalStyles = StyleSheet.create({
     borderColor: "#F0F0F0",
     backgroundColor: "#FFF",
     width: "100%",
-    paddingHorizontal: 5,
+    height: 50,
+    paddingHorizontal: 10,
     borderRadius: 7,
-    paddingVertical: 5,
+    paddingVertical: 10,
   },
   action: {
     position: "absolute",
@@ -131,10 +130,8 @@ export const GloblalStyles = StyleSheet.create({
     height: 15,
   },
   deleteIconContainer: {
-    backgroundColor: red,
-    padding: 5,
-    marginHorizontal: 5,
-    borderRadius: 5,
+    alignItems: "center",
+    justifyContent: "center",
   },
   deleteIcon: {
     width: 15,
@@ -181,5 +178,35 @@ export const GloblalStyles = StyleSheet.create({
   buttonTitle: {
     fontFamily: "k2d-bold",
     color: "white",
+  },
+
+  popupButton: {
+    backgroundColor: green,
+    alignItems: "center",
+    paddingVertical: 10,
+    paddingHorizontal: 120,
+    borderRadius: 10,
+    marginVertical: 20,
+  },
+
+  popupButtonTitle: {
+    fontFamily: "k2d-bold",
+    color: "#fff",
+  },
+
+  deleteButtonAndActionButtonContainer: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    width: "100%",
+  },
+  noList: {
+    justifyContent: "center",
+    alignItems: "center",
+    height: 200,
+  },
+  textNoList: {
+    fontFamily: "k2d-regular",
+    color: "red",
+    fontSize: 15,
   },
 });

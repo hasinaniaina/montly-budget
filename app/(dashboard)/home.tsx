@@ -28,43 +28,33 @@ import {
 } from "@/constants/interface";
 import {
   createExistingCategories,
-  retrieveCategoryAccordingToDate,
   retrieveCurrentUserCategory,
   retrieveProductByCategory,
 } from "@/constants/Controller";
 import { router } from "expo-router";
-import Loading from "@/components/loading";
 import Header from "@/components/category/header";
-import Resumes from "@/components/category/resume";
 import CategoryList from "@/components/category/categoryList";
 import {
   categoryDataInit,
   getCategorieDependToDate,
   getCategoriesForRNPickerSelect,
   prettyLog,
-  productDataInit,
   retrieveFirstAndLastDay,
+  sortedArray,
 } from "@/constants/utils";
-import PopupChooseAdd from "@/components/popupChooseAdd";
-import ColorPickerViewNew from "@/components/colorPickerNew";
 import {
   useCategoriesStore,
   useChangedStore,
   useDateFilterStore,
   useLogoutShowStore,
+  usePopupStore,
   useProductsStore,
   useShowActionButtonStore,
 } from "@/constants/store";
-import Chart from "@/components/category/chart";
-import Products from "./[categoryId]";
+import Chart from "@/components/category/filter";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 
 export default function Home() {
-  let options: Intl.DateTimeFormatOptions = {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  };
-
   const [popupAddCategoryVisible, setPopupAddCategoryVisible] =
     useState<ViewStyle>({ display: "none" });
 
@@ -110,7 +100,9 @@ export default function Home() {
   const setDateFilter = useDateFilterStore((state) => state.setDateFilter);
   const dateFilter = useDateFilterStore((state) => state.dateFilter);
 
-  const dateInitialised = useDateFilterStore((state) => state.dateInitialised);
+  const popupTitle = usePopupStore((state) => state.title);
+  const popupActionType = usePopupStore((state) => state.actionType);
+
   const setDateInitialised = useDateFilterStore(
     (state) => state.setDateInitialised,
   );
@@ -129,14 +121,6 @@ export default function Home() {
   const [isCategoryFiltered, setIsCategoryFilterSelected] =
     useState<boolean[]>(isFilterActivateInit);
 
-  // Retrieve Categories for filter
-  const [categoriesForRNPickerSelect, setCategoriesForRNPickerSelect] =
-    useState<Item[]>();
-
-  // Show loading when add category or product
-  const [showLoading, setShowLoading] = useState<ViewStyle>({
-    display: "none",
-  });
 
   // Display category action button
   let showActionButtonInit: ViewStyle[] = [];
@@ -146,14 +130,10 @@ export default function Home() {
   );
   const setShowLogout = useLogoutShowStore((state) => state.setShowLogout);
 
-  const getAllCurrentUserCategories = async (): Promise<
-    (Category & CreationCategory)[]
-  > => {
-    const allCategories = await retrieveCurrentUserCategory();
-    return allCategories;
-  };
-
-  const getCategory = async (): Promise<(Category & CreationCategory)[]> => {
+  const getCategory = async (
+    categories: (Category & CreationCategory)[],
+    dateFilter: string[],
+  ): Promise<(Category & CreationCategory)[]> => {
     let categoriesTmp: any = null;
 
     if (!isCategoryFiltered[0]) {
@@ -161,7 +141,9 @@ export default function Home() {
     } else {
       categoriesTmp = currentCategoryDatas;
     }
-    return categoriesTmp;
+
+    const categoriesTmpSorted = sortedArray(categoriesTmp);
+    return categoriesTmpSorted;
   };
 
   const modalOpenCloseAddListChoose = (openAddFieldCategory: boolean) => {
@@ -244,49 +226,55 @@ export default function Home() {
   };
 
   useEffect(() => {
-    (async () => {
+    const init = async () => {
       console.log("Home.tsx");
-      const categoriesTmp = await getCategory();
+
+      const [allCategories, products] = await Promise.all([
+        retrieveCurrentUserCategory(),
+        retrieveProductByCategory(),
+      ]);
+
+      setCategories(allCategories);
+      setCategoryProducts(products);
+
+      let dateFilterTmp = [];
+
+      if (dateFilter.length == 0) {
+        const { firstDay, lastDay } = retrieveFirstAndLastDay(
+          new Date().toString(),
+        );
+
+        dateFilterTmp.push(firstDay, lastDay);
+        setDateFilter([firstDay, lastDay]);
+      }
+
+      const categoriesTmp = await getCategory(allCategories, dateFilterTmp);
       setCurrentCategoryDatas(categoriesTmp);
 
-      const allCurrentUserCategories = await getAllCurrentUserCategories();
-      setCategories(allCurrentUserCategories);
+      // const categoriesForRNPickerSelectTmp =
+      //   getCategoriesForRNPickerSelect(categoriesTmp);
 
-      const productByCategory = await retrieveProductByCategory();
-      setCategoryProducts(productByCategory);
-
-      const categoriesForRNPickerSelectTmp =
-        getCategoriesForRNPickerSelect(currentCategoryDatas);
-
-      setCategoriesForRNPickerSelect(categoriesForRNPickerSelectTmp);
+      // setCategoriesForRNPickerSelect(categoriesForRNPickerSelectTmp);
 
       const allCurrentUserCategory = await getAllCurrentUserCategory();
       setItemAddCategoryIndex(allCurrentUserCategory.itemIndexTmp);
       setuserCategory(allCurrentUserCategory.categoryNotAdded);
+    };
 
-      // Retrieve Category date filter
-      if (!dateInitialised) {
-        const date = new Date();
-        const { firstDay, lastDay } = retrieveFirstAndLastDay(date.toString());
-        setDateFilter([firstDay, lastDay]);
-        setDateInitialised(true);
-      }
-      // Back button on click event
-      const backAction = () => {
-        router.push("/dashboard/home");
-        setChange(true);
-        return true;
-      };
+    init();
 
-      const backHandler = BackHandler.addEventListener(
-        "hardwareBackPress",
-        backAction,
-      );
+    // Back button on click event
+    const backAction = () => {
+      router.push("/home");
+      return true;
+    };
 
-      return () => backHandler.remove();
-    })();
+    const backHandler = BackHandler.addEventListener(
+      "hardwareBackPress",
+      backAction,
+    );
 
-    setChange(false);
+    return () => backHandler.remove();
   }, [change]);
 
   return (
@@ -297,43 +285,26 @@ export default function Home() {
         setShowLogout(false);
       }}
     >
-      <>
-        {/* header */}
-        <Header change={change} />
-        {/* Content */}
-        <ScrollView
-          contentInsetAdjustmentBehavior="automatic"
-          style={styles.content}
-        >
-          {/* Chart */}
-          <Chart setThereIsFilter={setIsCategoryFilterSelected} />
+      {/* header */}
+      <Header change={change} />
+      {/* Content */}
+      <ScrollView
+        contentInsetAdjustmentBehavior="automatic"
+        style={styles.content}
+      >
+        {/* Chart */}
+        <Chart setThereIsFilter={setIsCategoryFilterSelected} />
 
-          {/* Resume */}
-          {/* <Resumes
-            productByCategory={productByCategory!}
-            categoryDateFilter={categoryDateFilter}
-            setPopupFilterByDateVisible={setPopupFilterByDateVisible}
-          /> */}
-          {/* Category */}
-          <CategoryList
-            setPopupFilterByCategoryVisible={setPopupFilterByCategoryVisible}
-            isCategoryFiltered={isCategoryFiltered}
-            setIsCategoryFilterSelected={setIsCategoryFilterSelected}
-            setOpenCloseModalChooseAdd={modalOpenCloseAddListChoose}
-          />
-        </ScrollView>
-      </>
+        {/* Category */}
+        <CategoryList
+          setPopupFilterByCategoryVisible={setPopupFilterByCategoryVisible}
+          isCategoryFiltered={isCategoryFiltered}
+          setIsCategoryFilterSelected={setIsCategoryFilterSelected}
+          setOpenCloseModalChooseAdd={modalOpenCloseAddListChoose}
+        />
+      </ScrollView>
 
-      {/* Choose add category view */}
-      <PopupChooseAdd
-        modalShown={popupChooseAddCategory}
-        setOpenCloseModalChooseAdd={modalOpenCloseAddListChoose}
-        openPopupAddNewCategoryVisible={openPopupAddNewCategoryVisible}
-        openPopupAddExistingCategoryVisible={
-          openPopupAddExistingCategoryVisible
-        }
-        getAllCurrentUserCategory={getAllCurrentUserCategory}
-      />
+      <Popup title={popupTitle} action={popupActionType} />
     </Pressable>
   );
 }

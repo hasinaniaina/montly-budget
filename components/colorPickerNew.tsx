@@ -16,7 +16,6 @@ export default function ColorPickerViewNew({data, setData}: {
   return (
     <View style={styles.container}>
         <ColorPicker
-          style={{ width: "100%" }}
           value={data?.color}
           onComplete={onSelectColor}
           onChange={onSelectColor}
@@ -29,7 +28,7 @@ export default function ColorPickerViewNew({data, setData}: {
 
 const styles = StyleSheet.create({
   container: {
-    width: "50%",
+    width: 200,
     justifyContent: "center",
     backgroundColor: "#FFF",
     padding: 10,

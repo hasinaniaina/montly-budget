@@ -13,12 +13,15 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function Header({ change }: { change: boolean }) {
   const [userEmail, setUserEmail] = useState<string>("");
   const logoutShow = useLogoutShowStore((state) => state.showLogout);
   const setLogoutShow = useLogoutShowStore((state) => state.setShowLogout)
   const nav = useNavigation();
+  const insets = useSafeAreaInsets();
+  
 
   const fetchUserEmail = async () => {
     const user: any = getUserEmail();
@@ -37,8 +40,7 @@ export default function Header({ change }: { change: boolean }) {
     init();
   }, [change]);
   return (
-    <>
-      <View style={styles.header}>
+      <View style={[styles.header, {padding: 20}]}>
         <View style={styles.menuLogoutContainer}>
           <TouchableOpacity
             style={[GloblalStyles.avatarContainer, styles.headerMenuContainer]}
@@ -80,14 +82,12 @@ export default function Header({ change }: { change: boolean }) {
           {/* <Text style={GloblalStyles.email}>{userEmail}</Text> */}
         </View>
       </View>
-    </>
   );
 }
 
 const styles = StyleSheet.create({
   header: {
     height: "10%",
-    padding: 20,
     width: Dimensions.get("window").width,
     marginBottom: 30,
   },

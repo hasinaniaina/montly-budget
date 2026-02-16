@@ -163,8 +163,9 @@ export const updateUserPasssword = async (newPassword: string, user: User) => {
 
 export const insertProduct = async (
   datas: Product | CreationProduct,
+  uuidExpense: string,
+  uuidCreationExpense: string, 
 ): Promise<boolean> => {
-  const uuidProduct = crypto.randomUUID();
 
   try {
     let insertProduct = await (
@@ -173,25 +174,23 @@ export const insertProduct = async (
       `INSERT INTO Product 
     (idProduct, designation, color) 
     VALUES (?, ?, ?)`,
-      uuidProduct,
+      uuidExpense,
       (datas as Product).designation,
       (datas as Product).color,
     );
 
     if (insertProduct.changes) {
-      const uuidCreationProduct = crypto.randomUUID();
-
       let insertCreationProduct = await (
         await db
       ).runAsync(
         `INSERT INTO CreationProduct 
       (idCreationProduct, productAmount, productCoefficient, idCreationCategory, idProduct) 
       VALUES (?, ?, ? , ?, ?)`,
-        uuidCreationProduct,
+        uuidCreationExpense,
         (datas as CreationProduct).productAmount,
         (datas as CreationProduct).productCoefficient,
         (datas as CreationProduct).idCreationCategory,
-        uuidProduct,
+        uuidExpense,
       );
 
       if (insertCreationProduct.changes) {
@@ -293,7 +292,7 @@ export const getProductByIdCreationProduct = async (
   }
 };
 
-export const updateProduct = async (datas: Product | CreationProduct) => {
+export const updateProduct = async (datas: Product | CreationProduct): Promise<boolean> => {
   try {
     let updateProduct = await (
       await db
@@ -355,7 +354,7 @@ export const getProductFilter = async (datas: Product | CreationProduct) => {
 export const deleteProduct = async (
   idCreationProduct: string,
   removeProductTable: boolean,
-) => {
+): Promise<boolean> => {
   try {
     let deleteProduct: any = null;
 
@@ -377,35 +376,35 @@ export const deleteProduct = async (
         "'",
     );
 
-    return deleteCreationCategory.changes;
+    return true;
   } catch (error) {
     console.log("Delete month record error => ", error);
+    return true;
   }
 };
 
 export const insertCategory = async (
   datas: Category & CreationCategory,
   user: User,
+  idCategory: string,
+  idCreationCategory:string
 ) => {
-  const uuidCategory = crypto.randomUUID();
 
   try {
     const dbInstance = await db;
 
     let insertCategory = await dbInstance.runAsync(
       "INSERT INTO Category (idCategory, label, color) VALUES (?, ?, ?)",
-      uuidCategory,
+      idCategory,
       datas.label!,
       datas.color!,
     );
 
     if (insertCategory.changes) {
-      const uuidCreationCategory = crypto.randomUUID();
-
       const insertCreationCategory = await dbInstance.runAsync(
         "INSERT INTO CreationCategory (idCreationCategory, idCategory, idUser) VALUES (?, ?, ?)",
-        uuidCreationCategory,
-        uuidCategory,
+        idCreationCategory,
+        idCategory,
         user.id,
       );
 
@@ -563,7 +562,7 @@ export const deleteCategory = async (
   }
 };
 
-export const updateCategory = async (datas: Category | CreationCategory) => {
+export const updateCategory = async (datas: Category & CreationCategory) => {
   try {
     const updateCategory: any = await (
       await db

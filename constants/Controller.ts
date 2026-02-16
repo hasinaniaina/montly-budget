@@ -87,7 +87,7 @@ export const saveUser = async ({
       setModalShown([true]);
     } else {
       await AsyncStorage.setItem("userCredentials", JSON.stringify(user));
-      router.push("/dashboard/home");
+      router.push("/home");
     }
   }
 };
@@ -110,7 +110,7 @@ export const login = async ({
   if (user && password == user.password) {
     await AsyncStorage.setItem("userCredentials", JSON.stringify(user));
 
-    router.push("/dashboard/home");
+    router.push("/home");
   } else {
     setErrorMessage(["Authentification failed!"]);
     setModalShown([true, false]);
@@ -152,35 +152,14 @@ export const sendEMail = async ({
 // =========================== Product =========================
 export const saveProduct = async (
   datas: Product & CreationProduct,
-  setErrorMessage: (val: string[]) => void,
-  setModalShown: (val: boolean[]) => void
+  idExpense: string,
+  idCreationExpense: string,
 ) => {
-  if (
-    datas.color == "" ||
-    datas.designation == "" ||
-    datas.productAmount == 0
-  ) {
-    setErrorMessage(["All Fields should not be empty!"]);
-    setModalShown([true]);
-    return false;
-  }
-
-  const save = await insertProduct(datas);
-
+  const save = await insertProduct(datas, idExpense, idCreationExpense);
   return save;
 };
 
-export const editProduct = async (
-  datas: Product,
-  setErrorMessage: (val: string[]) => void,
-  setModalShown: (val: boolean[]) => void
-) => {
-  if (datas.color == "" || datas.designation == "") {
-    setErrorMessage(["All Fields should not be empty!"]);
-    setModalShown([true]);
-    return false;
-  }
-
+export const editProduct = async (datas: Product & CreationProduct) => {
   const edit = await updateProduct(datas);
   return edit;
 };
@@ -191,7 +170,7 @@ export const retrieveProductByCategory = async () => {
 };
 
 export const retrieveProduct = async (
-  category: Category & CreationCategory
+  category: Category & CreationCategory,
 ) => {
   const products = await getProducts(category);
   return products as (Product & CreationProduct)[];
@@ -202,59 +181,44 @@ export const filterProduct = async (datas: Product): Promise<Product[]> => {
 };
 
 export const removeProduct = async (idCreationProduct: string) => {
-  const productAlreadyExistBefore = await getProductByIdCreationProduct(
-    idCreationProduct
-  );
+  const productAlreadyExistBefore =
+    await getProductByIdCreationProduct(idCreationProduct);
 
+  let result = false;
   if (productAlreadyExistBefore.length > 1) {
-    const result = await deleteProduct(idCreationProduct, false);
+    result = await deleteProduct(idCreationProduct, false);
   } else {
-    const result = await deleteProduct(idCreationProduct, true);
+    result = await deleteProduct(idCreationProduct, true);
   }
 
-  return true;
+  return result;
 };
 
 // =========================== Category =========================
 
-export const createCategory = async ({
-  datas,
-  setErrorMessage,
-  setModalShown,
-}: {
-  datas?: Category & CreationCategory;
-  setErrorMessage: (val: string[]) => void;
-  setModalShown: (val: boolean[]) => void;
-}): Promise<boolean> => {
-
-  let error = false;
+export const createCategory = async (
+  category: Category & CreationCategory,
+  idCategory: string,
+  idCreationCategory: string,
+): Promise<boolean> => {
   const user: any = await AsyncStorage.getItem("userCredentials");
 
-  if (datas?.label == "") {
-    error = true;
-  }
+  const categoryCreated = await insertCategory(
+    category!,
+    JSON.parse(user),
+    idCategory,
+    idCreationCategory,
+  );
 
-  if (datas?.color == "") {
-    error = true;
-  }
-
-  if (error) {
-    setErrorMessage(["All Fields should not be empty!"]);
-    setModalShown([true]);
-  } else {
-    const categoryCreated = await insertCategory(datas!, JSON.parse(user));
-
-    if (categoryCreated) {
-      return true;
-    }
+  if (categoryCreated) {
+    return true;
   }
 
   return false;
 };
 
-
 export const retrieveCategoryAccordingToDate = async (
-  categoryDateFilter: string[]
+  categoryDateFilter: string[],
 ) => {
   const user: any = await AsyncStorage.getItem("userCredentials");
 
@@ -262,9 +226,8 @@ export const retrieveCategoryAccordingToDate = async (
 };
 
 export const removeCategory = async (idCreationCategory: string) => {
-  const creationProduct = await getProductByIdCreationCategory(
-    idCreationCategory
-  );
+  const creationProduct =
+    await getProductByIdCreationCategory(idCreationCategory);
 
   const categoryShowed = await getCategoryById(idCreationCategory);
 
@@ -288,34 +251,13 @@ export const retrieveCategoryById = async (id: string) => {
   return category;
 };
 
-export const upgradeCategory = async ({
-  datas,
-  setErrorMessage,
-  setModalShown,
-}: {
-  datas?: Category & CreationCategory;
-  setErrorMessage: (val: string[]) => void;
-  setModalShown: (val: boolean[]) => void;
-}): Promise<boolean> => {
-  let error = false;
+export const editCategory = async (
+  data: Category & CreationCategory,
+): Promise<boolean> => {
+  const updated = await updateCategory(data);
 
-  if (datas?.label == "") {
-    error = true;
-  }
-
-  if (datas?.color == "") {
-    error = true;
-  }
-
-  if (error) {
-    setErrorMessage(["All Fields should not be empty!"]);
-    setModalShown([true]);
-  } else {
-    const updated = await updateCategory(datas!);
-
-    if (updated.changes) {
-      return true;
-    }
+  if (updated.changes) {
+    return true;
   }
 
   return false;
@@ -323,7 +265,7 @@ export const upgradeCategory = async ({
 
 export const filterCategory = async (
   datas: Category[] & CreationCategory[],
-  date: string[]
+  date: string[],
 ) => {
   const user: any = await AsyncStorage.getItem("userCredentials");
 
@@ -412,9 +354,8 @@ export const getDatabaseDatas = async () => {
 
   let categoryObject = [];
 
-  const categoryDatas: Category[] & CreationCategory[] = await getUserCategory(
-    user
-  );
+  const categoryDatas: Category[] & CreationCategory[] =
+    await getUserCategory(user);
   let countCategory = 0;
 
   for (let category of categoryDatas) {

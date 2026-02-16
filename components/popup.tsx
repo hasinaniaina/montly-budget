@@ -19,7 +19,6 @@ import {
   retrieveCategoryAccordingToDate,
   retrieveProduct,
   saveProduct,
-  upgradeCategory,
 } from "@/constants/Controller";
 import ErrorMessageModal from "./message/errorMessageModal";
 import {
@@ -34,229 +33,53 @@ import {
   getCategorieDependToDate,
   isFilteredActivate,
 } from "@/constants/utils";
-import { useCategoriesStore, useChangedStore } from "@/constants/store";
+import {
+  useCategoriesStore,
+  useChangedStore,
+  usePopupStore,
+  useProductsStore,
+} from "@/constants/store";
+import AddCategoryInput from "./popup/addCategoryInput";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import AddExpensesInput from "./popup/addExpensesInput";
+import { useIsFocused } from "@react-navigation/native";
+import { useNavigation } from "expo-router";
 
-export default function Popup({
-  title,
-  buttonTitle,
-  visible,
-  setVisible,
-  viewType,
-  thereIsFilter,
-  setThereIsFilter,
-  categoryDateFilter,
-  category,
-  confirmAddExistingCategory,
-  children,
-}: {
-  title: string;
-  buttonTitle: string;
-  visible: ViewStyle;
-  setVisible: (val: ViewStyle) => void;
-  viewType: string;
-  thereIsFilter?: boolean[];
-  setThereIsFilter: (val: boolean[]) => void;
-  categoryDateFilter?: string[];
-  category?: Category & CreationCategory;
-  confirmAddExistingCategory?: () => void;
-  children: ReactNode;
-}) {
-  const setChangeHome = useChangedStore((state) => state.setChangeHome);
-  const setChangeCategoryProduct = useChangedStore(
-    (state) => state.setChangeCategoryProduct,
-  );
-  const categories = useCategoriesStore((state) => state.categories);
 
-  const currentCategoryDatas = useCategoriesStore(
-    (state) => state.currentCategoryDatas,
-  );
-  const setCurrentCategoryDatas = useCategoriesStore(
-    (state) => state.setCurrentCategoryDatas,
-  );
+export default function Popup({ title, action }: { title: string, action: "insert" | "update" }) {
+  
+  const setSingleCategoryData = useCategoriesStore((state) => state.setSingleCategoryData);
 
-  // Get product for edit
-  const productDataInit: Product & CreationProduct = {
-    idProduct: "",
-    idCreationProduct: "",
-    designation: "",
-    productAmount: 0,
-    color: "#000",
-    idCreationCategory: (datas as CreationCategory)?.idCreationCategory!,
-    productCoefficient: 1,
-  };
+  const setSingleExpenseData = useProductsStore((state) => state.setSingleExpenseData);
 
-  let [errorMessage, setErrorMessage] = useState<string[]>([]);
-  let [modalShown, setModalShown] = useState<boolean[]>([false]);
+  const visible = usePopupStore((state) => state.visible);
+  const setVisible = usePopupStore((state) => state.setVisible);
 
-  // Hide add button When keyboard is showing
-  const [hidePopupAddButton, setHidePopupAddButton] = useState<ViewStyle>({
-    display: "flex",
-  });
-
-  const addCategory = async () => {
-    if (datas?.idCategory! != "") {
-      const result = await upgradeCategory({
-        datas,
-        setErrorMessage,
-        setModalShown,
-      });
-
-      if (result) {
-        setChangeHome(true);
-        setData(categoryDataInit);
-        setVisible({ display: "none" });
-      }
-    } else {
-      const isCategoryLabelNotExist =
-        await checkIfCategorylabelAlreadyStored(datas);
-
-      if (isCategoryLabelNotExist) {
-        const result = await createCategory({
-          datas,
-          setErrorMessage,
-          setModalShown,
-        });
-
-        if (result) {
-          setChangeHome(true);
-          setData(categoryDataInit);
-        }
-      } else {
-        setErrorMessage([datas.label + " category already exist!"]);
-        setModalShown([true]);
-      }
-    }
-  };
-
-  const filterByCategory = async () => {
-    if (currentCategoryDatas) {
-      let datasTmp = currentCategoryDatas;
-
-      const datasAfterFilter = await filterCategory(
-        datasTmp,
-        categoryDateFilter!,
-      );
-
-      if (datasAfterFilter) {
-        setCurrentCategoryDatas(datasAfterFilter);
-        const isFiltered = isFilteredActivate(thereIsFilter!, 0, true);
-
-        setThereIsFilter!(isFiltered);
-
-        setChangeHome(true);
-        setVisible({ display: "none" });
-      }
-    }
-  };
-
-  const filterByDate = async () => {
-    let categoriesTmp = getCategorieDependToDate(
-      categories,
-      categoryDateFilter!,
-    );
-
-    let datasTmp = thereIsFilter![0] ? currentCategoryDatas : categoriesTmp;
-
-    setCurrentCategoryDatas(datasTmp);
-    setChangeHome(true);
-    setVisible({ display: "none" });
-
-    const isFiltered = isFilteredActivate(thereIsFilter!, 1, true);
-    setThereIsFilter(isFiltered);
-  };
-
-  const expenses = async () => {
-    const products = await retrieveProduct(category!);
-
-    let productAmountTmp = 0;
-
-    for (let product of products) {
-      productAmountTmp +=
-        (product as CreationProduct).productAmount *
-        (product as CreationProduct).productCoefficient;
-    }
-
-    if (datas.idCreationProduct == "") {
-      const insertProduct = await saveProduct(
-        datas,
-        setErrorMessage,
-        setModalShown,
-      );
-
-      if (insertProduct) {
-        setData(productDataInit);
-        setChangeCategoryProduct(true);
-      }
-    } else {
-      let oldAmount = 0;
-
-      for (let product of products) {
-        if (
-          (product as CreationProduct).idCreationProduct ==
-          datas.idCreationProduct
-        ) {
-          oldAmount =
-            (product as CreationProduct).productAmount *
-            (product as CreationProduct).productCoefficient;
-        }
-      }
-
-      const updateProduct = await editProduct(
-        datas,
-        setErrorMessage,
-        setModalShown,
-      );
-
-      if (updateProduct) {
-        setData(productDataInit);
-        setChangeCategoryProduct(true);
-        setVisible({ display: "none" });
-      }
-    }
-  };
-
-  const filterProducts = async () => {
-    const productsFiltered = await filterProduct(datas);
-
-    if (productsFiltered) {
-      setThereIsFilter([true]);
-      setData(productsFiltered);
-      setVisible({ display: "none" });
-      setChangeCategoryProduct(true);
-    }
-  };
+  const navigation = useNavigation();
 
   useEffect(() => {
     (() => {
       console.log("popup");
+      
+      const unsubscribe = navigation.addListener('blur', () => {
+        setVisible(false);
+      });
 
-      const keyboardDidShowListener = Keyboard.addListener(
-        "keyboardDidShow",
-        () => {
-          setHidePopupAddButton({ display: "none" });
-        },
-      );
-      const keyboardDidHideListener = Keyboard.addListener(
-        "keyboardDidHide",
-        () => {
-          setHidePopupAddButton({ display: "flex" });
-        },
-      );
-
-      return () => {
-        keyboardDidHideListener.remove();
-        keyboardDidShowListener.remove();
-      };
     })();
   }, [visible]);
 
   return (
-    <View style={[styles.popupContainer, visible]}>
+    <View
+      style={[
+        styles.popupContainer,
+        visible ? { display: "flex" } : { display: "none" },
+      ]}
+    >
       {/* popup top */}
-      <View style={styles.popupTop}></View>
+      <View style={styles.BackDrop}></View>
 
       {/* popup bottom */}
-      <View style={styles.popupBottom}>
+      <View style={[styles.popupBottom, , { marginBottom: 50 }]}>
         {/* popup header */}
         <View style={styles.popupHeader}>
           <View style={styles.popupHeaderTitle}>
@@ -265,11 +88,15 @@ export default function Popup({
           <TouchableOpacity
             style={[styles.popupIconClose]}
             onPress={() => {
-              if (viewType == "category") {
-                setData(categoryDataInit);
+              if (title.toLocaleLowerCase() == "category") {
+                setSingleCategoryData(null);
+              } 
+
+               if (title.toLocaleLowerCase() == "expenses") {
+                setSingleExpenseData(null);
               }
 
-              setVisible({ display: "none" });
+              setVisible(false);
             }}
           >
             <Image
@@ -278,51 +105,12 @@ export default function Popup({
             />
           </TouchableOpacity>
         </View>
-        <View
-          style={{
-            alignItems: "center",
-            height: "70%",
-            marginBottom: 10,
-          }}
-        >
-          {/* popup content */}
-          <View style={styles.popupContent}>{children}</View>
+        {/* popup content */}
+        <View style={styles.popupContent}>
+          {title.toLocaleLowerCase() == "category" && <AddCategoryInput />}
+          {title.toLocaleLowerCase() == "expenses" && <AddExpensesInput />}
         </View>
-        <TouchableOpacity
-          style={[styles.popupButton, hidePopupAddButton]}
-          onPress={async () => {
-            switch (viewType) {
-              case "category":
-                addCategory();
-                break;
-              case "categoryExisting":
-                confirmAddExistingCategory!();
-                break;
-              case "filterByCategory":
-                filterByCategory();
-                break;
-              case "filterByDate":
-                filterByDate();
-                break;
-              case "expenses":
-                expenses();
-                break;
-              case "filterProduct":
-                filterProducts();
-                break;
-            }
-          }}
-        >
-          <Text style={styles.popupButtonTitle}>{buttonTitle}</Text>
-        </TouchableOpacity>
       </View>
-
-      <ErrorMessageModal
-        modalShown={modalShown[0]}
-        errorMessage={errorMessage}
-        setErrorMessage={setErrorMessage}
-        setModalShown={setModalShown}
-      />
     </View>
   );
 }
@@ -331,47 +119,38 @@ const styles = StyleSheet.create({
   popupContainer: {
     position: "absolute",
     top: 0,
-    height: "100%",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: "center",
+    zIndex: 10
   },
-  popupTop: {
+  BackDrop: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    left: 0,
+    bottom: 0,
     backgroundColor: "#000",
-    flex: 2,
-    opacity: 0.6,
+    opacity: 0.7,
   },
   popupBottom: {
     backgroundColor: "#FFF",
     padding: 20,
-    flex: 2,
+    position: "absolute",
+    bottom: -70,
   },
   popupHeader: {
     flexDirection: "row",
-    position: "relative",
-    width: Dimensions.get("screen").width,
     justifyContent: "center",
     alignItems: "center",
-    paddingVertical: 10,
   },
   popupHeaderTitle: {},
   popupIconClose: {
     position: "absolute",
-    right: 20,
-  },
-  popupButton: {
-    backgroundColor: green,
-    marginHorizontal: 40,
-    width: Dimensions.get("screen").width - 40,
-    alignItems: "center",
-    paddingVertical: 10,
-    borderRadius: 10,
-    position: "absolute",
-    bottom: 10,
+    right: 40,
   },
   popupContent: {
     alignItems: "center",
-    justifyContent: "center",
-  },
-  popupButtonTitle: {
-    fontFamily: "k2d-bold",
-    color: "#fff",
   },
 });

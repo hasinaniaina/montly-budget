@@ -28,6 +28,7 @@ export default function RootLayout() {
   return (
     <Suspense fallback={<FallBack />}>
       <SQLiteProvider databaseName="monthlyBudget" onInit={init} >
+        
         <Stack
           screenOptions={{
             headerShown: false,
@@ -36,7 +37,7 @@ export default function RootLayout() {
           <Stack.Screen name="index" />
           <Stack.Screen name="signup" />
           <Stack.Screen name="forgotPassword" />
-          <Stack.Screen name="dashboard" />
+          <Stack.Screen name="(dashboard)" />
         </Stack>
       </SQLiteProvider>
     </Suspense>

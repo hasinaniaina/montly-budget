@@ -18,6 +18,7 @@ export interface CreationCategory {
 }
 
 export interface Product {
+  categoryLabel?: string, 
   idProduct: string;
   designation: string;
   color: string;

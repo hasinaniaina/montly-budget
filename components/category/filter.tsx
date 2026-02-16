@@ -7,7 +7,7 @@ import {
   Dimensions,
 } from "react-native";
 import React, { useEffect, useReducer, useState } from "react";
-// import { BarChart } from "react-native-gifted-charts";
+import { BarChart } from "react-native-gifted-charts";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { green, red, TextColor, TitleColor } from "@/constants/Colors";
 import {
@@ -15,6 +15,7 @@ import {
   formatNewDateIncrease,
   getCategorieDependToCategorieSearch,
   getCategorieDependToDate,
+  getValueForBarChart,
   numStr,
   prettyLog,
   retrieveFirstAndLastDay,
@@ -25,13 +26,8 @@ import {
   useDateFilterStore,
   useProductsStore,
 } from "@/constants/store";
-import { month } from "@/constants/constant";
-import {
-  Category,
-  CreationCategory,
-  CreationProduct,
-  Product,
-} from "@/constants/interface";
+import { MONTH } from "@/constants/constant";
+import { Category, CreationCategory } from "@/constants/interface";
 
 enum CountActionKind {
   INCREASE = "INCREASE",
@@ -46,7 +42,7 @@ interface CountState {
   date: string;
 }
 
-export default function Chart({
+export default function Filter({
   setThereIsFilter,
 }: {
   setThereIsFilter: (val: boolean[]) => void;
@@ -89,6 +85,9 @@ export default function Chart({
   const setDateFilter = useDateFilterStore((state) => state.setDateFilter);
   const dateFilter = useDateFilterStore((state) => state.dateFilter);
   const [categorySearchCache, setCategorySearchCache] = useState<string>("");
+  const [barChartDatas, setBarChartDatas] = useState<
+    { value: number; label: string }[]
+  >([]);
 
   const getSumExpenseForResume = (): number => {
     let categoryCount = 0;
@@ -121,92 +120,34 @@ export default function Chart({
     return result;
   };
 
-  const retrieveDataAfterFilterDate = async (dateFilter: string[]) => {
-    setThereIsFilter([true, false]);
-
-    const newCategories = getCategorieDependToDate(categories, dateFilter, categorySearchCache, "date");
-
-    setCurrentCategoryDatas(newCategories);
-    setChange(true);
-  };
-
   useEffect(() => {
     (async () => {
       const sumExpense = getSumExpenseForResume();
-
+      const barChartDatasTmp = getValueForBarChart(
+        categories,
+        categoryProducts,
+      );
+      setBarChartDatas(barChartDatasTmp);
       const sumTmp = sumExpense;
 
       setSum(sumTmp);
     })();
   }, [currentCategoryDatas]);
 
-  const data = [{ value: 50 }, { value: 80 }, { value: 90 }, { value: 70 }];
-
   return (
     <View style={styles.chartContainer}>
-      <View style={styles.expensesIncomeContainer}>
-        <View style={styles.textIconAmountContainer}>
-          <Text style={styles.textExpensesIncome}>Expenses</Text>
-          <View style={styles.iconAmountContainer}>
-            <Ionicons name="arrow-up-circle" size={20} color={red} />
-            <Text style={styles.amount}>
-              {numStr(String(sum), ".")}&nbsp;Ariary
-            </Text>
-          </View>
-        </View>
-        <View style={styles.textIconAmountContainer}>
-          <Text style={styles.textExpensesIncome}>Income</Text>
-          <View style={styles.iconAmountContainer}>
-            <Ionicons name="arrow-down-circle" size={20} color={green} />
-            <Text style={styles.amount}>
-              {numStr(String("300000"), ".")}&nbsp;Ariary
-            </Text>
-          </View>
-        </View>
-      </View>
-      <View style={styles.monthFilterContainer}>
-        <TouchableOpacity
-          onPress={() => {
-            dispatch({ type: CountActionKind.DECREASE });
-
-            setTimeout(() => {
-              const theDate = formatNewDateDecrease(state.date);
-              const { firstDay, lastDay } = retrieveFirstAndLastDay(
-                theDate.toString(),
-                true,
-              );
-              const dateForFilter = [firstDay, lastDay];
-              setDateFilter(dateForFilter);
-              retrieveDataAfterFilterDate(dateForFilter);
-            }, 500);
-          }}
-        >
-          <Ionicons name="arrow-back-circle" size={25} color={TitleColor} />
-        </TouchableOpacity>
-        <Text style={styles.month}>
-          {String(month[new Date(state.date).getMonth()])}&nbsp;
-          {String(new Date(state.date).getFullYear())}
-        </Text>
-
-        <TouchableOpacity
-          onPress={() => {
-            dispatch({ type: CountActionKind.INCREASE });
-
-            setTimeout(() => {
-              const theDate = formatNewDateIncrease(state.date);
-              const { firstDay, lastDay } = retrieveFirstAndLastDay(
-                theDate.toString(),
-                true,
-              );
-              const dateForFilter = [firstDay, lastDay];
-              setDateFilter(dateForFilter);
-              retrieveDataAfterFilterDate(dateForFilter);
-            }, 500);
-          }}
-        >
-          <Ionicons name="arrow-forward-circle" size={25} color={TitleColor} />
-        </TouchableOpacity>
-      </View>
+      {/* <View style={styles.barChartContainer}>
+        <BarChart
+          data={barChartDatas}
+          frontColor={"#FFD056"}
+          barWidth={15}
+          gradientColor={"#FFEEFE"}
+          noOfSections={3}
+          barBorderRadius={4}
+          yAxisThickness={0}
+          xAxisThickness={0}
+        />
+      </View> */}
       <View style={styles.searchCategory}>
         <Ionicons name="search-outline" size={25} color="#000" />
         <TextInput
@@ -217,7 +158,7 @@ export default function Chart({
               categories,
               categorySearch,
               dateFilter,
-              "categorySearch"
+              "categorySearch",
             );
 
             setCurrentCategoryDatas(newCategories);
@@ -226,7 +167,6 @@ export default function Chart({
           }}
         />
       </View>
-      <View>{/* <BarChart data={data} /> */}</View>
     </View>
   );
 }
@@ -235,6 +175,7 @@ const styles = StyleSheet.create({
   chartContainer: {
     alignItems: "center",
     justifyContent: "center",
+    width: Dimensions.get("screen").width,
   },
   month: {
     fontFamily: "k2d-light",
@@ -281,5 +222,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-around",
     marginBottom: 20,
+  },
+  barChartContainer: {
+    width: Dimensions.get("screen").width - 20,
+    marginBottom: 40,
+    marginTop: 20,
   },
 });
