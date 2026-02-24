@@ -44,6 +44,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AddExpensesInput from "./popup/addExpensesInput";
 import { useIsFocused } from "@react-navigation/native";
 import { useNavigation } from "expo-router";
+import AddIncomeInput from "./popup/addIncomeInput";
 
 
 export default function Popup({ title, action }: { title: string, action: "insert" | "update" }) {
@@ -109,6 +110,7 @@ export default function Popup({ title, action }: { title: string, action: "inser
         <View style={styles.popupContent}>
           {title.toLocaleLowerCase() == "category" && <AddCategoryInput />}
           {title.toLocaleLowerCase() == "expenses" && <AddExpensesInput />}
+          {title.toLocaleLowerCase() == "income" && <AddIncomeInput />}
         </View>
       </View>
     </View>

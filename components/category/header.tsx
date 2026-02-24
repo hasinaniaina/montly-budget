@@ -40,7 +40,7 @@ export default function Header({ change }: { change: boolean }) {
     init();
   }, [change]);
   return (
-      <View style={[styles.header, {padding: 20}]}>
+      <View style={[styles.header, {paddingHorizontal: 20}]}>
         <View style={styles.menuLogoutContainer}>
           <TouchableOpacity
             style={[GloblalStyles.avatarContainer, styles.headerMenuContainer]}

@@ -5,8 +5,9 @@ import {
   StyleSheet,
   Dimensions,
   Image,
+  ActivityIndicator,
 } from "react-native";
-import React from "react";
+import React, { useState } from "react";
 import ColorPickerViewNew from "../colorPickerNew";
 import { TextInput } from "react-native-gesture-handler";
 import { GloblalStyles } from "@/constants/GlobalStyles";
@@ -14,6 +15,7 @@ import {
   useCategoriesStore,
   useChangedStore,
   usePopupStore,
+  useProductsStore,
 } from "@/constants/store";
 import {
   checkIfCategorylabelAlreadyStored,
@@ -25,7 +27,12 @@ import {
   editCategory,
   removeCategory,
 } from "@/constants/Controller";
-import { Category, CreationCategory } from "@/constants/interface";
+import {
+  Category,
+  CreationCategory,
+  CreationProduct,
+  Product,
+} from "@/constants/interface";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Toast from "react-native-toast-message";
 import { updateCategory } from "@/constants/db";
@@ -41,7 +48,6 @@ export default function AddCategoryInput() {
     (state) => state.setSingleCategoryData,
   );
 
-
   const categories = useCategoriesStore((state) => state.categories);
   const setCategories = useCategoriesStore((state) => state.setCategories);
 
@@ -55,14 +61,32 @@ export default function AddCategoryInput() {
     (state) => state.setCurrentCategoryDatas,
   );
 
+  const singleExpenseData = useProductsStore(
+    (state) => state.singleExpenseData,
+  );
+
+  const setSingleExpenseData = useProductsStore(
+    (state) => state.setSingleExpenseData,
+  );
+
+  const setPopupTitle = usePopupStore((state) => state.setTitle);
+  const setPopupActionType = usePopupStore((state) => state.setActionType);
+  const addCategoryInExpenseView = usePopupStore(
+    (state) => state.addCategoryInExpenseView,
+  );
+  const setAddCategoryInExpenseView = usePopupStore(
+    (state) => state.setAddCategoryInExpenseView,
+  );
+
   const setPopupVisible = usePopupStore((state) => state.setVisible);
+
+  const [loading, setLoading] = useState<boolean>(false);
 
   const dataAdded: (Category & CreationCategory)[] = [];
 
-  const addCategory = async () => {
+  const addCategory = async (): Promise<boolean> => {
     let inputNotEmpty = checkInputsEmpty(singleCategoryData!);
-    
-    
+
     if (inputNotEmpty) {
       const isCategoryLabelExist = await checkIfCategorylabelAlreadyStored(
         singleCategoryData!,
@@ -100,7 +124,24 @@ export default function AddCategoryInput() {
             type: "success",
             text1: "Category inserted!!!",
           });
+
+          if (addCategoryInExpenseView) {
+            setPopupTitle("Expenses");
+            setPopupActionType("insert");
+            setAddCategoryInExpenseView(false);
+
+            const singleExpenseDataTmp: Product & CreationProduct = {
+              ...singleExpenseData!,
+              idCreationCategory: uuidCreationCategory,
+              categoryLabel: singleCategoryData?.label,
+            };
+
+            setSingleExpenseData(singleExpenseDataTmp);
+          }
+
           setSingleCategoryData(null);
+
+          return true;
         } else {
           const currentCategoriesSortedDontDelete =
             currentCategoriesSorted.filter(
@@ -113,17 +154,25 @@ export default function AddCategoryInput() {
             type: "error",
             text1: "Something went wrong!!!",
           });
+          return true;
         }
       } else {
         Toast.show({
           type: "error",
           text1: "Category already exist!!!",
         });
+        return true;
       }
+    } else {
+      Toast.show({
+        type: "error",
+        text1: "Inputs should not be empty!!!",
+      });
+      return true;
     }
   };
 
-  const updateCategory = async () => {
+  const updateCategory = async (): Promise<boolean> => {
     const inputNotEmpty = checkInputsEmpty(singleCategoryData!);
 
     if (inputNotEmpty) {
@@ -140,7 +189,13 @@ export default function AddCategoryInput() {
         setCurrentCategoryDatas(categoriesUpdated);
         setSingleCategoryData(null);
         setPopupVisible(false);
+
+        return true;
+      } else {
+        return true;
       }
+    } else {
+      return true;
     }
   };
 
@@ -160,7 +215,6 @@ export default function AddCategoryInput() {
     } else {
       error = true;
     }
-    
 
     if (error) {
       Toast.show({
@@ -173,7 +227,7 @@ export default function AddCategoryInput() {
     }
   };
 
-  const remove = async () => {
+  const remove = async (): Promise<boolean> => {
     const result = await removeCategory(
       singleCategoryData?.idCreationCategory!,
     );
@@ -193,11 +247,14 @@ export default function AddCategoryInput() {
       const timeOut = setTimeout(() => {
         setPopupVisible(false);
       }, 1000);
+      return true;
     } else {
       Toast.show({
         type: "error",
         text1: "Something went wrong!!!",
       });
+
+      return false;
     }
   };
 
@@ -225,25 +282,45 @@ export default function AddCategoryInput() {
           <TouchableOpacity
             style={[GloblalStyles.popupButton]}
             onPress={async () => {
-              addCategory();
+              setLoading(true);
+              const result = await addCategory();
+              if (result) {
+                setLoading(false);
+              }
             }}
           >
-            <Text style={GloblalStyles.popupButtonTitle}>Add</Text>
+            {loading ? (
+              <ActivityIndicator size={"small"} color={"white"} />
+            ) : (
+              <Text style={GloblalStyles.popupButtonTitle}>Add</Text>
+            )}
           </TouchableOpacity>
         ) : (
           <View style={GloblalStyles.deleteButtonAndActionButtonContainer}>
             <TouchableOpacity
               style={[GloblalStyles.popupButton]}
               onPress={async () => {
-                updateCategory();
+                setLoading(true);
+                const result = await updateCategory();
+                if (result) {
+                  setLoading(false);
+                }
               }}
             >
-              <Text style={GloblalStyles.popupButtonTitle}>Update</Text>
+              {loading ? (
+                <ActivityIndicator size={"small"} color={"white"} />
+              ) : (
+                <Text style={GloblalStyles.popupButtonTitle}>Update</Text>
+              )}
             </TouchableOpacity>
             <TouchableOpacity
               style={GloblalStyles.deleteIconContainer}
-              onPress={() => {
-                remove();
+              onPress={async () => {
+                setLoading(true);
+                const result = await remove();
+                if (result) {
+                  setLoading(false);
+                }
               }}
             >
               <Ionicons name="trash-outline" size={30} color={red} />

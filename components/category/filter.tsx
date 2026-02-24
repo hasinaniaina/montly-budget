@@ -1,24 +1,15 @@
 import {
   View,
-  Text,
   StyleSheet,
-  TouchableOpacity,
   TextInput,
   Dimensions,
 } from "react-native";
 import React, { useEffect, useReducer, useState } from "react";
-import { BarChart } from "react-native-gifted-charts";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { green, red, TextColor, TitleColor } from "@/constants/Colors";
+import {TextColor } from "@/constants/Colors";
 import {
-  formatNewDateDecrease,
-  formatNewDateIncrease,
   getCategorieDependToCategorieSearch,
-  getCategorieDependToDate,
   getValueForBarChart,
-  numStr,
-  prettyLog,
-  retrieveFirstAndLastDay,
 } from "@/constants/utils";
 import {
   useCategoriesStore,
@@ -26,8 +17,6 @@ import {
   useDateFilterStore,
   useProductsStore,
 } from "@/constants/store";
-import { MONTH } from "@/constants/constant";
-import { Category, CreationCategory } from "@/constants/interface";
 
 enum CountActionKind {
   INCREASE = "INCREASE",
@@ -42,11 +31,7 @@ interface CountState {
   date: string;
 }
 
-export default function Filter({
-  setThereIsFilter,
-}: {
-  setThereIsFilter: (val: boolean[]) => void;
-}) {
+export default function Filter() {
   const dateReducer = (state: CountState, action: CountAction): CountState => {
     switch (action.type) {
       case CountActionKind.INCREASE: {
@@ -136,18 +121,6 @@ export default function Filter({
 
   return (
     <View style={styles.chartContainer}>
-      {/* <View style={styles.barChartContainer}>
-        <BarChart
-          data={barChartDatas}
-          frontColor={"#FFD056"}
-          barWidth={15}
-          gradientColor={"#FFEEFE"}
-          noOfSections={3}
-          barBorderRadius={4}
-          yAxisThickness={0}
-          xAxisThickness={0}
-        />
-      </View> */}
       <View style={styles.searchCategory}>
         <Ionicons name="search-outline" size={25} color="#000" />
         <TextInput
@@ -222,10 +195,5 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-around",
     marginBottom: 20,
-  },
-  barChartContainer: {
-    width: Dimensions.get("screen").width - 20,
-    marginBottom: 40,
-    marginTop: 20,
   },
 });

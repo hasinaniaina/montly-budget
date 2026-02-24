@@ -5,18 +5,25 @@ import { useEffect, useState } from "react";
 
 import {
   StyleSheet,
+  Text,
+  TouchableOpacity,
   View,
   ViewStyle,
   Pressable,
   BackHandler,
+  Keyboard,
   ActivityIndicator,
 } from "react-native";
-import { Product, CreationProduct } from "@/constants/interface";
+import {
+  Product,
+  CreationProduct,
+} from "@/constants/interface";
 import {
   retrieveCurrentUserCategory,
   retrieveCurrentUserIncome,
   retrieveProductByCategory,
 } from "@/constants/Controller";
+import Header from "@/components/category/header";
 import {
   getExpensesDependToDate,
   retrieveFirstAndLastDay,
@@ -32,10 +39,15 @@ import {
   useProductsStore,
   useShowActionButtonStore,
 } from "@/constants/store";
-import ExpensesList from "@/components/expenses/expensesList";
-import Filter from "@/components/expenses/filter";
+import ResumeIncomeExpenses from "@/components/resumeIncomeExpenses";
+import BarchartStatistics from "@/components/statistics/barchartStatistics";
+import Ionicons from "@expo/vector-icons/Ionicons";
 
-export default function Expenses() {
+export default function Statistics() {
+  // if new event
+  const change = useChangedStore((state) => state.changeHome);
+  const setChange = useChangedStore((state) => state.setChangeHome);
+
   const categories = useCategoriesStore((state) => state.categories);
   const setCategories = useCategoriesStore((state) => state.setCategories);
 
@@ -51,6 +63,7 @@ export default function Expenses() {
   const setCurrentCategoryDatas = useCategoriesStore(
     (state) => state.setCurrentCategoryDatas,
   );
+  const setDateFilter = useDateFilterStore((state) => state.setDateFilter);
   const dateFilter = useDateFilterStore((state) => state.dateFilter);
 
   const popupTitle = usePopupStore((state) => state.title);
@@ -58,7 +71,6 @@ export default function Expenses() {
 
   const currentUserIncome = useIncomeStore((state) => state.income);
   const setCurrrentUserIncome = useIncomeStore((state) => state.setIncome);
-
 
   // Display category action button
   let showActionButtonInit: ViewStyle[] = [];
@@ -70,7 +82,9 @@ export default function Expenses() {
 
   const disabledMonth = useDisabledMonth((state) => state.disabled);
 
+  const [isKeyboardVisible, setKeyboardVisible] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [stateVisible, setStateVisible] = useState<boolean>(true);
 
   const getCurrentDateExpensesList = (
     allExpensesList: (Product & CreationProduct)[],
@@ -90,7 +104,8 @@ export default function Expenses() {
   useEffect(() => {
     const init = async () => {
       try {
-        console.log("expenses.tsx");
+        setLoading(true);
+
         // 1. On récupère les données
         let expenses = categoryProducts;
         let allCategories = categories;
@@ -115,6 +130,7 @@ export default function Expenses() {
           dateFilterTmp.toString(),
         );
 
+
         const currentDateExpensesTmp = getCurrentDateExpensesList(
           categoryProducts.length == 0 ? expenses : categoryProducts,
           [firstDay, lastDay],
@@ -136,9 +152,17 @@ export default function Expenses() {
     };
 
     init();
-  }, [disabledMonth, loading, dateFilter.expenseDatefilter]);
+  }, [change, disabledMonth, loading]);
 
   useEffect(() => {
+    const showSubscription = Keyboard.addListener("keyboardDidShow", () => {
+      setKeyboardVisible(true);
+    });
+
+    const hideSubscription = Keyboard.addListener("keyboardDidHide", () => {
+      setKeyboardVisible(false);
+    });
+
     const backAction = () => {
       // Bloque le retour
       return true;
@@ -150,6 +174,8 @@ export default function Expenses() {
     );
 
     return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
       backHandler.remove();
     };
   }, []);
@@ -162,16 +188,33 @@ export default function Expenses() {
         setShowLogout(false);
       }}
     >
-      {/* Chart */}
-      <Filter />
-
-      {loading ? (
-        <View style={{ flex: 1, justifyContent: "center" }}>
-          <ActivityIndicator size={"large"} />
-        </View>
-      ) : (
-        <ExpensesList />
+      {!isKeyboardVisible && (
+        <>
+          {/* header */}
+          <Header change={change} />
+          {/* Resume */}
+          <ResumeIncomeExpenses />
+        </>
       )}
+
+      <View style={{ paddingHorizontal: 20 }}>
+        <TouchableOpacity
+          style={[GloblalStyles.titleFlexAlignement, { alignItems: "center" }]}
+          onPress={() => {
+            setStateVisible(!stateVisible);
+          }}
+        >
+          <Text style={GloblalStyles.titleSection}>Statistics</Text>
+          <Ionicons
+            name="chevron-down"
+            size={20}
+            style={{ alignSelf: "center" }}
+          />
+        </TouchableOpacity>
+        {stateVisible && <BarchartStatistics />}
+      </View>
+
+  
 
       <Popup title={popupTitle} action={popupActionType} />
     </Pressable>

@@ -161,18 +161,6 @@ export default function Categories() {
     }
   };
 
-  useEffect(() => {
-    const init = async () => {
-      console.log("Home.tsx");
-
-      const allCategories = await retrieveCurrentUserCategory();      
-      setCategories(allCategories);      
-      setCurrentCategoryDatas(allCategories)
-    };
-
-    init();
-  }, [change]);
-
   return (
     <Pressable
       style={GloblalStyles.container}
@@ -181,7 +169,7 @@ export default function Categories() {
       }}
     >
       {/* Chart */}
-      <Filter setThereIsFilter={setIsCategoryFilterSelected} />
+      <Filter/>
 
       {/* Category */}
       <CategoryList  />

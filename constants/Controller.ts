@@ -19,6 +19,10 @@ import {
   getProductByIdCreationProduct,
   insertExistingCategories,
   updateUserPasssword,
+  getUserIncome,
+  insertIncome,
+  updateIncome,
+  deleteIncome,
 } from "./db";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
@@ -26,6 +30,7 @@ import {
   CreationCategory,
   CreationProduct,
   ExportProductDatas,
+  Income,
   ItemAddCategory,
   Product,
   settingsPassword,
@@ -87,7 +92,7 @@ export const saveUser = async ({
       setModalShown([true]);
     } else {
       await AsyncStorage.setItem("userCredentials", JSON.stringify(user));
-      router.push("/home");
+      router.push("/expenses");
     }
   }
 };
@@ -110,7 +115,7 @@ export const login = async ({
   if (user && password == user.password) {
     await AsyncStorage.setItem("userCredentials", JSON.stringify(user));
 
-    router.push("/home");
+    router.push("/expenses");
   } else {
     setErrorMessage(["Authentification failed!"]);
     setModalShown([true, false]);
@@ -382,3 +387,26 @@ export const getDatabaseDatas = async () => {
 
   return categoryObject;
 };
+
+
+export const retrieveCurrentUserIncome = async (): Promise<Income[]> => {
+  const user: any = await AsyncStorage.getItem("userCredentials");
+  return await getUserIncome(JSON.parse(user));
+};
+
+export const createIncome = async(datas: Income, idIncome: string) => {
+  const user: any = await AsyncStorage.getItem("userCredentials");
+  const result  = await insertIncome(datas, JSON.parse(user), idIncome);
+
+  return result;
+}
+
+export const editIncome = async(datas: Income) => {
+  const result = await updateIncome(datas);
+  return result;
+}
+
+export const removeIncome = async (idIcome: string) => {
+  const result = await deleteIncome(idIcome);
+  return result;
+}

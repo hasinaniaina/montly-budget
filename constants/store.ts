@@ -3,6 +3,7 @@ import {
   Category,
   CreationCategory,
   CreationProduct,
+  Income,
   Product,
 } from "./interface";
 import { categoryDataInit, retrieveFirstAndLastDay } from "./utils";
@@ -38,7 +39,23 @@ type ProductsStore = {
   setSingleExpenseData: (
     singleExpenseData: (Product & CreationProduct) | null,
   ) => void;
+  sumExpenses: number,
+  setSumExpenses: (sumExpenses: number) => void;
 };
+
+type IncomeStore = {
+  income: Income[],
+  setIncome: (income: Income[]) => void,
+  singleIncomeData: Income | null;
+  setSingleIncomeData: (
+    singleIncomeData: Income | null,
+  ) => void;
+  incomeForFilter: Income[] | [],
+  setIncomeForFilter: (income: Income[]) => void,
+  sumIncome: number,
+  setSumIncome : (sumIncome: number) => void
+}
+
 
 type ShowActionButtonStore = {
   showActionButton: ViewStyle[];
@@ -58,8 +75,10 @@ type ChangeProp = {
 type DateFilterProp = {
   dateInitialised: boolean;
   setDateInitialised: (dateInitialised: boolean) => void;
-  dateFilter: string[] | [];
-  setDateFilter: (dateFilter: string[] | []) => void;
+  dateFilter: {expenseDatefilter: Date, incomeDateFilter:Date};
+  setDateFilter: (dateFilter: {expenseDatefilter: Date, incomeDateFilter:Date}) => void;
+  dateFilterStatistic: Date,
+  setDateFilterStatistic: (dateFilterStatistic: Date) => void,
 };
 
 type PopupStore = {
@@ -69,7 +88,31 @@ type PopupStore = {
   setTitle: (title: string) => void;
   actionType: "insert" | "update";
   setActionType: (actionType: "insert" | "update") => void;
+  addCategoryInExpenseView: boolean;
+  setAddCategoryInExpenseView: (addCategoryInExpenseView: boolean) => void;
 };
+
+type disabledMonthStore = {
+  disabled: boolean;
+  setDisabled: (disabled: boolean) => void;
+};
+
+export const useDisabledMonth = create<disabledMonthStore>((set) => ({
+  disabled: false,
+  setDisabled: (disabled) => set(() => ({ disabled: disabled })),
+}));
+
+
+export const useIncomeStore = create<IncomeStore>((set) => ({
+  income: [],
+  setIncome: (income) => set(() => ({income: income})),
+  singleIncomeData: null,
+  setSingleIncomeData: (singleIncomeData) => set(() => ({singleIncomeData: singleIncomeData})),
+  incomeForFilter: [],
+  setIncomeForFilter: (incomeForFilter) => set(() => ({incomeForFilter: incomeForFilter})),
+  sumIncome: 0,
+  setSumIncome: (sumIncome) => set(() => ({sumIncome: sumIncome}))
+}));
 
 export const usePopupStore = create<PopupStore>((set) => ({
   visible: false,
@@ -77,15 +120,20 @@ export const usePopupStore = create<PopupStore>((set) => ({
   title: "",
   setTitle: (title) => set(() => ({ title: title })),
   actionType: "insert",
-  setActionType: (actionType) => set(() => ({ actionType })),
+  setActionType: (actionType) => set(() => ({ actionType: actionType })),
+  addCategoryInExpenseView: false,
+  setAddCategoryInExpenseView: (addCategoryInExpenseView) =>
+    set(() => ({ addCategoryInExpenseView: addCategoryInExpenseView })),
 }));
 
 export const useDateFilterStore = create<DateFilterProp>((set) => ({
   dateInitialised: false,
   setDateInitialised: (dateInitialised) =>
     set(() => ({ dateInitialised: dateInitialised })),
-  dateFilter: [],
+  dateFilter: {expenseDatefilter: new Date(), incomeDateFilter:new Date()},
   setDateFilter: (dateFilter) => set(() => ({ dateFilter: dateFilter })),
+  dateFilterStatistic: new Date(),  
+  setDateFilterStatistic: (dateFilterStatistic) => set(() => ({dateFilterStatistic: dateFilterStatistic})),
 }));
 
 export const useLogoutShowStore = create<logoutShowStore>((set) => ({
@@ -112,7 +160,10 @@ export const useProductsStore = create<ProductsStore>((set) => ({
   setCurrentDateExpenses: (currentDateExpenses) =>
     set(() => ({ currentDateExpenses: currentDateExpenses })),
   singleExpenseData: null,
-  setSingleExpenseData: (singleExpenseData) => set(() => ({singleExpenseData: singleExpenseData}))
+  setSingleExpenseData: (singleExpenseData) =>
+    set(() => ({ singleExpenseData: singleExpenseData })),
+  sumExpenses: 0,
+  setSumExpenses: (sumExpenses) => set(() => ({sumExpenses: sumExpenses}))
 }));
 
 export const useChangedStore = create<ChangeProp>((set) => ({

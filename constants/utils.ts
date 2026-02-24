@@ -7,6 +7,7 @@ import {
   Product,
   CreationProduct,
   Resume,
+  Income,
 } from "./interface";
 import { getDatabaseDatas, retrieveCurrentUserCategory } from "./Controller";
 
@@ -20,7 +21,8 @@ import {
   insertCSVIntoProductDatabase,
 } from "./db";
 import { Item } from "react-native-picker-select";
-import { MONTH } from "./constant";
+import { BARCHARTMONTH } from "./constant";
+import Categories from "@/app/(dashboard)/(tabs)/categories";
 
 const header = `Category,Category color,created date, Product, Product color, Product amount,Product coefficient, Product created date `;
 
@@ -468,6 +470,7 @@ export const getExpensesDependToDate = (
   dateFilter: string[],
   expensesSearch?: string,
   searchInDateOrExpensesSearch?: "date" | "expensesSearch",
+  disabledMonth?: boolean,
 ): (Product & CreationProduct)[] => {
   const firstDateFilter = new Date(dateFilter[0]);
   const lastDateFilter = new Date(dateFilter[1]);
@@ -487,10 +490,10 @@ export const getExpensesDependToDate = (
         : expenses;
   }
 
+  
   expensesDependToExpensesSearch.map((expense, index) => {
     const expenseDateStoreSplited = String(expense.createdDate).split(" ")[0];
     const newExpenseDateStore = new Date(expenseDateStoreSplited);
-
     if (
       newExpenseDateStore >= firstDateFilter &&
       newExpenseDateStore <= lastDateFilter
@@ -498,8 +501,8 @@ export const getExpensesDependToDate = (
       newExpenses.push(expenses[index]);
     }
   });
-
-  return newExpenses;
+  
+  return  newExpenses;
 };
 
 export const getExpensesDependToExpensesSearch = (
@@ -507,12 +510,13 @@ export const getExpensesDependToExpensesSearch = (
   expensesSearch: string,
   dateFilter: string[],
   searchInDateOrExpensesSearch: "date" | "expensesSearch",
+  disabledMonth?: boolean,
 ): (Product & CreationProduct)[] => {
   const newExpense: (Product & CreationProduct)[] = [];
 
-  let expensesSearchTmp: (Product & CreationProduct)[] = expenses;  
+  let expensesSearchTmp: (Product & CreationProduct)[] = expenses;
 
-  if (searchInDateOrExpensesSearch == "expensesSearch") {
+  if (searchInDateOrExpensesSearch == "expensesSearch" && !disabledMonth) {
     expensesSearchTmp = getExpensesDependToDate(
       expenses,
       dateFilter,
@@ -536,9 +540,7 @@ export const getExpensesDependToExpensesSearch = (
   return newExpensesSorted;
 };
 
-export const sortedArray = (
-  value: (Category & CreationCategory)[]
-) => {
+export const sortedArray = (value: (Category & CreationCategory)[]) => {
   const valueSorted = [...value].sort(
     (a, b) =>
       new Date(b.createdDate!).getTime() - new Date(a.createdDate!).getTime(),
@@ -547,9 +549,16 @@ export const sortedArray = (
   return valueSorted;
 };
 
-export const sortedArrayExpenses = (
-  value:(Product & CreationProduct)[]
-) => {
+export const sortedArrayExpenses = (value: (Product & CreationProduct)[]) => {
+  const valueSorted = [...value].sort(
+    (a, b) =>
+      new Date(b.createdDate!).getTime() - new Date(a.createdDate!).getTime(),
+  );
+
+  return valueSorted;
+};
+
+export const sortedArrayIncome = (value: Income[]) => {
   const valueSorted = [...value].sort(
     (a, b) =>
       new Date(b.createdDate!).getTime() - new Date(a.createdDate!).getTime(),
@@ -569,7 +578,7 @@ export const getValueForBarChart = (
   let barChartValue: { value: number; label: string }[] | [] = [];
 
   if (categories) {
-    MONTH.map((month, indexMonth) => {
+    BARCHARTMONTH.map((month, indexMonth) => {
       let sumProductForEachCategory: number = 0;
 
       categories.map((category) => {
@@ -592,4 +601,37 @@ export const getValueForBarChart = (
     });
   }
   return barChartValue;
+};
+
+
+export const getIncomeDependToIncomeSearch = (
+  income: Income[],
+  incomeSearch: string
+): Income[] => {
+
+  const newIncome: Income[] = [];
+  let incomeSearchTmp: Income[] = income;
+
+  // if (searchInDateOrCategorySearch == "categorySearch") {
+  //   categorySearchTmp = getCategorieDependToDate(
+  //     categories,
+  //     dateFilter,
+  //     categorySearch,
+  //     searchInDateOrCategorySearch,
+  //   );
+  // }
+
+  incomeSearchTmp.map((income, index) => {
+    if (
+      income.label
+        .toLocaleLowerCase()
+        .startsWith(incomeSearch.toLocaleLowerCase())
+    ) {
+      newIncome.push(incomeSearchTmp[index]);
+    }
+  });
+
+  const newIncomeSorted = sortedArrayIncome(newIncome);
+
+  return newIncomeSorted;
 };

@@ -24,6 +24,7 @@ export interface Product {
   color: string;
 }
 
+
 export interface CreationProduct {
   idCreationProduct: string;
   idProduct: string;
@@ -31,6 +32,13 @@ export interface CreationProduct {
   productCoefficient: number;
   createdDate?: Date;
   idCreationCategory: string;
+}
+
+export interface Income {
+  idIncome: string,
+  label: string,
+  amount: number,
+  createdDate?: Date;
 }
 
 export interface ItemAddCategory {

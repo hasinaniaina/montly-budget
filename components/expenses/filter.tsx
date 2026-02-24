@@ -6,112 +6,41 @@ import {
   TextInput,
   Dimensions,
 } from "react-native";
-import React, { useEffect, useReducer, useState } from "react";
-import { BarChart } from "react-native-gifted-charts";
+import React, { useEffect, useState } from "react";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { green, red, TextColor, TitleColor } from "@/constants/Colors";
+import { TextColor } from "@/constants/Colors";
 import {
-  formatNewDateDecrease,
-  formatNewDateIncrease,
-  getCategorieDependToCategorieSearch,
-  getCategorieDependToDate,
   getExpensesDependToDate,
   getExpensesDependToExpensesSearch,
-  getValueForBarChart,
-  numStr,
-  prettyLog,
   retrieveFirstAndLastDay,
 } from "@/constants/utils";
 import {
-  useCategoriesStore,
-  useChangedStore,
   useDateFilterStore,
+  useDisabledMonth,
   useProductsStore,
 } from "@/constants/store";
-import { MONTH } from "@/constants/constant";
+import { BARCHARTMONTH } from "@/constants/constant";
+import CustomDatePicker from "../customDatePicker";
 
-enum CountActionKind {
-  INCREASE = "INCREASE",
-  DECREASE = "DECREASE",
-}
-
-interface CountAction {
-  type: CountActionKind;
-}
-
-interface CountState {
-  date: string;
-}
-
-export default function Filter({
-  setThereIsFilter,
-}: {
-  setThereIsFilter: (val: boolean[]) => void;
-}) {
-  const dateReducer = (state: CountState, action: CountAction): CountState => {
-    switch (action.type) {
-      case CountActionKind.INCREASE: {
-        const newDate = new Date(state.date);
-        newDate.setMonth(new Date(state.date).getMonth() + 1);
-        return { date: newDate.toString() };
-      }
-
-      case CountActionKind.DECREASE: {
-        const newDate = new Date(state.date);
-        newDate.setMonth(new Date(state.date).getMonth() - 1);
-        return { date: newDate.toString() };
-      }
-
-      default:
-        return state;
-    }
-  };
-
-  const [sum, setSum] = useState<number>(0);
-  const [state, dispatch] = useReducer(dateReducer, {
-    date: new Date().toString(),
-  });
-
-  const categories = useCategoriesStore((state) => state.categories);
+export default function Filter() {
+  const [datePickerVisible, setDatePickerVisible] = useState<boolean>(false);
 
   const expenses = useProductsStore((state) => state.categoryProducts);
-
-  const currentDateExpenses = useProductsStore(
-    (state) => state.currentDateExpenses,
-  );
 
   const setCurrentDateExpenses = useProductsStore(
     (state) => state.setCurrentDateExpenses,
   );
-  const change = useChangedStore((state) => state.changeHome);
-  const setChange = useChangedStore((state) => state.setChangeHome);
-  const categoryProducts = useProductsStore((state) => state.categoryProducts);
 
-  const setDateFilter = useDateFilterStore((state) => state.setDateFilter);
-  const dateFilter = useDateFilterStore((state) => state.dateFilter);
+  const [dateFilter, setDateFilter] = useState<string[]>([]);
+
+  const disabledMonth = useDisabledMonth((state) => state.disabled);
+  const setDisabledMonth = useDisabledMonth((state) => state.setDisabled);
+  const dateFilterStore = useDateFilterStore((state) => state.dateFilter);
+  const setDateFilterStore = useDateFilterStore((state) => state.setDateFilter);
+
   const [expenseSearchCache, setExpenseSearchCache] = useState<string>("");
 
-  const getSumExpenseForResume = (): number => {
-    let expensesCount = 0;
-    let sumExpensiveTmp = 0;
-
-    if (currentDateExpenses) {
-      while (expensesCount < currentDateExpenses.length) {
-        sumExpensiveTmp +=
-          currentDateExpenses[expensesCount].productAmount *
-          currentDateExpenses[expensesCount].productCoefficient;
-        expensesCount++;
-      }
-    }
-
-    const result = sumExpensiveTmp;
-
-    return result;
-  };
-
   const retrieveDataAfterFilterDate = async (dateFilter: string[]) => {
-    setThereIsFilter([true, false]);
-
     const newExpenses = getExpensesDependToDate(
       expenses,
       dateFilter,
@@ -123,102 +52,88 @@ export default function Filter({
   };
 
   useEffect(() => {
-    (async () => {
-      const sumExpense = getSumExpenseForResume();
-      const sumTmp = sumExpense;
-
-      setSum(sumTmp);
+    (() => {
+      const { firstDay, lastDay } = retrieveFirstAndLastDay(
+        dateFilterStore.expenseDatefilter.toString(),
+      );
+      setDateFilter([firstDay, lastDay]);
     })();
-  }, [currentDateExpenses]);
+  }, [dateFilterStore]);
 
   return (
     <View style={styles.chartContainer}>
-      {/* <View style={styles.barChartContainer}>
-        <BarChart
-          data={barChartDatas}
-          frontColor={"#FFD056"}
-          barWidth={15}
-          gradientColor={"#FFEEFE"}
-          noOfSections={3}
-          barBorderRadius={4}
-          yAxisThickness={0}
-          xAxisThickness={0}
-        />
-      </View> */}
-      <View style={styles.expensesIncomeContainer}>
-        <View style={styles.textIconAmountContainer}>
-          <Text style={styles.textExpensesIncome}>Expenses</Text>
-          <View style={styles.iconAmountContainer}>
-            <Ionicons name="arrow-up-circle" size={20} color={red} />
-            <Text style={styles.amount}>
-              {numStr(String(sum), ".")}&nbsp;Ariary
-            </Text>
-          </View>
-        </View>
-        <View style={styles.textIconAmountContainer}>
-          <Text style={styles.textExpensesIncome}>Income</Text>
-          <View style={styles.iconAmountContainer}>
-            <Ionicons name="arrow-down-circle" size={20} color={green} />
-            <Text style={styles.amount}>
-              {numStr(String("300000"), ".")}&nbsp;Ariary
-            </Text>
-          </View>
-        </View>
-      </View>
       <View style={styles.monthFilterContainer}>
         <TouchableOpacity
+          delayPressIn={0}
           onPress={() => {
-            dispatch({ type: CountActionKind.DECREASE });
-
-            setTimeout(() => {
-              const theDate = formatNewDateDecrease(state.date);
-              const { firstDay, lastDay } = retrieveFirstAndLastDay(
-                theDate.toString(),
-                true,
-              );
-
-              setDateFilter([firstDay, lastDay]);
-              retrieveDataAfterFilterDate([firstDay, lastDay]);
-            }, 500);
+            setDatePickerVisible(true);
           }}
         >
-          <Ionicons name="arrow-back-circle" size={25} color={TitleColor} />
+          <Text style={styles.month}>
+            {String(
+              BARCHARTMONTH[
+                new Date(dateFilterStore.expenseDatefilter).getMonth()
+              ],
+            )}
+            &nbsp;
+            {String(new Date(dateFilterStore.expenseDatefilter).getFullYear())}
+          </Text>
         </TouchableOpacity>
-        <Text style={styles.month}>
-          {String(MONTH[new Date(state.date).getMonth()])}&nbsp;
-          {String(new Date(state.date).getFullYear())}
-        </Text>
+        <TouchableOpacity delayPressIn={0} style={styles.closeDateFilter} onPress={() => {
+            setDisabledMonth(true);
+        }}>
+          <Ionicons name="lock-closed-outline" size={24} color={"#b8b8b8ff"} />
+        </TouchableOpacity>
+        <CustomDatePicker
+          visible={datePickerVisible}
+          mode={"month-year"}
+          onClose={() => setDatePickerVisible(false)}
+          dateFilter={dateFilterStore.expenseDatefilter}
+          onConfirm={(month, year) => {
+            // 1. Créez une NOUVELLE instance à partir de la valeur existante
+            const dateFilterStoreTmp = { ...dateFilterStore };
 
-        <TouchableOpacity
-          onPress={() => {
-            dispatch({ type: CountActionKind.INCREASE });
+            const newDate = new Date(dateFilterStore.expenseDatefilter);
+            newDate.setMonth(BARCHARTMONTH.indexOf(month));
+            newDate.setFullYear(Number(year));
 
-            setTimeout(() => {
-              const theDate = formatNewDateIncrease(state.date);
-              const { firstDay, lastDay } = retrieveFirstAndLastDay(
-                theDate.toString(),
-                true,
-              );
+            dateFilterStoreTmp.expenseDatefilter = new Date(newDate);
 
-              setDateFilter([firstDay, lastDay]);
-              retrieveDataAfterFilterDate([firstDay, lastDay]);
-            }, 500);
+            // 3. Mettez à jour le store avec ce nouvel objet
+            setDateFilterStore(dateFilterStoreTmp);
           }}
+        />
+        <TouchableOpacity
+          delayPressIn={0}
+          onPress={() => {
+            setDisabledMonth(false);
+          }}
+          style={[
+            styles.disabledMonthContainer,
+            disabledMonth ? { display: "flex" } : { display: "none" },
+          ]}
         >
-          <Ionicons name="arrow-forward-circle" size={25} color={TitleColor} />
+          <View style={styles.disabledMonth}>
+            <Ionicons
+              name="lock-open-outline"
+              size={24}
+              color={"#b8b8b8ff"}
+            />
+          </View>
         </TouchableOpacity>
       </View>
       <View style={styles.searchCategory}>
         <Ionicons name="search-outline" size={25} color="#000" />
         <TextInput
           style={styles.searchInput}
-          placeholder="Search Expenses"
+          placeholder="Search Income"
           onChangeText={(expensesSearch) => {
             const newExpenses = getExpensesDependToExpensesSearch(
               expenses,
               expensesSearch,
               dateFilter,
               "expensesSearch",
+              disabledMonth,
             );
 
             setCurrentDateExpenses(newExpenses);
@@ -254,37 +169,40 @@ const styles = StyleSheet.create({
     width: "87%",
     marginLeft: 7,
   },
-  expensesIncomeContainer: {
-    width: Dimensions.get("screen").width - 40,
-    alignItems: "center",
-    justifyContent: "space-around",
-    flexDirection: "row",
-    marginVertical: 30,
-  },
-  textIconAmountContainer: {},
-  textExpensesIncome: {
-    fontFamily: "k2d-light",
-  },
-  iconAmountContainer: {
-    marginTop: 5,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  amount: {
-    marginLeft: 5,
-    fontFamily: "k2d-bold",
-  },
   monthFilterContainer: {
     width: "80%",
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-around",
+    justifyContent: "center",
     marginBottom: 20,
   },
   barChartContainer: {
     width: Dimensions.get("screen").width - 20,
     marginBottom: 40,
     marginTop: 20,
+  },
+  disabledMonthContainer: {
+    position: "absolute",
+    width: "100%",
+    height: 50,
+    right: 0,
+    left: 0,
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 10,
+  },
+  closeDateFilter: {
+    marginLeft: 15,
+    padding: 5,
+  },
+  disabledMonth: {
+    width: "86%",
+    borderWidth: 1,
+    borderColor: "#ebebebff",
+    backgroundColor: "#ffffffff",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 5,
+    borderRadius: 10,
   },
 });

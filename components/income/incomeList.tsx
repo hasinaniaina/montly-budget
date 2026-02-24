@@ -1,47 +1,38 @@
 import {
   View,
   Text,
-  Image,
-  ScrollView,
   StyleSheet,
-  ViewStyle,
   TouchableOpacity,
-  Pressable,
-  InteractionManager,
   FlatList,
 } from "react-native";
 import React, { useEffect, useState } from "react";
 import { GloblalStyles } from "@/constants/GlobalStyles";
-import { orange, red, TextColor, TitleColor } from "@/constants/Colors";
-import { Category, CreationCategory } from "@/constants/interface";
+import { green, orange, TextColor, TitleColor } from "@/constants/Colors";
+import { Category, CreationCategory, Income } from "@/constants/interface";
 import {
   useCategoriesStore,
+  useIncomeStore,
   usePopupStore,
   useProductsStore,
   useShowActionButtonStore,
 } from "@/constants/store";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { numStr } from "@/constants/utils";
 
-export default function CategoryList() {
-  const showActionButton = useShowActionButtonStore(
-    (state) => state.showActionButton,
+export default function IncomeList() {
+  const setSingleIncomeData = useIncomeStore(
+    (state) => state.setSingleIncomeData,
   );
-
-  const currentCategoryDatas = useCategoriesStore(
-    (state) => state.currentCategoryDatas,
-  );
-
-  const setSingleCategoryData = useCategoriesStore(
-    (state) => state.setSingleCategoryData,
-  );
-
-  const categoryProducts = useProductsStore((state) => state.categoryProducts);
 
   const setPopupTitle = usePopupStore((state) => state.setTitle);
   const setPopupActionType = usePopupStore((state) => state.setActionType);
 
   const setPopupVisible = usePopupStore((state) => state.setVisible);
+
+  const currentUserIncome = useIncomeStore((state) => state.income);
+
+  const incomeForFilter = useIncomeStore((state) => state.incomeForFilter);
+
+  const [incomeList, setIncomeList] = useState<Income[]>([]);
 
   let options: Intl.DateTimeFormatOptions = {
     year: "numeric",
@@ -49,51 +40,28 @@ export default function CategoryList() {
     day: "numeric",
   };
 
-  // Sum expenses each categories
-  const [sumExpenseCategory, setSumExpenseCategory] = useState<Record<
-    string,
-    { amount: number }
-  > | null>(null);
-
-  const sumAmountExpensesForEachCategories = () => {
-    let sumExpenseCategoryTmp: Record<string, { amount: number }> | null = null;
-
-    currentCategoryDatas.map((category) => {
-      let amount = 0;
-      categoryProducts.map((expense) => {
-        if (category.idCreationCategory == expense.idCreationCategory) {
-          amount += expense.productAmount * expense.productCoefficient;
-        }
-      });
-
-      sumExpenseCategoryTmp = {
-        ...sumExpenseCategoryTmp,
-        [category.idCategory]: { amount: amount },
-      };
-    });
-
-    setSumExpenseCategory(sumExpenseCategoryTmp);
-  };
-
   useEffect(() => {
-    console.log("categories list");
-    sumAmountExpensesForEachCategories();
-  }, [categoryProducts, currentCategoryDatas]);
+    console.log("Income list");
+
+    const incomeListTmp =
+      incomeForFilter.length == 0 ? currentUserIncome : incomeForFilter;
+    setIncomeList(incomeListTmp);
+  }, [incomeForFilter, currentUserIncome]);
 
   return (
     <>
       <View style={styles.categoryContainer}>
         <View style={styles.categoryTitleFilterContainer}>
           <View style={GloblalStyles.titleFlexAlignement}>
-            <Text style={GloblalStyles.titleSection}>Category</Text>
+            <Text style={GloblalStyles.titleSection}>Income list</Text>
           </View>
         </View>
 
         {/* Category Content */}
         <View style={styles.categoryContent}>
-          {currentCategoryDatas.length > 0 ? (
+          {incomeList && incomeList.length > 0 ? (
             <FlatList
-              data={currentCategoryDatas}
+              data={incomeList}
               initialNumToRender={10}
               maxToRenderPerBatch={10}
               windowSize={5}
@@ -103,43 +71,30 @@ export default function CategoryList() {
                   style={styles.item}
                   key={index}
                   onPress={() => {
-                    let showActionButtonTmp = [...showActionButton];
-                    showActionButtonTmp[index] = { display: "flex" };
-
-                    setSingleCategoryData(item);
-                    setPopupTitle("category");
+                    setSingleIncomeData(item);
+                    setPopupTitle("Income");
                     setPopupActionType("update");
                     setPopupVisible(true);
                   }}
                 >
+                  <View>
+                    <Ionicons name="cash-outline" size={20} color={green} />
+                  </View>
                   <View style={styles.colorNamecontainer}>
-                    <View
-                      style={[
-                        styles.colorCategory,
-                      ]}
-                    >
-                      <Ionicons name="wallet-outline" size={20} color={"black"} />
-                    </View>
                     <View style={styles.categoryName}>
-                      <Text style={styles.name}>
-                        {(item as Category).label}
-                      </Text>
+                      <Text style={styles.name}>{item.label}</Text>
                       <Text style={GloblalStyles.CreatedDate}>
-                        {new Date(
-                          (item as CreationCategory).createdDate!,
-                        ).toLocaleDateString("en-US", options)}
+                        {new Date(item.createdDate!).toLocaleDateString(
+                          "en-US",
+                          options,
+                        )}
                       </Text>
                     </View>
                   </View>
 
-                  <View>
+                  <View style={styles.amountContainer}>
                     <Text style={styles.categoryIncome}>
-                      {sumExpenseCategory && sumExpenseCategory[item.idCategory]
-                        ? numStr(
-                            String(sumExpenseCategory[item.idCategory].amount),
-                            ".",
-                          )
-                        : 0}
+                      {item.amount}
                       &nbsp;Ariary
                     </Text>
                   </View>
@@ -148,7 +103,7 @@ export default function CategoryList() {
             />
           ) : (
             <View style={GloblalStyles.noList}>
-              <Text style={GloblalStyles.textNoList}>No Category</Text>
+              <Text style={GloblalStyles.textNoList}>No Income</Text>
             </View>
           )}
         </View>
@@ -157,7 +112,7 @@ export default function CategoryList() {
           style={[styles.iconAdd]}
           onPress={() => {
             setPopupVisible(true);
-            setPopupTitle("category");
+            setPopupTitle("Income");
             setPopupActionType("insert");
           }}
         >
@@ -208,14 +163,16 @@ const styles = StyleSheet.create({
   item: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
     position: "relative",
   },
   colorNamecontainer: {
     flexDirection: "row",
     alignItems: "center",
+    marginLeft: 10
   },
   colorCategory: {
+    width: 10,
+    height: 10,
     borderRadius: 20,
     marginRight: 15,
   },
@@ -231,6 +188,10 @@ const styles = StyleSheet.create({
   },
   categoryIncome: {
     fontFamily: "k2d-bold",
-    color: TextColor,
+    color: green,
+    alignSelf: "flex-end"
   },
+  amountContainer: {
+    flex: 1,
+  }
 });

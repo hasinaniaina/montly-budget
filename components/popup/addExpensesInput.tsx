@@ -6,6 +6,7 @@ import {
   Dimensions,
   TouchableOpacity,
   ScrollView,
+  ActivityIndicator,
 } from "react-native";
 import React, { useEffect, useState } from "react";
 import ColorPickerViewNew from "../colorPickerNew";
@@ -27,6 +28,7 @@ import {
   saveProduct,
 } from "@/constants/Controller";
 import { sortedArrayExpenses } from "@/constants/utils";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type CategoriesSelectPicker = {
   label: string;
@@ -34,6 +36,7 @@ type CategoriesSelectPicker = {
 };
 
 export default function AddExpensesInput() {
+  const insets = useSafeAreaInsets();
   // Initiate list day number
   const [dayNumber, setDayNumber] = useState<Item[]>();
 
@@ -61,6 +64,18 @@ export default function AddExpensesInput() {
 
   const setPopupTitle = usePopupStore((state) => state.setTitle);
   const setPopupActionType = usePopupStore((state) => state.setActionType);
+  const setAddCategoryInExpenseView = usePopupStore(
+    (state) => state.setAddCategoryInExpenseView,
+  );
+
+  const setCategoryProducts = useProductsStore(
+    (state) => state.setCategoryProducts,
+  );
+
+  const currentCategoryDatas = useCategoriesStore(
+    (state) => state.currentCategoryDatas,
+  );
+  const categoryProducts = useProductsStore((state) => state.categoryProducts);
 
   const expenseAmount = singleExpenseData?.productAmount
     ? singleExpenseData.productAmount
@@ -81,6 +96,8 @@ export default function AddExpensesInput() {
     CategoriesSelectPicker[] | null
   >(null);
 
+  const [loading, setLoading] = useState<boolean>(false);
+
   // Initialize number of day (1 to 31)
   const getListDayNumber = () => {
     let dayNumberTmp: Item[] = [];
@@ -98,7 +115,11 @@ export default function AddExpensesInput() {
   const getCategoryLabelListForSelectPicker = () => {
     const categoriesSelectPickerTmp = [] as CategoriesSelectPicker[];
 
-    categories.map((category) => {
+    const SortedCategory = currentCategoryDatas.sort((a, b) =>
+      a.label.localeCompare(b.label),
+    );
+
+    SortedCategory.map((category) => {
       categoriesSelectPickerTmp.push({
         label: category.label,
         value: category.idCreationCategory,
@@ -108,7 +129,7 @@ export default function AddExpensesInput() {
     setCategoriesSelectPicker(categoriesSelectPickerTmp);
   };
 
-  const addExpense = async () => {
+  const addExpense = async (): Promise<boolean> => {
     const inputsNotEmpty = checkInputsEmpty(singleExpenseData!);
 
     if (inputsNotEmpty) {
@@ -122,6 +143,7 @@ export default function AddExpensesInput() {
       );
 
       const currentDateExpensesTmp = [...currentDateExpenses];
+      const categoryProductsTmp = [...categoryProducts];
 
       const newCurrentExpensesData: Product & CreationProduct = {
         designation: singleExpenseData?.designation!,
@@ -138,6 +160,10 @@ export default function AddExpensesInput() {
       const currentExpensesSorted = sortedArrayExpenses(currentDateExpensesTmp);
       setCurrentDateExpenses(currentExpensesSorted);
 
+      categoryProductsTmp.push(newCurrentExpensesData);
+      const categoryProductsSorted = sortedArrayExpenses(categoryProductsTmp);
+      setCategoryProducts(categoryProductsSorted);
+
       if (result) {
         Toast.show({
           type: "success",
@@ -145,6 +171,7 @@ export default function AddExpensesInput() {
         });
 
         setSingleExpenseData(null);
+        return true;
       } else {
         Toast.show({
           type: "error",
@@ -156,16 +183,18 @@ export default function AddExpensesInput() {
         );
 
         setCurrentDateExpenses(currentExpensesSortedDontDelete);
+        return true;
       }
     } else {
       Toast.show({
         type: "error",
         text1: "Inputs should not be empty!!!",
       });
+      return true;
     }
   };
 
-  const updateExpense = async () => {
+  const updateExpense = async (): Promise<boolean> => {
     const inputsNotEmpty = checkInputsEmpty(singleExpenseData!);
 
     if (inputsNotEmpty) {
@@ -177,6 +206,7 @@ export default function AddExpensesInput() {
           text1: "Expense updated!!!",
         });
         const currentDateExpensesTmp = [...currentDateExpenses];
+        const categoryProductsTmp = [...categoryProducts];
 
         currentDateExpensesTmp.map((currentDateExpense, index) => {
           if (currentDateExpense.idProduct == singleExpenseData?.idProduct) {
@@ -192,22 +222,71 @@ export default function AddExpensesInput() {
           }
         });
 
+        categoryProductsTmp.map((categoryProduct, index) => {
+          if (categoryProduct.idProduct == singleExpenseData?.idProduct) {
+            categoryProductsTmp[index].designation =
+              singleExpenseData.designation;
+            categoryProductsTmp[index].color = singleExpenseData.color;
+            categoryProductsTmp[index].idCreationCategory =
+              singleExpenseData.idCreationCategory;
+            categoryProductsTmp[index].productAmount =
+              singleExpenseData.productAmount;
+            categoryProductsTmp[index].productCoefficient =
+              singleExpenseData.productCoefficient;
+          }
+        });
+
         setCurrentDateExpenses(currentDateExpensesTmp);
+        setCategoryProducts(categoryProductsTmp);
+
         setSingleExpenseData(null);
         setPopupVisible(false);
+        return true;
       } else {
         Toast.show({
           type: "error",
           text1: "Something went wrong!!!",
         });
-        return false;
+        return true;
       }
     } else {
       Toast.show({
         type: "error",
         text1: "Inputs should not be empty!!!",
       });
-      return false;
+      return true;
+    }
+  };
+
+  const removeExpense = async (): Promise<boolean> => {
+    const result = await removeProduct(singleExpenseData?.idCreationProduct!);
+
+    if (result) {
+      const newCurrentCategoryDatas = currentDateExpenses.filter(
+        (item) => item.idProduct !== singleExpenseData?.idProduct,
+      );
+
+      const newCategoryProducts = categoryProducts.filter(
+        (item) => item.idProduct !== singleExpenseData?.idProduct,
+      );
+
+      setCurrentDateExpenses(newCurrentCategoryDatas);
+      setCategoryProducts(newCategoryProducts);
+
+      Toast.show({
+        type: "success",
+        text1: "Expense deleted!!!",
+      });
+
+      setPopupVisible(false);
+      setSingleExpenseData(null);
+      return true;
+    } else {
+      Toast.show({
+        type: "error",
+        text1: "Inputs should not be empty!!!",
+      });
+      return true;
     }
   };
 
@@ -231,40 +310,22 @@ export default function AddExpensesInput() {
     }
   };
 
-  const removeExpense = async () => {
-    const result = await removeProduct(singleExpenseData?.idCreationProduct!);
-
-    if (result) {
-      const newCurrentCategoryDatas = currentDateExpenses.filter(
-        (item) => item.idProduct !== singleExpenseData?.idProduct,
-      );
-
-      setCurrentDateExpenses(newCurrentCategoryDatas);
-      Toast.show({
-        type: "success",
-        text1: "Expense deleted!!!",
-      });
-
-        setPopupVisible(false);
-        setSingleExpenseData(null);
-    } else {
-      Toast.show({
-        type: "error",
-        text1: "Inputs should not be empty!!!",
-      });
-      return false;
-    }
-  };
-
   useEffect(() => {
     (() => {
       getListDayNumber();
       getCategoryLabelListForSelectPicker();
     })();
-  }, [popupVisible, singleExpenseData]);
+  }, [popupVisible, singleExpenseData, currentCategoryDatas]);
 
   return (
-    <View style={{ alignItems: "center", justifyContent: "center" }}>
+    <View
+      style={{
+        flex: 1,
+        width: Dimensions.get("screen").width,
+        justifyContent: "center",
+        alignItems: "center",
+      }}
+    >
       <ColorPickerViewNew
         data={singleExpenseData}
         setData={setSingleExpenseData}
@@ -325,6 +386,7 @@ export default function AddExpensesInput() {
               onPress={() => {
                 setPopupTitle("Category");
                 setPopupActionType("insert");
+                setAddCategoryInExpenseView(true);
               }}
             >
               <Ionicons
@@ -411,25 +473,46 @@ export default function AddExpensesInput() {
         <TouchableOpacity
           style={[GloblalStyles.popupButton]}
           onPress={async () => {
-            addExpense();
+            setLoading(true);
+            const result = await addExpense();
+            if (result) {
+              setLoading(false);
+            }
           }}
         >
-          <Text style={GloblalStyles.popupButtonTitle}>Add</Text>
+          {loading ? (
+            <ActivityIndicator size={"small"} color={"white"} />
+          ) : (
+            <Text style={GloblalStyles.popupButtonTitle}>Add</Text>
+          )}
         </TouchableOpacity>
       ) : (
         <View style={GloblalStyles.deleteButtonAndActionButtonContainer}>
           <TouchableOpacity
             style={[GloblalStyles.popupButton]}
             onPress={async () => {
-              updateExpense();
+              setLoading(true);
+              const result = await updateExpense();
+              if (result) {
+                setLoading(false);
+              }
             }}
           >
-            <Text style={GloblalStyles.popupButtonTitle}>Update</Text>
+            {loading ? (
+              <ActivityIndicator size={"small"} color={"white"}/>
+            ) : (
+              <Text style={GloblalStyles.popupButtonTitle}>Update</Text>
+            )}
           </TouchableOpacity>
           <TouchableOpacity
             style={GloblalStyles.deleteIconContainer}
-            onPress={() => {
-              removeExpense();
+            onPress={async () => {
+              setLoading(true);
+              const result = await removeExpense();
+
+              if (result) {
+                setLoading(false);
+              }
             }}
           >
             <Ionicons name="trash-outline" size={30} color={red} />

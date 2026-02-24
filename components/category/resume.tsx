@@ -1,3 +1,4 @@
+import Income from "@/app/(dashboard)/(tabs)/income";
 import { TextColor, TitleColor, orange } from "@/constants/Colors";
 import { retrieveProductByCategory } from "@/constants/Controller";
 import { GloblalStyles } from "@/constants/GlobalStyles";
@@ -7,7 +8,7 @@ import {
   CreationProduct,
   Product,
 } from "@/constants/interface";
-import { useCategoriesStore, useChangedStore } from "@/constants/store";
+import { useCategoriesStore, useChangedStore, useIncomeStore } from "@/constants/store";
 import { useEffect, useState } from "react";
 import {
   Dimensions,
@@ -32,6 +33,7 @@ export default function Resumes({
     (state) => state.currentCategoryDatas,
   );
 
+
   let options: Intl.DateTimeFormatOptions = {
     year: "numeric",
     month: "short",
@@ -40,6 +42,7 @@ export default function Resumes({
 
   // Sum of all expenses, income, saving
   const [sumExpenseResume, setSumExpenseResume] = useState<number>(0);
+
 
   const getSumExpenseForResume = (
     productByCategory: (Product & CreationProduct)[],
@@ -73,6 +76,7 @@ export default function Resumes({
     const result = sumExpensiveTmp;
     return result;
   };
+
 
   useEffect(() => {
     (() => {

@@ -1,29 +1,21 @@
 import {
-  Image,
   StyleSheet,
   Text,
-  TouchableHighlight,
   TouchableOpacity,
   View,
   FlatList,
-  ViewStyle,
 } from "react-native";
 import { TextColor, TitleColor, green, orange, red } from "@/constants/Colors";
-import { CreationProduct, Product } from "@/constants/interface";
-import { removeProduct } from "@/constants/Controller";
+import { CreationProduct } from "@/constants/interface";
 import { useEffect, useState } from "react";
 import { GloblalStyles } from "@/constants/GlobalStyles";
 import {
   useCategoriesStore,
-  useChangedStore,
-  useDateFilterStore,
+  useDisabledMonth,
   usePopupStore,
   useProductsStore,
 } from "@/constants/store";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { getExpensesDependToDate } from "@/constants/utils";
-import Products from "@/app/(dashboard)/[categoryId]";
 
 export default function ExpensesList() {
   let options: Intl.DateTimeFormatOptions = {
@@ -31,8 +23,6 @@ export default function ExpensesList() {
     month: "short",
     day: "numeric",
   };
-
-  const insets = useSafeAreaInsets();
 
   const [price, setPrice] = useState<string[]>();
   const [coefficient, setCoefficient] = useState<string[]>();
@@ -45,12 +35,10 @@ export default function ExpensesList() {
 
   const allExpensesList = useProductsStore((state) => state.categoryProducts);
 
-  const change = useChangedStore((state) => state.changeCategoryProduct);
-  const dateFilter = useDateFilterStore((state) => state.dateFilter);
-
   const setPopupTitle = usePopupStore((state) => state.setTitle);
   const setPopupActionType = usePopupStore((state) => state.setActionType);
   const setPopupVisible = usePopupStore((state) => state.setVisible);
+  const disabledMonth = useDisabledMonth((state) => state.disabled);
 
   const [expenseCategory, setExpenseCategory] = useState<Record<
     string,
@@ -92,7 +80,7 @@ export default function ExpensesList() {
         }
       });
     });
-        
+
     setExpenseCategory(expenseCategoryTmp);
   };
 
@@ -111,6 +99,10 @@ export default function ExpensesList() {
       {expenses && expenses.length > 0 ? (
         <FlatList
           data={expenses}
+          initialNumToRender={10}
+          maxToRenderPerBatch={10}
+          windowSize={5}
+          removeClippedSubviews={true}
           renderItem={({ item, index }) => (
             <TouchableOpacity
               onPress={() => {
@@ -124,8 +116,10 @@ export default function ExpensesList() {
               <View style={[styles.itemsContainer]}>
                 <View style={styles.itemLeftContent}>
                   <View
-                    style={[styles.itemColor, { backgroundColor: item.color }]}
-                  ></View>
+                    style={[styles.itemColor]}
+                  >
+                    <Ionicons name="cash-outline" size={20} color={red} />
+                  </View>
                   <View>
                     <Text style={[styles.productName]}>{item.designation}</Text>
                     <Text style={{ fontSize: 10 }}>
@@ -143,7 +137,7 @@ export default function ExpensesList() {
                 </View>
                 <View style={[styles.itemRightContent]}>
                   <Text style={styles.price}>
-                    {price ? price[index] : ""} Ariary
+                    -{price ? price[index] : ""} Ariary
                   </Text>
                 </View>
               </View>
@@ -156,16 +150,18 @@ export default function ExpensesList() {
         </View>
       )}
 
-      <TouchableOpacity
-        style={[styles.iconAdd, { marginBottom: insets.bottom }]}
-        onPress={() => {
-          setPopupVisible(true);
-          setPopupTitle("Expenses");
-          setPopupActionType("insert");
-        }}
-      >
-        <Ionicons name="add-circle" size={60} color={orange} />
-      </TouchableOpacity>
+      {!disabledMonth && (
+        <TouchableOpacity
+          style={[styles.iconAdd]}
+          onPress={() => {
+            setPopupVisible(true);
+            setPopupTitle("Expenses");
+            setPopupActionType("insert");
+          }}
+        >
+          <Ionicons name="add-circle" size={60} color={orange} />
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
@@ -184,7 +180,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     position: "relative",
-    padding: 6,
     borderRadius: 10,
   },
   itemLeftContent: {
@@ -192,10 +187,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   itemColor: {
-    width: 15,
-    height: 15,
     borderRadius: 5,
-    marginRight: 5,
+    marginRight: 10,
+    
   },
   productName: {
     fontFamily: "k2d-bold",
@@ -207,7 +201,7 @@ const styles = StyleSheet.create({
   },
   price: {
     fontFamily: "k2d-regular",
-    color: TextColor,
+    color: red,
   },
   buttonsAction: {
     position: "absolute",
@@ -248,7 +242,7 @@ const styles = StyleSheet.create({
   iconAdd: {
     position: "absolute",
     alignItems: "center",
-    bottom: 0,
+    bottom: -30,
     right: 10,
     zIndex: 10,
     shadowOffset: { width: 20, height: 20 },

@@ -4,6 +4,7 @@ import {
   CreationCategory,
   CreationProduct,
   CsvDataType,
+  Income,
   ItemAddCategory,
   Product,
   User,
@@ -56,6 +57,14 @@ export const createTable = async () => {
           FOREIGN KEY(idCreationCategory) REFERENCES CreationCategory(id),
           FOREIGN KEY(idProduct) REFERENCES Product(id)
           );
+      CREATE TABLE IF NOT EXISTS Income (
+          idIncome TEXT PRIMARY KEY, 
+          label TEXT NOT NULL, 
+          amount TEXT,
+          idUser TEXT,
+          createdDate  DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY(idUser) REFERENCES User(id)
+          );
       `);
 
     console.log("Database initialized!");
@@ -75,6 +84,7 @@ export const deleteTable = async () => {
       DROP TABLE IF EXISTS CreationCategory;
       DROP TABLE IF EXISTS CreationProduct;
       DROP TABLE IF EXISTS Product;
+      DROP TABLE IF EXISTS Income;
     `);
 
     console.log("Table deleted!");
@@ -164,9 +174,8 @@ export const updateUserPasssword = async (newPassword: string, user: User) => {
 export const insertProduct = async (
   datas: Product | CreationProduct,
   uuidExpense: string,
-  uuidCreationExpense: string, 
+  uuidCreationExpense: string,
 ): Promise<boolean> => {
-
   try {
     let insertProduct = await (
       await db
@@ -292,7 +301,9 @@ export const getProductByIdCreationProduct = async (
   }
 };
 
-export const updateProduct = async (datas: Product | CreationProduct): Promise<boolean> => {
+export const updateProduct = async (
+  datas: Product | CreationProduct,
+): Promise<boolean> => {
   try {
     let updateProduct = await (
       await db
@@ -387,9 +398,8 @@ export const insertCategory = async (
   datas: Category & CreationCategory,
   user: User,
   idCategory: string,
-  idCreationCategory:string
+  idCreationCategory: string,
 ) => {
-
   try {
     const dbInstance = await db;
 
@@ -450,7 +460,6 @@ export const getCategory = async (user: User, categoryDateFilter: string[]) => {
     try {
       const dateFrom = categoryDateFilter[0].split("T")[0] + " 01:00:00";
       const dateTo = categoryDateFilter[1].split("T")[0] + " 24:00:00";
-      
 
       let query = `SELECT *
                 FROM Category as cat INNER JOIN CreationCategory as creatCat 
@@ -476,7 +485,9 @@ export const getCategory = async (user: User, categoryDateFilter: string[]) => {
   }
 };
 
-export const getUserCategory = async (user: User): Promise<(Category & CreationCategory)[]> => {
+export const getUserCategory = async (
+  user: User,
+): Promise<(Category & CreationCategory)[]> => {
   try {
     const categories: any = await (
       await db
@@ -547,11 +558,11 @@ export const deleteCategory = async (
       );
 
       if (deleteCreationCategory.changes) {
-          const deleteProduct: any = dbtmp.runAsync(
-            "DELETE FROM CreationProduct WHERE idCreationCategory='" +
-              idCreationCategory +
-              "'",
-          );
+        const deleteProduct: any = dbtmp.runAsync(
+          "DELETE FROM CreationProduct WHERE idCreationCategory='" +
+            idCreationCategory +
+            "'",
+        );
 
         return deleteCreationCategory;
       }
@@ -589,12 +600,11 @@ export const getCategoryFilter = async (
 
     const dateFrom = date[0].split("T")[0] + " 01:00:00";
     const dateTo = date[1].split("T")[0] + " 24:00:00";
-    
+
     if (datas.length > 0) {
       let query = `SELECT * 
       FROM Category cat INNER JOIN CreationCategory creatCat ON cat.idCategory = creatCat.idCategory
         `;
-
 
       if (datas[0].idCategory != "") {
         query += " WHERE ";
@@ -707,10 +717,78 @@ export const insertCSVIntoProductDatabase = async (
   }
 };
 
-// export const getCatagoriesDatas = async (user: any) => {
+export const getUserIncome = async (user: User): Promise<Income[]> => {
+  const idUser = user.id;
+  try {
+    const income: Income[] | null = await (
+      await db
+    ).getAllAsync(`SELECT * 
+    FROM Income WHERE idUser='${idUser}'`);
 
-// }
+    return income!;
+  } catch (error) {
+    console.log("Income by idUser retrieve error =>", error);
+    return [];
+  }
+};
 
-// export const getProductDatas = (user: any) => {
+export const insertIncome = async (
+  datas: Income,
+  user: User,
+  idIncome: string,
+) => {
+  try {
+    let insertIncome = await (
+      await db
+    ).runAsync(
+      "INSERT INTO Income (idIncome, label, amount, idUser) VALUES (?, ?, ?, ?)",
+      idIncome,
+      datas.label!,
+      datas.amount!,
+      user.id,
+    );
+    if (insertIncome.changes) {
+      return true;
+    }
+  } catch (error) {
+    console.log("Income insertion error =>", error);
+    return false;
+  }
+};
 
-// }
+export const updateIncome = async (datas: Income) => {
+  try {
+    const updateIncome: any = await (
+      await db
+    ).runAsync(
+      "UPDATE Income SET label = ? , amount = ? WHERE idIncome = ? ",
+      datas.label!,
+      datas.amount!,
+      datas.idIncome
+    );
+
+    if (updateIncome.changes) {
+      return true;
+    }
+  } catch (error) {
+    console.log("Update category error =>", error);
+    return false;
+  }
+};
+
+export const deleteIncome = async (idIncome: string): Promise<boolean> => {
+  try {
+    let deleteIncome = await (
+      await db
+    ).runAsync("DELETE FROM Income WHERE idIncome='" + idIncome + "'");
+
+    if (deleteIncome.changes) {
+      return true;
+    } else {
+      return false;
+    }
+  } catch (error) {
+    console.log("Delete month record error => ", error);
+    return false;
+  }
+};

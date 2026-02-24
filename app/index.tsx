@@ -43,7 +43,7 @@ export default function Login() {
   }
 
   return (
-    <View style={GloblalStyles.container}>
+    <View style={[{justifyContent: "center", alignItems: "center"}, GloblalStyles.container]}>
       <View>
         <Image
           style={GloblalStyles.authentificationIcon}
