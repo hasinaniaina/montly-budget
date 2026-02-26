@@ -25,9 +25,7 @@ export default function ResumeIncomeExpenses() {
   const sumIncome = useIncomeStore((state) => state.sumIncome);
   const sumExpenses = useProductsStore((state) => state.sumExpenses);
 
-  useEffect(() => {
-  }, [currentDateExpenses, currentUserIncome, dateFilterStatistic]);
-
+ 
   return (
     <View style={{ paddingHorizontal: 20 }}>
       <View style={styles.expensesIncomeContainer}>

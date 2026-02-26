@@ -36,7 +36,6 @@ type CategoriesSelectPicker = {
 };
 
 export default function AddExpensesInput() {
-  const insets = useSafeAreaInsets();
   // Initiate list day number
   const [dayNumber, setDayNumber] = useState<Item[]>();
 

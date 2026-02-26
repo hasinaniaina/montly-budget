@@ -14,10 +14,7 @@ import {
   Keyboard,
   ActivityIndicator,
 } from "react-native";
-import {
-  Product,
-  CreationProduct,
-} from "@/constants/interface";
+import { Product, CreationProduct } from "@/constants/interface";
 import {
   retrieveCurrentUserCategory,
   retrieveCurrentUserIncome,
@@ -26,6 +23,7 @@ import {
 import Header from "@/components/category/header";
 import {
   getExpensesDependToDate,
+  prettyLog,
   retrieveFirstAndLastDay,
 } from "@/constants/utils";
 import {
@@ -44,10 +42,6 @@ import BarchartStatistics from "@/components/statistics/barchartStatistics";
 import Ionicons from "@expo/vector-icons/Ionicons";
 
 export default function Statistics() {
-  // if new event
-  const change = useChangedStore((state) => state.changeHome);
-  const setChange = useChangedStore((state) => state.setChangeHome);
-
   const categories = useCategoriesStore((state) => state.categories);
   const setCategories = useCategoriesStore((state) => state.setCategories);
 
@@ -70,7 +64,7 @@ export default function Statistics() {
   const popupActionType = usePopupStore((state) => state.actionType);
 
   const currentUserIncome = useIncomeStore((state) => state.income);
-  const setCurrrentUserIncome = useIncomeStore((state) => state.setIncome);
+  const setCurrentUserIncome = useIncomeStore((state) => state.setIncome);
 
   // Display category action button
   let showActionButtonInit: ViewStyle[] = [];
@@ -85,6 +79,7 @@ export default function Statistics() {
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
   const [loading, setLoading] = useState(true);
   const [stateVisible, setStateVisible] = useState<boolean>(true);
+  const [isInitialised, setIsInitialised] = useState<boolean>(false);
 
   const getCurrentDateExpensesList = (
     allExpensesList: (Product & CreationProduct)[],
@@ -103,56 +98,47 @@ export default function Statistics() {
 
   useEffect(() => {
     const init = async () => {
-      try {
-        setLoading(true);
+      let allCategories = categories;
+      let expenses = categoryProducts;
+      let income = currentUserIncome;
 
-        // 1. On récupère les données
-        let expenses = categoryProducts;
-        let allCategories = categories;
-        let income = currentUserIncome;
+      if (!isInitialised) {
+        [allCategories, expenses, income] = await Promise.all([
+          retrieveCurrentUserCategory(),
+          retrieveProductByCategory(),
+          retrieveCurrentUserIncome(),
+        ]);
 
-        if (categories.length === 0) {
-          [allCategories, expenses, income] = await Promise.all([
-            retrieveCurrentUserCategory(),
-            retrieveProductByCategory(),
-            retrieveCurrentUserIncome(),
-          ]);
+        setIsInitialised(true);
 
-          // 2. On met à jour Zustand (pour les autres composants)
-          setCategories(allCategories);
-          setCategoryProducts(expenses);
-          setCurrrentUserIncome(income);
-        }
-
-        let dateFilterTmp = dateFilter.expenseDatefilter;        
-
-        const { firstDay, lastDay } = retrieveFirstAndLastDay(
-          dateFilterTmp.toString(),
-        );
-
-
-        const currentDateExpensesTmp = getCurrentDateExpensesList(
-          categoryProducts.length == 0 ? expenses : categoryProducts,
-          [firstDay, lastDay],
-        );
-
-        if (!disabledMonth) {
-          setCurrentDateExpenses(currentDateExpensesTmp);
-        } else {
-          setCurrentDateExpenses(
-            categoryProducts.length == 0 ? expenses : categoryProducts,
-          );
-        }
-
-        setCurrentCategoryDatas(allCategories);
-      } catch (error) {
-      } finally {
-        setLoading(false);
+        // 2. On met à jour Zustand (pour les autres composants)
+        setCategories(allCategories);
+        setCategoryProducts(expenses);
+        setCurrentUserIncome(income);
       }
+
+      let dateFilterTmp = dateFilter.expenseDatefilter;
+
+      const { firstDay, lastDay } = retrieveFirstAndLastDay(
+        dateFilterTmp.toString(),
+      );
+
+      const currentDateExpensesTmp = getCurrentDateExpensesList(expenses, [
+        firstDay,
+        lastDay,
+      ]);
+
+      if (!disabledMonth) {
+        setCurrentDateExpenses(currentDateExpensesTmp);
+      } else {
+        setCurrentDateExpenses(expenses);
+      }
+
+      setCurrentCategoryDatas(allCategories);
     };
 
     init();
-  }, [change, disabledMonth, loading]);
+  }, [disabledMonth, loading, dateFilter.expenseDatefilter]);
 
   useEffect(() => {
     const showSubscription = Keyboard.addListener("keyboardDidShow", () => {
@@ -191,7 +177,7 @@ export default function Statistics() {
       {!isKeyboardVisible && (
         <>
           {/* header */}
-          <Header change={change} />
+          <Header />
           {/* Resume */}
           <ResumeIncomeExpenses />
         </>
@@ -213,8 +199,6 @@ export default function Statistics() {
         </TouchableOpacity>
         {stateVisible && <BarchartStatistics />}
       </View>
-
-  
 
       <Popup title={popupTitle} action={popupActionType} />
     </Pressable>

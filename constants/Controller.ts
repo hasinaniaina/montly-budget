@@ -92,7 +92,7 @@ export const saveUser = async ({
       setModalShown([true]);
     } else {
       await AsyncStorage.setItem("userCredentials", JSON.stringify(user));
-      router.push("/expenses");
+      router.push("/statistics");
     }
   }
 };
@@ -115,7 +115,7 @@ export const login = async ({
   if (user && password == user.password) {
     await AsyncStorage.setItem("userCredentials", JSON.stringify(user));
 
-    router.push("/expenses");
+    router.push("/statistics");
   } else {
     setErrorMessage(["Authentification failed!"]);
     setModalShown([true, false]);

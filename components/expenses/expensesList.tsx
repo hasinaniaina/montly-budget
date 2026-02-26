@@ -27,7 +27,7 @@ export default function ExpensesList() {
   const [price, setPrice] = useState<string[]>();
   const [coefficient, setCoefficient] = useState<string[]>();
 
-  const expenses = useProductsStore((state) => state.currentDateExpenses);
+  const currentDateExpenses = useProductsStore((state) => state.currentDateExpenses);
   const categories = useCategoriesStore((state) => state.categories);
   const setSingleExpenseData = useProductsStore(
     (state) => state.setSingleExpenseData,
@@ -56,8 +56,8 @@ export default function ExpensesList() {
         (data as CreationProduct).productCoefficient;
     });
 
-    if (expenses) {
-      for (let data of expenses) {
+    if (currentDateExpenses) {
+      for (let data of currentDateExpenses) {
         const priceTmp = data.productAmount * data.productCoefficient;
         price.push(priceTmp.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "."));
       }
@@ -71,7 +71,7 @@ export default function ExpensesList() {
     let expenseCategoryTmp: Record<string, { categoryLabel: string }> | null =
       null;
     categories.map((category, index) => {
-      expenses.map((expense) => {
+      currentDateExpenses.map((expense) => {
         if (expense.idCreationCategory == category.idCreationCategory) {
           expenseCategoryTmp = {
             ...expenseCategoryTmp,
@@ -89,16 +89,16 @@ export default function ExpensesList() {
       calculPriceForEachProduct();
       getExpensesGroup();
     })();
-  }, [expenses]);
+  }, [currentDateExpenses]);
 
   return (
     <View style={styles.container}>
       <View style={GloblalStyles.titleFlexAlignement}>
         <Text style={GloblalStyles.titleSection}>Current expenses</Text>
       </View>
-      {expenses && expenses.length > 0 ? (
+      {currentDateExpenses && currentDateExpenses.length > 0 ? (
         <FlatList
-          data={expenses}
+          data={currentDateExpenses}
           initialNumToRender={10}
           maxToRenderPerBatch={10}
           windowSize={5}
@@ -106,7 +106,7 @@ export default function ExpensesList() {
           renderItem={({ item, index }) => (
             <TouchableOpacity
               onPress={() => {
-                setSingleExpenseData(expenses[index]);
+                setSingleExpenseData(currentDateExpenses[index]);
                 setPopupTitle("Expenses");
                 setPopupActionType("update");
                 setPopupVisible(true);

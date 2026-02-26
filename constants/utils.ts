@@ -476,10 +476,9 @@ export const getExpensesDependToDate = (
   const lastDateFilter = new Date(dateFilter[1]);
   const newExpenses: (Product & CreationProduct)[] = [];
 
-  let expensesDependToExpensesSearch: (Product & CreationProduct)[] = expenses;
 
   if (searchInDateOrExpensesSearch == "date") {
-    expensesDependToExpensesSearch =
+    expenses =
       expensesSearch != ""
         ? getExpensesDependToExpensesSearch(
             expenses,
@@ -490,10 +489,9 @@ export const getExpensesDependToDate = (
         : expenses;
   }
 
-  
-  expensesDependToExpensesSearch.map((expense, index) => {
-    const expenseDateStoreSplited = String(expense.createdDate).split(" ")[0];
-    const newExpenseDateStore = new Date(expenseDateStoreSplited);
+
+  expenses.map((expense, index) => {
+    const newExpenseDateStore = new Date(expense.createdDate!);
     if (
       newExpenseDateStore >= firstDateFilter &&
       newExpenseDateStore <= lastDateFilter
@@ -502,7 +500,8 @@ export const getExpensesDependToDate = (
     }
   });
   
-  return  newExpenses;
+
+  return newExpenses;
 };
 
 export const getExpensesDependToExpensesSearch = (
@@ -603,12 +602,10 @@ export const getValueForBarChart = (
   return barChartValue;
 };
 
-
 export const getIncomeDependToIncomeSearch = (
   income: Income[],
-  incomeSearch: string
+  incomeSearch: string,
 ): Income[] => {
-
   const newIncome: Income[] = [];
   let incomeSearchTmp: Income[] = income;
 

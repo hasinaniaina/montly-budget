@@ -12,6 +12,7 @@ import { TextColor } from "@/constants/Colors";
 import {
   getExpensesDependToDate,
   getExpensesDependToExpensesSearch,
+  prettyLog,
   retrieveFirstAndLastDay,
 } from "@/constants/utils";
 import {
@@ -79,9 +80,13 @@ export default function Filter() {
             {String(new Date(dateFilterStore.expenseDatefilter).getFullYear())}
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity delayPressIn={0} style={styles.closeDateFilter} onPress={() => {
+        <TouchableOpacity
+          delayPressIn={0}
+          style={styles.closeDateFilter}
+          onPress={() => {
             setDisabledMonth(true);
-        }}>
+          }}
+        >
           <Ionicons name="lock-closed-outline" size={24} color={"#b8b8b8ff"} />
         </TouchableOpacity>
         <CustomDatePicker
@@ -114,11 +119,7 @@ export default function Filter() {
           ]}
         >
           <View style={styles.disabledMonth}>
-            <Ionicons
-              name="lock-open-outline"
-              size={24}
-              color={"#b8b8b8ff"}
-            />
+            <Ionicons name="lock-open-outline" size={24} color={"#b8b8b8ff"} />
           </View>
         </TouchableOpacity>
       </View>
@@ -136,6 +137,9 @@ export default function Filter() {
               disabledMonth,
             );
 
+            
+
+            
             setCurrentDateExpenses(newExpenses);
             setExpenseSearchCache(expensesSearch);
           }}

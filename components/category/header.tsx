@@ -15,7 +15,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-export default function Header({ change }: { change: boolean }) {
+export default function Header() {
   const [userEmail, setUserEmail] = useState<string>("");
   const logoutShow = useLogoutShowStore((state) => state.showLogout);
   const setLogoutShow = useLogoutShowStore((state) => state.setShowLogout)
@@ -38,7 +38,7 @@ export default function Header({ change }: { change: boolean }) {
     };
 
     init();
-  }, [change]);
+  }, []);
   return (
       <View style={[styles.header, {paddingHorizontal: 20}]}>
         <View style={styles.menuLogoutContainer}>

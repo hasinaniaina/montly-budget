@@ -157,7 +157,7 @@ export default function BarchartStatistics() {
 
   useEffect(() => {
     getBarChartValueExpense();
-  }, [expenses, yearlyMonthly, dateFilterStatistic]);
+  }, [expenses, yearlyMonthly, dateFilterStatistic, income]);
   return (
     <View style={styles.barChartContainer}>
       <View style={styles.monthOrYearContainer}>

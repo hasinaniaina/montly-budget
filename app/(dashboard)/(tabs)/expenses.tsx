@@ -19,6 +19,7 @@ import {
 } from "@/constants/Controller";
 import {
   getExpensesDependToDate,
+  prettyLog,
   retrieveFirstAndLastDay,
 } from "@/constants/utils";
 import {
@@ -44,6 +45,9 @@ export default function Expenses() {
     (state) => state.setCategoryProducts,
   );
 
+  const currentDateExpenses = useProductsStore(
+    (state) => state.currentDateExpenses,
+  );
   const setCurrentDateExpenses = useProductsStore(
     (state) => state.setCurrentDateExpenses,
   );
@@ -58,7 +62,6 @@ export default function Expenses() {
 
   const currentUserIncome = useIncomeStore((state) => state.income);
   const setCurrrentUserIncome = useIncomeStore((state) => state.setIncome);
-
 
   // Display category action button
   let showActionButtonInit: ViewStyle[] = [];
@@ -89,50 +92,7 @@ export default function Expenses() {
 
   useEffect(() => {
     const init = async () => {
-      try {
-        console.log("expenses.tsx");
-        // 1. On récupère les données
-        let expenses = categoryProducts;
-        let allCategories = categories;
-        let income = currentUserIncome;
-
-        if (categories.length === 0) {
-          [allCategories, expenses, income] = await Promise.all([
-            retrieveCurrentUserCategory(),
-            retrieveProductByCategory(),
-            retrieveCurrentUserIncome(),
-          ]);
-
-          // 2. On met à jour Zustand (pour les autres composants)
-          setCategories(allCategories);
-          setCategoryProducts(expenses);
-          setCurrrentUserIncome(income);
-        }
-
-        let dateFilterTmp = dateFilter.expenseDatefilter;        
-
-        const { firstDay, lastDay } = retrieveFirstAndLastDay(
-          dateFilterTmp.toString(),
-        );
-
-        const currentDateExpensesTmp = getCurrentDateExpensesList(
-          categoryProducts.length == 0 ? expenses : categoryProducts,
-          [firstDay, lastDay],
-        );
-
-        if (!disabledMonth) {
-          setCurrentDateExpenses(currentDateExpensesTmp);
-        } else {
-          setCurrentDateExpenses(
-            categoryProducts.length == 0 ? expenses : categoryProducts,
-          );
-        }
-
-        setCurrentCategoryDatas(allCategories);
-      } catch (error) {
-      } finally {
-        setLoading(false);
-      }
+      setLoading(false);
     };
 
     init();
