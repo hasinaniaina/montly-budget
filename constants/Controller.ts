@@ -366,7 +366,6 @@ export const getDatabaseDatas = async () => {
   for (let category of categoryDatas) {
     categoryObject.push({
       label: category.label,
-      color: category.color,
       createdDate: category.createdDate!,
       products: [] as Array<ExportProductDatas>,
     });

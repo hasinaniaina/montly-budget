@@ -114,7 +114,7 @@ export const generateCSV = (datas: ExportDatas[]) => {
 };
 
 export const exportCSV = async () => {
-  const datas = await getDatasFromDatabaseToExport();
+  const datas: any = await getDatasFromDatabaseToExport();
 
   const permissions =
     await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
@@ -408,8 +408,6 @@ export const getCategorieDependToDate = (
         ? getCategorieDependToCategorieSearch(
             categories,
             categorySearch!,
-            dateFilter,
-            searchInDateOrCategorySearch,
           )
         : categories;
   }
@@ -432,8 +430,6 @@ export const getCategorieDependToDate = (
 export const getCategorieDependToCategorieSearch = (
   categories: (Category & CreationCategory)[],
   categorySearch: string,
-  dateFilter: string[],
-  searchInDateOrCategorySearch: "date" | "categorySearch",
 ): (Category & CreationCategory)[] => {
   const newCategory: (Category & CreationCategory)[] = [];
 
@@ -605,18 +601,21 @@ export const getValueForBarChart = (
 export const getIncomeDependToIncomeSearch = (
   income: Income[],
   incomeSearch: string,
+  dateFilter: string[],
+  searchInDateOrIncomeSearch: "incomeSearch" | "date",
+  disabledMonth?: boolean,
 ): Income[] => {
   const newIncome: Income[] = [];
   let incomeSearchTmp: Income[] = income;
 
-  // if (searchInDateOrCategorySearch == "categorySearch") {
-  //   categorySearchTmp = getCategorieDependToDate(
-  //     categories,
-  //     dateFilter,
-  //     categorySearch,
-  //     searchInDateOrCategorySearch,
-  //   );
-  // }
+  if (searchInDateOrIncomeSearch == "incomeSearch" && !disabledMonth) {
+    incomeSearchTmp = getIncomeDependToDate(
+      income,
+      dateFilter,
+      incomeSearch,
+      searchInDateOrIncomeSearch,
+    );
+  }
 
   incomeSearchTmp.map((income, index) => {
     if (
@@ -627,8 +626,46 @@ export const getIncomeDependToIncomeSearch = (
       newIncome.push(incomeSearchTmp[index]);
     }
   });
+ 
 
   const newIncomeSorted = sortedArrayIncome(newIncome);
 
   return newIncomeSorted;
+};
+
+export const getIncomeDependToDate = (
+  income: Income[],
+  dateFilter: string[],
+  incomeSearch?: string,
+  searchInDateOrIncomeSearch?: "date" | "incomeSearch",
+): Income[] => {
+  const firstDateFilter = new Date(dateFilter[0]);
+  const lastDateFilter = new Date(dateFilter[1]);
+  const newIncome: Income[] = [];
+
+
+  if (searchInDateOrIncomeSearch == "date") {
+    income =
+      incomeSearch != ""
+        ? getIncomeDependToIncomeSearch(
+            income,
+            incomeSearch!,
+            dateFilter,
+            searchInDateOrIncomeSearch,
+          )
+        : income;
+  }
+
+  income.map((inc, index) => {
+    const newExpenseDateStore = new Date(inc.createdDate!);
+    if (
+      newExpenseDateStore >= firstDateFilter &&
+      newExpenseDateStore <= lastDateFilter
+    ) {
+      newIncome.push(income[index]);
+    }
+  });
+  
+
+  return newIncome;
 };

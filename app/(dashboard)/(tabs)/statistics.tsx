@@ -12,7 +12,6 @@ import {
   Pressable,
   BackHandler,
   Keyboard,
-  ActivityIndicator,
 } from "react-native";
 import { Product, CreationProduct } from "@/constants/interface";
 import {

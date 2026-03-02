@@ -209,4 +209,26 @@ export const GloblalStyles = StyleSheet.create({
     color: "red",
     fontSize: 15,
   },
+
+  disabledMonthContainer: {
+    position: "absolute",
+    width: "100%",
+    height: 50,
+    right: 0,
+    left: 0,
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 10,
+  },
+
+  disabledMonth: {
+    width: "86%",
+    borderWidth: 1,
+    borderColor: "#ebebebff",
+    backgroundColor: "#ffffffff",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 5,
+    borderRadius: 10,
+  },
 });

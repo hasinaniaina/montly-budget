@@ -108,7 +108,6 @@ export default function AddCategoryInput() {
 
         const newCurrentCategoriesData: Category & CreationCategory = {
           label: singleCategoryData?.label!,
-          color: singleCategoryData?.color!,
           idCategory: uuidCategory,
           idCreationCategory: uuidCreationCategory,
           idUser: JSON.parse(user).id,
@@ -182,8 +181,7 @@ export default function AddCategoryInput() {
         const categoriesUpdated = [...categories];
         categoriesUpdated.map((category, index) => {
           if (category.idCategory == singleCategoryData?.idCategory) {
-            ((categoriesUpdated[index].color = singleCategoryData.color),
-              (categoriesUpdated[index].label = singleCategoryData.label));
+            ((categoriesUpdated[index].label = singleCategoryData.label));
           }
         });
         setCurrentCategoryDatas(categoriesUpdated);
@@ -206,10 +204,6 @@ export default function AddCategoryInput() {
 
     if (singleCategoryData) {
       if (!singleCategoryData.label || singleCategoryData.label == "") {
-        error = true;
-      }
-
-      if (!singleCategoryData.color || singleCategoryData.color == "") {
         error = true;
       }
     } else {
@@ -261,10 +255,6 @@ export default function AddCategoryInput() {
   return (
     <View>
       <View style={{ alignItems: "center" }}>
-        <ColorPickerViewNew
-          data={singleCategoryData}
-          setData={setSingleCategoryData}
-        />
         <View style={GloblalStyles.popupLabelInput}>
           <View style={GloblalStyles.appInput}>
             <TextInput

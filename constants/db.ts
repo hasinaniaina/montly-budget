@@ -31,8 +31,7 @@ export const createTable = async () => {
           password TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS Category (
           idCategory TEXT PRIMARY KEY, 
-          label TEXT NOT NULL,
-          color TEXT NOT NULL
+          label TEXT NOT NULL
           );
       CREATE TABLE IF NOT EXISTS CreationCategory (
         idCreationCategory TEXT PRIMARY KEY , 
@@ -44,8 +43,7 @@ export const createTable = async () => {
         );
       CREATE TABLE IF NOT EXISTS Product (
           idProduct TEXT PRIMARY KEY, 
-          designation TEXT NOT NULL, 
-          color TEXT
+          designation TEXT NOT NULL
           );
       CREATE TABLE IF NOT EXISTS CreationProduct (
           idCreationProduct TEXT PRIMARY KEY, 
@@ -181,11 +179,10 @@ export const insertProduct = async (
       await db
     ).runAsync(
       `INSERT INTO Product 
-    (idProduct, designation, color) 
-    VALUES (?, ?, ?)`,
+    (idProduct, designation) 
+    VALUES (?, ?)`,
       uuidExpense,
       (datas as Product).designation,
-      (datas as Product).color,
     );
 
     if (insertProduct.changes) {
@@ -308,9 +305,8 @@ export const updateProduct = async (
     let updateProduct = await (
       await db
     ).runAsync(
-      `UPDATE Product SET designation = ?, color = ? WHERE idProduct = ?`,
+      `UPDATE Product SET designation = ? WHERE idProduct = ?`,
       (datas as Product).designation,
-      (datas as Product).color,
       (datas as Product).idProduct,
     );
 
@@ -404,10 +400,9 @@ export const insertCategory = async (
     const dbInstance = await db;
 
     let insertCategory = await dbInstance.runAsync(
-      "INSERT INTO Category (idCategory, label, color) VALUES (?, ?, ?)",
+      "INSERT INTO Category (idCategory, label) VALUES (?, ?)",
       idCategory,
       datas.label!,
-      datas.color!,
     );
 
     if (insertCategory.changes) {
@@ -578,9 +573,8 @@ export const updateCategory = async (datas: Category & CreationCategory) => {
     const updateCategory: any = await (
       await db
     ).runAsync(
-      "UPDATE Category SET label = ? , color = ? WHERE idCategory = ? ",
+      "UPDATE Category SET label = ? WHERE idCategory = ? ",
       (datas as Category).label!,
-      (datas as Category).color!,
       datas.idCategory!,
     );
 

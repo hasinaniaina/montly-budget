@@ -7,7 +7,6 @@ export interface User {
 export interface Category {
   idCategory: string;
   label: string;
-  color: string;
 }
 
 export interface CreationCategory {
@@ -21,7 +20,6 @@ export interface Product {
   categoryLabel?: string, 
   idProduct: string;
   designation: string;
-  color: string;
 }
 
 

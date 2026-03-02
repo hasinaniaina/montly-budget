@@ -130,8 +130,6 @@ export default function Filter() {
             const newCategories = getCategorieDependToCategorieSearch(
               categories,
               categorySearch,
-              dateFilter,
-              "categorySearch",
             );
 
             setCurrentCategoryDatas(newCategories);

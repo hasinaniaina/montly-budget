@@ -13,18 +13,12 @@ import {
 } from "react-native";
 import { Product, CreationProduct } from "@/constants/interface";
 import {
-  retrieveCurrentUserCategory,
-  retrieveCurrentUserIncome,
-  retrieveProductByCategory,
 } from "@/constants/Controller";
 import {
   getExpensesDependToDate,
-  prettyLog,
-  retrieveFirstAndLastDay,
 } from "@/constants/utils";
 import {
   useCategoriesStore,
-  useChangedStore,
   useDateFilterStore,
   useDisabledMonth,
   useIncomeStore,

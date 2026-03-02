@@ -53,7 +53,9 @@ type IncomeStore = {
   incomeForFilter: Income[] | [],
   setIncomeForFilter: (income: Income[]) => void,
   sumIncome: number,
-  setSumIncome : (sumIncome: number) => void
+  setSumIncome : (sumIncome: number) => void,
+  isIncomeSearch: boolean,
+  setIsIncomeSearch: (isIncomeSearch: boolean) => void
 }
 
 
@@ -111,7 +113,9 @@ export const useIncomeStore = create<IncomeStore>((set) => ({
   incomeForFilter: [],
   setIncomeForFilter: (incomeForFilter) => set(() => ({incomeForFilter: incomeForFilter})),
   sumIncome: 0,
-  setSumIncome: (sumIncome) => set(() => ({sumIncome: sumIncome}))
+  setSumIncome: (sumIncome) => set(() => ({sumIncome: sumIncome})),
+  isIncomeSearch: false,
+  setIsIncomeSearch: (isIncomeSearch) => set(() => ({isIncomeSearch: isIncomeSearch}))
 }));
 
 export const usePopupStore = create<PopupStore>((set) => ({

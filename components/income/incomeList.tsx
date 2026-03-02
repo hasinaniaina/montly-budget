@@ -11,12 +11,15 @@ import { green, orange, TextColor, TitleColor } from "@/constants/Colors";
 import { Category, CreationCategory, Income } from "@/constants/interface";
 import {
   useCategoriesStore,
+  useDateFilterStore,
+  useDisabledMonth,
   useIncomeStore,
   usePopupStore,
   useProductsStore,
   useShowActionButtonStore,
 } from "@/constants/store";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { numStr, retrieveFirstAndLastDay } from "@/constants/utils";
 
 export default function IncomeList() {
   const setSingleIncomeData = useIncomeStore(
@@ -32,7 +35,13 @@ export default function IncomeList() {
 
   const incomeForFilter = useIncomeStore((state) => state.incomeForFilter);
 
-  const [incomeList, setIncomeList] = useState<Income[]>([]);
+  const isIncomeSearch = useIncomeStore((state) => state.isIncomeSearch);
+
+  const dateFilterStore = useDateFilterStore((state) => state.dateFilter);
+
+  const disabledMonth = useDisabledMonth((state) => state.disabled);
+
+  const [incomeList, setIncomeList] = useState<Income[]>(currentUserIncome);
 
   let options: Intl.DateTimeFormatOptions = {
     year: "numeric",
@@ -41,10 +50,17 @@ export default function IncomeList() {
   };
 
   useEffect(() => {
-    console.log("Income list");
+    console.log("Income list===");
+    const { firstDay, lastDay } = retrieveFirstAndLastDay(
+      dateFilterStore.incomeDateFilter.toString(),
+    );
+    
 
     const incomeListTmp =
-      incomeForFilter.length == 0 ? currentUserIncome : incomeForFilter;
+      incomeForFilter.length == 0 && !isIncomeSearch
+        ? currentUserIncome
+        : incomeForFilter;
+
     setIncomeList(incomeListTmp);
   }, [incomeForFilter, currentUserIncome]);
 
@@ -94,7 +110,7 @@ export default function IncomeList() {
 
                   <View style={styles.amountContainer}>
                     <Text style={styles.categoryIncome}>
-                      {item.amount}
+                      {numStr(String(item.amount), ".")}
                       &nbsp;Ariary
                     </Text>
                   </View>
@@ -168,7 +184,7 @@ const styles = StyleSheet.create({
   colorNamecontainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginLeft: 10
+    marginLeft: 10,
   },
   colorCategory: {
     width: 10,
@@ -189,9 +205,9 @@ const styles = StyleSheet.create({
   categoryIncome: {
     fontFamily: "k2d-bold",
     color: green,
-    alignSelf: "flex-end"
+    alignSelf: "flex-end",
   },
   amountContainer: {
     flex: 1,
-  }
+  },
 });

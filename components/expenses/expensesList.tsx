@@ -16,6 +16,7 @@ import {
   useProductsStore,
 } from "@/constants/store";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { numStr } from "@/constants/utils";
 
 export default function ExpensesList() {
   let options: Intl.DateTimeFormatOptions = {

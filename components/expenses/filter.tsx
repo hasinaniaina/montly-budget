@@ -22,6 +22,7 @@ import {
 } from "@/constants/store";
 import { BARCHARTMONTH } from "@/constants/constant";
 import CustomDatePicker from "../customDatePicker";
+import { GloblalStyles } from "@/constants/GlobalStyles";
 
 export default function Filter() {
   const [datePickerVisible, setDatePickerVisible] = useState<boolean>(false);
@@ -114,11 +115,11 @@ export default function Filter() {
             setDisabledMonth(false);
           }}
           style={[
-            styles.disabledMonthContainer,
+            GloblalStyles.disabledMonthContainer,
             disabledMonth ? { display: "flex" } : { display: "none" },
           ]}
         >
-          <View style={styles.disabledMonth}>
+          <View style={GloblalStyles.disabledMonth}>
             <Ionicons name="lock-open-outline" size={24} color={"#b8b8b8ff"} />
           </View>
         </TouchableOpacity>
@@ -136,8 +137,6 @@ export default function Filter() {
               "expensesSearch",
               disabledMonth,
             );
-
-            
 
             
             setCurrentDateExpenses(newExpenses);
@@ -198,15 +197,5 @@ const styles = StyleSheet.create({
   closeDateFilter: {
     marginLeft: 15,
     padding: 5,
-  },
-  disabledMonth: {
-    width: "86%",
-    borderWidth: 1,
-    borderColor: "#ebebebff",
-    backgroundColor: "#ffffffff",
-    justifyContent: "center",
-    alignItems: "center",
-    paddingVertical: 5,
-    borderRadius: 10,
   },
 });

@@ -146,7 +146,6 @@ export default function AddExpensesInput() {
 
       const newCurrentExpensesData: Product & CreationProduct = {
         designation: singleExpenseData?.designation!,
-        color: singleExpenseData?.color!,
         idCreationProduct: uuidCreationExpense,
         idCreationCategory: singleExpenseData?.idCreationCategory!,
         idProduct: uuidExpense,
@@ -211,7 +210,6 @@ export default function AddExpensesInput() {
           if (currentDateExpense.idProduct == singleExpenseData?.idProduct) {
             currentDateExpensesTmp[index].designation =
               singleExpenseData.designation;
-            currentDateExpensesTmp[index].color = singleExpenseData.color;
             currentDateExpensesTmp[index].idCreationCategory =
               singleExpenseData.idCreationCategory;
             currentDateExpensesTmp[index].productAmount =
@@ -225,7 +223,6 @@ export default function AddExpensesInput() {
           if (categoryProduct.idProduct == singleExpenseData?.idProduct) {
             categoryProductsTmp[index].designation =
               singleExpenseData.designation;
-            categoryProductsTmp[index].color = singleExpenseData.color;
             categoryProductsTmp[index].idCreationCategory =
               singleExpenseData.idCreationCategory;
             categoryProductsTmp[index].productAmount =
@@ -292,8 +289,6 @@ export default function AddExpensesInput() {
   const checkInputsEmpty = (singleExpenseData: Product & CreationProduct) => {
     if (
       !singleExpenseData ||
-      !singleExpenseData.color ||
-      singleExpenseData.color == "" ||
       !singleExpenseData.designation ||
       singleExpenseData.designation == "" ||
       !singleExpenseData.productAmount ||
@@ -325,10 +320,6 @@ export default function AddExpensesInput() {
         alignItems: "center",
       }}
     >
-      <ColorPickerViewNew
-        data={singleExpenseData}
-        setData={setSingleExpenseData}
-      />
       <View style={styles.popupLabelInput}>
         <Text style={GloblalStyles.appLabel}>Label</Text>
         <View style={GloblalStyles.appInput}>

@@ -21,7 +21,6 @@ function ConfirmationMessageModal({
 }) {
 
 
-  const setChange = useChangedStore((state) => state.setChanged);
 
   return (
     <Modal animationType="fade" transparent={true} visible={modalShown}>
@@ -42,7 +41,7 @@ function ConfirmationMessageModal({
                   const result = await removeItem();
 
                   if (result) {
-                    setChange(true);
+                    // setChange(true);
                   }
                 }}
               >
